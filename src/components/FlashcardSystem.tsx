@@ -240,10 +240,10 @@ function FlashcardSystem({ day }: FlashcardSystemProps): JSX.Element {
                                     onChange={(e) => setNewCard({ ...newCard, difficulty: e.target.value as 'easy' | 'medium' | 'hard' })}
                                     style={{
                                         width: '100%',
-                                        padding: '8px',
+                                        padding: '8px 2.15rem 8px 8px',
                                         borderRadius: '6px',
                                         border: '1px solid var(--border-primary)',
-                                        background: 'var(--bg-section)',
+                                        backgroundColor: 'var(--bg-section)',
                                         color: 'var(--text-primary)'
                                     }}
                                 >

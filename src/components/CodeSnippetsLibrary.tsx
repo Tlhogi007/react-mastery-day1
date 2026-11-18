@@ -97,10 +97,10 @@ function CodeSnippetsLibrary(): JSX.Element {
                             onChange={(e) => setSelectedCategory(e.target.value)}
                             style={{
                                 width: '100%',
-                                padding: '8px',
+                                padding: '8px 2.15rem 8px 8px',
                                 borderRadius: '6px',
                                 border: '1px solid var(--border-primary)',
-                                background: 'var(--bg-section)',
+                                backgroundColor: 'var(--bg-section)',
                                 color: 'var(--text-primary)'
                             }}
                         >
@@ -118,10 +118,10 @@ function CodeSnippetsLibrary(): JSX.Element {
                             onChange={(e) => setSelectedDifficulty(e.target.value)}
                             style={{
                                 width: '100%',
-                                padding: '8px',
+                                padding: '8px 2.15rem 8px 8px',
                                 borderRadius: '6px',
                                 border: '1px solid var(--border-primary)',
-                                background: 'var(--bg-section)',
+                                backgroundColor: 'var(--bg-section)',
                                 color: 'var(--text-primary)'
                             }}
                         >

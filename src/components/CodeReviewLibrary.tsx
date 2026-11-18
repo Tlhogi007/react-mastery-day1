@@ -51,10 +51,10 @@ function CodeReviewLibrary(): JSX.Element {
                                 onChange={(e) => setFilterDay(e.target.value === 'all' ? 'all' : parseInt(e.target.value, 10))}
                                 style={{
                                     width: '100%',
-                                    padding: '8px',
+                                    padding: '8px 2.15rem 8px 8px',
                                     borderRadius: '6px',
                                     border: '1px solid var(--border-primary)',
-                                    background: 'var(--bg-section)',
+                                    backgroundColor: 'var(--bg-section)',
                                     color: 'var(--text-primary)'
                                 }}
                             >
@@ -71,10 +71,10 @@ function CodeReviewLibrary(): JSX.Element {
                                 onChange={(e) => setFilterDifficulty(e.target.value)}
                                 style={{
                                     width: '100%',
-                                    padding: '8px',
+                                    padding: '8px 2.15rem 8px 8px',
                                     borderRadius: '6px',
                                     border: '1px solid var(--border-primary)',
-                                    background: 'var(--bg-section)',
+                                    backgroundColor: 'var(--bg-section)',
                                     color: 'var(--text-primary)'
                                 }}
                             >
