@@ -12,7 +12,7 @@ export type ProgressData = {
 
 export type LabCloudState = {
   exercise: string
-  view: 'exercises' | 'community'
+  view: 'exercises' | 'community' | 'settings'
   tools: boolean
   tab?: string
 }
@@ -25,6 +25,8 @@ export type UserCloudSnapshot = {
   notes?: unknown
   annotations?: unknown
   reflections?: unknown
+  flashcards?: unknown
+  snippets?: unknown
 }
 
 export const USER_CLOUD_KEY_PREFIX = 'rm:user:'
@@ -52,6 +54,8 @@ export function emptySnapshot(): UserCloudSnapshot {
     notes: [],
     annotations: [],
     reflections: [],
+    flashcards: [],
+    snippets: [],
   }
 }
 
@@ -106,6 +110,14 @@ export function mergeProgress(a: ProgressData, b: ProgressData): ProgressData {
   }
 }
 
+function itemStamp(row: Record<string, unknown>): string {
+  for (const key of ['updatedAt', 'lastReviewDate', 'createdAt'] as const) {
+    const v = row[key]
+    if (typeof v === 'string' && v) return v
+  }
+  return ''
+}
+
 function mergeById(local: unknown, cloud: unknown): unknown[] {
   const a = Array.isArray(local) ? local : []
   const b = Array.isArray(cloud) ? cloud : []
@@ -120,9 +132,7 @@ function mergeById(local: unknown, cloud: unknown): unknown[] {
       map.set(id, row)
       continue
     }
-    const prevUpdated = typeof prev.updatedAt === 'string' ? prev.updatedAt : ''
-    const nextUpdated = typeof row.updatedAt === 'string' ? row.updatedAt : ''
-    map.set(id, nextUpdated >= prevUpdated ? row : prev)
+    map.set(id, itemStamp(row) >= itemStamp(prev) ? row : prev)
   }
   return [...map.values()]
 }
@@ -148,6 +158,8 @@ export function mergeSnapshots(
     notes: mergeById(l.notes, c.notes),
     annotations: mergeById(l.annotations, c.annotations),
     reflections: mergeById(l.reflections, c.reflections),
+    flashcards: mergeById(l.flashcards, c.flashcards),
+    snippets: mergeById(l.snippets, c.snippets),
   }
 }
 
@@ -164,10 +176,16 @@ export function parseSnapshot(raw: string | null): UserCloudSnapshot | null {
       notes: parsed.notes ?? [],
       annotations: parsed.annotations ?? [],
       reflections: parsed.reflections ?? [],
+      flashcards: parsed.flashcards ?? [],
+      snippets: parsed.snippets ?? [],
     }
   } catch {
     return null
   }
+}
+
+function cappedArray(value: unknown, max: number): unknown[] {
+  return Array.isArray(value) ? value.slice(0, max) : []
 }
 
 export function sanitizeIncomingSnapshot(body: unknown): UserCloudSnapshot | null {
@@ -178,9 +196,11 @@ export function sanitizeIncomingSnapshot(body: unknown): UserCloudSnapshot | nul
     updatedAt: typeof o.updatedAt === 'string' ? o.updatedAt : new Date().toISOString(),
     progress: normalizeProgress(o.progress),
     lab: o.lab ?? null,
-    notes: Array.isArray(o.notes) ? o.notes.slice(0, 500) : [],
-    annotations: Array.isArray(o.annotations) ? o.annotations.slice(0, 500) : [],
-    reflections: Array.isArray(o.reflections) ? o.reflections.slice(0, 500) : [],
+    notes: cappedArray(o.notes, 500),
+    annotations: cappedArray(o.annotations, 500),
+    reflections: cappedArray(o.reflections, 500),
+    flashcards: cappedArray(o.flashcards, 1000),
+    snippets: cappedArray(o.snippets, 500),
   }
   // Cap JSON size roughly by stringifying later; reject huge payloads in handler.
   return snap

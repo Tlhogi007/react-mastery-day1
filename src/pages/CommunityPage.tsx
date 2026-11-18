@@ -3,6 +3,8 @@ import { motion } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import { getAllCommunityContent, type CommunityContent } from '../lib/contentLoader'
 import { tracking } from '../lib/googleAnalytics'
+import { CommunityAttribution } from '../components/CommunityAttribution'
+import { CommunityContributeHint } from '../components/CommunityContributeHint'
 import './CommunityPage.css'
 
 export default function CommunityPage() {
@@ -35,16 +37,10 @@ export default function CommunityPage() {
             <h1>{selectedContent.title}</h1>
             <div className="article-meta">
               <span className="author">
-                By {selectedContent.author}
-                {selectedContent.github && (
-                  <a 
-                    href={`https://github.com/${selectedContent.github}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    @{selectedContent.github}
-                  </a>
-                )}
+                <CommunityAttribution
+                  author={selectedContent.author}
+                  github={selectedContent.github}
+                />
               </span>
               <span className="difficulty">{selectedContent.difficulty}</span>
               <span className="date">{selectedContent.date}</span>
@@ -80,6 +76,7 @@ export default function CommunityPage() {
         >
           Contribute an article
         </a>
+        <CommunityContributeHint />
       </header>
       
       <div className="community-filters">
@@ -132,7 +129,13 @@ export default function CommunityPage() {
             >
               <h3>{content.title}</h3>
               <div className="card-meta">
-                <span className="author">by {content.author}</span>
+                <span className="author">
+                  <CommunityAttribution
+                    author={content.author}
+                    github={content.github}
+                    compact
+                  />
+                </span>
                 <span className={`difficulty ${content.difficulty}`}>
                   {content.difficulty}
                 </span>

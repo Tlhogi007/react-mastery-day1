@@ -10,6 +10,8 @@
   "include": [
     "vite.config.ts",
     "vite-plugin-ai-quiz.ts",
+    "vite-plugin-admin-ai.ts",
+    "vite-plugin-user-data.ts",
     "api/_lib/generateQuiz.ts"
   ]
 }

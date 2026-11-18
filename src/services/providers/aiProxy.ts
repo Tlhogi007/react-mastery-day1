@@ -140,12 +140,14 @@ export async function fetchViaAiProxy(
       })
       return []
     }
-    if (res.status === 403 || code === 'email_verification_required') {
+    if (res.status === 403 || code === 'email_verification_required' || code === 'ai_banned') {
       emitAiGate({
         mode: 'quota',
         message:
           message ||
-          'Verify your email to use free hosted AI, or add your own API key in Settings.',
+          (code === 'ai_banned'
+            ? 'Hosted AI is disabled for this account. Add your own API key in Settings.'
+            : 'Verify your email to use free hosted AI, or add your own API key in Settings.'),
       })
       return []
     }

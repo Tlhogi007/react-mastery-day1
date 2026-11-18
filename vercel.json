@@ -15,6 +15,10 @@
     "api/clerk-webhook.ts": {
       "includeFiles": "api/_lib/**",
       "maxDuration": 15
+    },
+    "api/admin-ai.ts": {
+      "includeFiles": "api/_lib/**",
+      "maxDuration": 20
     }
   }
 }

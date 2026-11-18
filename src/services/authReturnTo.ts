@@ -6,7 +6,12 @@
 export const ACTIVE_TAB_KEY = 'rm-active-tab'
 export const LAB_SESSION_KEY = 'rm-lab-session'
 
-export type AuthReturnView = 'exercises' | 'community'
+export type AuthReturnView = 'exercises' | 'community' | 'settings'
+
+export function normalizeLabView(view: unknown): AuthReturnView {
+  if (view === 'community' || view === 'settings') return view
+  return 'exercises'
+}
 
 export type AuthReturnTo = {
   inLab: boolean
@@ -75,7 +80,7 @@ export function readLabSession(validExercises: Record<string, unknown>): LabSess
     if (!parsed.exercise || !(parsed.exercise in validExercises)) return null
     return {
       exercise: parsed.exercise,
-      view: parsed.view === 'community' ? 'community' : 'exercises',
+      view: normalizeLabView(parsed.view),
       tools: Boolean(parsed.tools),
     }
   } catch {
@@ -140,7 +145,7 @@ function parseHash(): Partial<AuthReturnTo> | null {
     inLab: rm === 'lab',
     exercise: params.get('ex') || undefined,
     tab: params.get('tab') || undefined,
-    view: params.get('view') === 'community' ? 'community' : 'exercises',
+    view: normalizeLabView(params.get('view')),
     tools: params.get('tools') === '1',
   }
 }
@@ -174,7 +179,7 @@ export function readAuthReturnTo(
     const state: AuthReturnTo = {
       inLab: Boolean(fromHash.inLab),
       exercise: exercise || 'day01-rendering-pipeline',
-      view: fromHash.view === 'community' ? 'community' : 'exercises',
+      view: normalizeLabView(fromHash.view),
       tools: Boolean(fromHash.tools),
       tab: fromHash.tab || getActiveTab() || 'learn',
     }

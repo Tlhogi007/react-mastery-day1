@@ -14,6 +14,7 @@ import VisualDiagrams from '../../../components/VisualDiagrams'
 import PersonalNotes from '../../../components/PersonalNotes'
 import DailyReflection from '../../../components/DailyReflection'
 import ReconciliationTodoDemo from './components/ReconciliationTodoDemo'
+import TypeComparisonDemo from './components/TypeComparisonDemo'
 import KeyConceptsSection from './components/KeyConceptsSection'
 import { day02Challenges, day02Quiz, day02Debugging, day02RealWorld } from './challenges'
 
@@ -21,20 +22,19 @@ interface TodoItem {
   id: string
   text: string
   completed: boolean
-  notes: string
 }
 
 function Day02Reconciliation(): JSX.Element {
   const [todos, setTodos] = useState<TodoItem[]>([
-    { id: '1', text: 'Learn React', completed: false, notes: '' },
-    { id: '2', text: 'Master Reconciliation', completed: false, notes: '' },
-    { id: '3', text: 'Build awesome apps', completed: false, notes: '' },
+    { id: '1', text: 'Learn React', completed: false },
+    { id: '2', text: 'Master Reconciliation', completed: false },
+    { id: '3', text: 'Build awesome apps', completed: false },
   ])
 
   const [useIndexKeys, setUseIndexKeys] = useState<boolean>(true)
 
   const toggleTodo = (id: string): void => {
-    setTodos(todos.map(todo => 
+    setTodos(todos.map(todo =>
       todo.id === id ? { ...todo, completed: !todo.completed } : todo
     ))
   }
@@ -59,12 +59,6 @@ function Day02Reconciliation(): JSX.Element {
 
   const containerStyle: React.CSSProperties = {
     color: 'var(--text-primary)'
-  }
-
-  const handleNotesChange = (id: string, notes: string): void => {
-    setTodos(todos.map(todo =>
-      todo.id === id ? { ...todo, notes } : todo
-    ))
   }
 
   return (
@@ -129,8 +123,15 @@ function Day02Reconciliation(): JSX.Element {
                     onToggleTodo={toggleTodo}
                     onMoveUp={moveUp}
                     onMoveDown={moveDown}
-                    onNotesChange={handleNotesChange}
                   />
+                </Card>
+
+                <Card
+                  title="Type Comparison Lab"
+                  icon="🔀"
+                  style={{ marginBottom: '24px' }}
+                >
+                  <TypeComparisonDemo />
                 </Card>
 
                 <Card

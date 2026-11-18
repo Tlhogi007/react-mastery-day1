@@ -18,6 +18,7 @@ import {
   readAuthReturnTo,
   setActiveTab,
   writeLabSession,
+  type AuthReturnView,
 } from './services/authReturnTo'
 import { clearQuizProgress } from './services/quizResume'
 import { USER_CLOUD_SYNCED_EVENT } from './services/userCloudSync'
@@ -38,6 +39,7 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { BREAKPOINTS } from './constants'
 
 const CommunityPage = lazy(() => import('./pages/CommunityPage'))
+const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const Tools = lazy(() => import('./pages/Tools'))
 
 const Day01RenderingPipeline = lazy(() => import('./exercises/week1/day01-rendering-pipeline/App'))
@@ -110,7 +112,7 @@ interface SearchResult {
 function App(): JSX.Element {
   const [savedReturn] = useState(() => readAuthReturnTo(exercises))
   const [showLanding, setShowLanding] = useState<boolean>(() => !savedReturn?.inLab)
-  const [currentView, setCurrentView] = useState<'exercises' | 'community'>(
+  const [currentView, setCurrentView] = useState<AuthReturnView>(
     () => savedReturn?.view ?? 'exercises',
   )
   const [currentExercise, setCurrentExercise] = useState<ExerciseKey>(
@@ -188,6 +190,10 @@ function App(): JSX.Element {
     }
     if (currentView === 'community') {
       setAppContext({ view: 'community', day: null, exercise: null, week: null })
+      return
+    }
+    if (currentView === 'settings') {
+      setAppContext({ view: 'settings', day: null, exercise: null, week: null })
       return
     }
     setAppContext({
@@ -468,7 +474,7 @@ function App(): JSX.Element {
   return (
     <>
       {clerkEnabled && <SignOutLandingRedirect onSignedOut={handleSignedOut} />}
-      {clerkEnabled && !showLanding && (
+      {clerkEnabled && (
         <UserCloudSync
           exercise={currentExercise}
           view={currentView}
@@ -476,6 +482,7 @@ function App(): JSX.Element {
           tab={getActiveTab() || undefined}
           progressEpoch={dayCompleteTick}
           onRestoredLab={(lab) => {
+            // Apply restored lab location even if still on landing (used when they enter).
             if (lab.exercise in exercises) {
               setCurrentExercise(lab.exercise as ExerciseKey)
             }
@@ -689,7 +696,9 @@ function App(): JSX.Element {
                 exercises={exercises}
               />
 
-              {!showTools && currentView === 'exercises' && currentExerciseData && (
+              {!showTools &&
+                currentView === 'exercises' &&
+                currentExerciseData && (
                 <MemoizedBreadcrumbs
                   exercise={currentExerciseData}
                   isDayCompleted={isCurrentDayCompleted}
@@ -706,6 +715,13 @@ function App(): JSX.Element {
                   />
                 ) : currentView === 'community' ? (
                   <CommunityPage />
+                ) : currentView === 'settings' ? (
+                  <SettingsPage
+                    onBack={() => {
+                      setShowTools(false)
+                      setCurrentView('exercises')
+                    }}
+                  />
                 ) : ExerciseComponent ? (
                   <StudyMode isActive={studyMode} onToggle={() => setStudyMode(!studyMode)}>
                     <PageTransition transitionKey={currentExercise}>
@@ -750,6 +766,11 @@ function App(): JSX.Element {
           <SettingsModal
             isOpen={showSettings}
             onClose={() => setShowSettings(false)}
+            onOpenAccountPage={() => {
+              setShowTools(false)
+              setCurrentView('settings')
+              if (isMobile) setShowSidebar(false)
+            }}
             onReplayTour={() => {
               settingsStorage.setOnboardingComplete(false)
               setShowTools(false)

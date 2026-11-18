@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { aiQuizDevPlugin } from './vite-plugin-ai-quiz'
+import { adminAiDevPlugin } from './vite-plugin-admin-ai'
 import { userDataDevPlugin } from './vite-plugin-user-data'
 
 const root = path.dirname(fileURLToPath(import.meta.url))
@@ -29,6 +30,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       aiQuizDevPlugin(),
+      adminAiDevPlugin(),
       userDataDevPlugin(),
       // After other plugins; only uploads when auth token is present (CI/production builds)
       ...(sentryAuthToken

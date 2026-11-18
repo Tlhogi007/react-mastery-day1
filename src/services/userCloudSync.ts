@@ -1,8 +1,8 @@
 /**
- * Sync learner progress / notes / lab location to /api/user-data when signed in.
+ * Sync learner progress / notes / tools data to /api/user-data when signed in.
  */
 import { progressStorage, type ProgressData } from './progressStorage'
-import { getActiveTab, writeLabSession } from './authReturnTo'
+import { getActiveTab, normalizeLabView, writeLabSession } from './authReturnTo'
 import { waitForAiAuthToken } from './aiAuthBridge'
 
 export const USER_CLOUD_SYNCED_EVENT = 'rm-user-cloud-synced'
@@ -18,7 +18,7 @@ export type AiQuotaStatus = {
 
 export type LabCloudState = {
   exercise: string
-  view: 'exercises' | 'community'
+  view: 'exercises' | 'community' | 'settings'
   tools: boolean
   tab?: string
 }
@@ -31,6 +31,8 @@ export type UserCloudSnapshot = {
   notes?: unknown
   annotations?: unknown
   reflections?: unknown
+  flashcards?: unknown
+  snippets?: unknown
 }
 
 type UserDataResponse = {
@@ -41,7 +43,7 @@ type UserDataResponse = {
 function readJsonKey(key: string): unknown {
   try {
     const raw = localStorage.getItem(key)
-    if (!raw) return key.includes('notes') || key.includes('reflection') || key.includes('annotation') ? [] : null
+    if (!raw) return []
     return JSON.parse(raw) as unknown
   } catch {
     return []
@@ -64,7 +66,7 @@ function readLabFromStorage(): LabCloudState | null {
     if (!parsed.exercise || typeof parsed.exercise !== 'string') return null
     return {
       exercise: parsed.exercise,
-      view: parsed.view === 'community' ? 'community' : 'exercises',
+      view: normalizeLabView(parsed.view),
       tools: Boolean(parsed.tools),
       tab: getActiveTab() || undefined,
     }
@@ -91,9 +93,11 @@ export function buildLocalSnapshot(
     updatedAt: new Date().toISOString(),
     progress: progressStorage.getProgress(),
     lab,
-    notes: readJsonKey('react-mastery-notes') ?? [],
-    annotations: readJsonKey('react-mastery-annotations') ?? [],
-    reflections: readJsonKey('react-mastery-reflections') ?? [],
+    notes: readJsonKey('react-mastery-notes'),
+    annotations: readJsonKey('react-mastery-annotations'),
+    reflections: readJsonKey('react-mastery-reflections'),
+    flashcards: readJsonKey('react-mastery-flashcards'),
+    snippets: readJsonKey('react-mastery-snippets'),
   }
 }
 
@@ -102,10 +106,12 @@ function applySnapshotLocally(cloud: UserCloudSnapshot): void {
   if (Array.isArray(cloud.notes)) writeJsonKey('react-mastery-notes', cloud.notes)
   if (Array.isArray(cloud.annotations)) writeJsonKey('react-mastery-annotations', cloud.annotations)
   if (Array.isArray(cloud.reflections)) writeJsonKey('react-mastery-reflections', cloud.reflections)
+  if (Array.isArray(cloud.flashcards)) writeJsonKey('react-mastery-flashcards', cloud.flashcards)
+  if (Array.isArray(cloud.snippets)) writeJsonKey('react-mastery-snippets', cloud.snippets)
   if (cloud.lab?.exercise) {
     writeLabSession({
       exercise: cloud.lab.exercise,
-      view: cloud.lab.view || 'exercises',
+      view: normalizeLabView(cloud.lab.view),
       tools: Boolean(cloud.lab.tools),
     })
     if (cloud.lab.tab) {
@@ -163,7 +169,6 @@ export async function pushUserCloud(
 /** Pull cloud quota, then PUT local snapshot (server merges with existing cloud). */
 export async function syncUserCloudOnSignIn(lab?: Partial<LabCloudState>): Promise<UserDataResponse | null> {
   const local = buildLocalSnapshot(lab)
-  // Seed quota badge + ensure we have a token before PUT
   await fetchUserCloud()
   return pushUserCloud(local)
 }

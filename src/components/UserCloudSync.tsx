@@ -5,18 +5,19 @@ import {
   pushUserCloud,
   syncUserCloudOnSignIn,
 } from '../services/userCloudSync'
+import { normalizeLabView, type AuthReturnView } from '../services/authReturnTo'
 import { tracking } from '../lib/googleAnalytics'
 
 interface UserCloudSyncProps {
   exercise: string
-  view: 'exercises' | 'community'
+  view: AuthReturnView
   tools: boolean
   tab?: string
   /** Bumps when day/quiz progress changes so we push sooner. */
   progressEpoch: number
   onRestoredLab?: (lab: {
     exercise: string
-    view: 'exercises' | 'community'
+    view: AuthReturnView
     tools: boolean
     tab?: string
   }) => void
@@ -52,7 +53,7 @@ export function UserCloudSync({
       if (result.cloud.lab && onRestoredLab) {
         onRestoredLab({
           exercise: result.cloud.lab.exercise,
-          view: result.cloud.lab.view || 'exercises',
+          view: normalizeLabView(result.cloud.lab.view),
           tools: Boolean(result.cloud.lab.tools),
           tab: result.cloud.lab.tab,
         })

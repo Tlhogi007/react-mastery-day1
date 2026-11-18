@@ -1,10 +1,12 @@
 /**
  * Clerk JWT verification for hosted AI routes.
  * Requires a signed-in user with a verified email (or Google/GitHub OAuth).
+ * Honors private/publicMetadata.aiBanned and admin role checks.
  * If CLERK_SECRET_KEY is unset, hosted AI stays on IP caps only (legacy).
  */
 
 import { createClerkClient, verifyToken } from '@clerk/backend'
+import type { User } from '@clerk/backend'
 import type { VercelRequest } from '@vercel/node'
 
 export type AuthUser = { userId: string }
@@ -35,7 +37,6 @@ export function clerkAuthorizedParties(): string[] {
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
     parties.add(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL.replace(/\/$/, '')}`)
   }
-  // Current deployment only (prod or this preview) — not every preview URL.
   if (process.env.VERCEL_URL) {
     parties.add(`https://${process.env.VERCEL_URL.replace(/\/$/, '')}`)
   }
@@ -46,32 +47,43 @@ export function clerkAuthorizedParties(): string[] {
   return [...parties]
 }
 
-function clerkClient() {
+export function clerkClient() {
   return createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! })
 }
 
-async function userMayUseHostedAi(userId: string): Promise<boolean> {
-  const user = await clerkClient().users.getUser(userId)
+export function isAiBanned(user: User): boolean {
+  const priv = user.privateMetadata as Record<string, unknown> | undefined
+  const pub = user.publicMetadata as Record<string, unknown> | undefined
+  return priv?.aiBanned === true || pub?.aiBanned === true
+}
+
+export function isAdminUser(user: User): boolean {
+  const allow = (process.env.ADMIN_USER_IDS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+  if (allow.includes(user.id)) return true
+  const priv = user.privateMetadata as Record<string, unknown> | undefined
+  const pub = user.publicMetadata as Record<string, unknown> | undefined
+  return pub?.role === 'admin' || priv?.role === 'admin'
+}
+
+function userMayUseHostedAi(user: User): boolean {
   if (user.emailAddresses.some((e) => e.verification?.status === 'verified')) {
     return true
   }
   return user.externalAccounts.some((a) => OAUTH_PROVIDERS.has(a.provider))
 }
 
-export async function requireAiUser(req: VercelRequest): Promise<
-  | { ok: true; user: AuthUser }
+async function verifyBearerUser(req: VercelRequest): Promise<
+  | { ok: true; user: User }
   | {
       ok: false
       status: 401 | 403
       error: string
-      code: 'auth_required' | 'email_verification_required'
+      code: 'auth_required' | 'email_verification_required' | 'ai_banned'
     }
 > {
-  if (!clerkConfigured()) {
-    // Auth not wired yet — caller may still apply IP caps
-    return { ok: true, user: { userId: 'anonymous' } }
-  }
-
   const header = req.headers.authorization
   const token =
     typeof header === 'string' && header.startsWith('Bearer ')
@@ -83,7 +95,7 @@ export async function requireAiUser(req: VercelRequest): Promise<
       ok: false,
       status: 401,
       code: 'auth_required',
-      error: 'Sign in to use hosted AI quiz generation.',
+      error: 'Sign in to continue.',
     }
   }
 
@@ -99,28 +111,95 @@ export async function requireAiUser(req: VercelRequest): Promise<
         ok: false,
         status: 401,
         code: 'auth_required',
-        error: 'Sign in to use hosted AI quiz generation.',
+        error: 'Sign in to continue.',
       }
     }
-
-    const allowed = await userMayUseHostedAi(userId)
-    if (!allowed) {
-      return {
-        ok: false,
-        status: 403,
-        code: 'email_verification_required',
-        error:
-          'Verify your email to use free hosted AI, or add your own API key in Settings.',
-      }
-    }
-
-    return { ok: true, user: { userId } }
+    const user = await clerkClient().users.getUser(userId)
+    return { ok: true, user }
   } catch {
     return {
       ok: false,
       status: 401,
       code: 'auth_required',
-      error: 'Session expired. Sign in again to use hosted AI.',
+      error: 'Session expired. Sign in again.',
     }
   }
+}
+
+export async function requireAiUser(req: VercelRequest): Promise<
+  | { ok: true; user: AuthUser }
+  | {
+      ok: false
+      status: 401 | 403
+      error: string
+      code: 'auth_required' | 'email_verification_required' | 'ai_banned'
+    }
+> {
+  if (!clerkConfigured()) {
+    return { ok: true, user: { userId: 'anonymous' } }
+  }
+
+  const verified = await verifyBearerUser(req)
+  if (!verified.ok) return verified
+
+  if (isAiBanned(verified.user)) {
+    return {
+      ok: false,
+      status: 403,
+      code: 'ai_banned',
+      error: 'Hosted AI access is disabled for this account. Use your own API key in Settings.',
+    }
+  }
+
+  if (!userMayUseHostedAi(verified.user)) {
+    return {
+      ok: false,
+      status: 403,
+      code: 'email_verification_required',
+      error:
+        'Verify your email to use free hosted AI, or add your own API key in Settings.',
+    }
+  }
+
+  return { ok: true, user: { userId: verified.user.id } }
+}
+
+export async function requireAdminUser(req: VercelRequest): Promise<
+  | { ok: true; user: User }
+  | {
+      ok: false
+      status: 401 | 403
+      error: string
+      code: 'auth_required' | 'admin_required'
+    }
+> {
+  if (!clerkConfigured()) {
+    return {
+      ok: false,
+      status: 401,
+      code: 'auth_required',
+      error: 'Clerk is not configured.',
+    }
+  }
+
+  const verified = await verifyBearerUser(req)
+  if (!verified.ok) {
+    return {
+      ok: false,
+      status: verified.status === 401 ? 401 : 403,
+      code: verified.status === 401 ? 'auth_required' : 'admin_required',
+      error: verified.error,
+    }
+  }
+
+  if (!isAdminUser(verified.user)) {
+    return {
+      ok: false,
+      status: 403,
+      code: 'admin_required',
+      error: 'Admin access required.',
+    }
+  }
+
+  return { ok: true, user: verified.user }
 }

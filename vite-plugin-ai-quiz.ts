@@ -14,7 +14,7 @@ import {
   clampQuestionCount,
 } from './api/_lib/aiQuizGuard'
 import { createClerkClient, verifyToken } from '@clerk/backend'
-import { clerkAuthorizedParties } from './api/_lib/auth'
+import { clerkAuthorizedParties, isAiBanned } from './api/_lib/auth'
 
 const OAUTH_PROVIDERS = new Set(['oauth_google', 'oauth_github', 'google', 'github'])
 
@@ -25,12 +25,6 @@ function readBody(req: Connect.IncomingMessage): Promise<string> {
     req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
     req.on('error', reject)
   })
-}
-
-async function userMayUseHostedAi(userId: string, secretKey: string): Promise<boolean> {
-  const user = await createClerkClient({ secretKey }).users.getUser(userId)
-  if (user.emailAddresses.some((e) => e.verification?.status === 'verified')) return true
-  return user.externalAccounts.some((a) => OAUTH_PROVIDERS.has(a.provider))
 }
 
 async function resolveUserId(
@@ -68,7 +62,19 @@ async function resolveUserId(
         error: 'Sign in to use hosted AI quiz generation.',
       }
     }
-    const allowed = await userMayUseHostedAi(payload.sub, secretKey)
+    const user = await createClerkClient({ secretKey }).users.getUser(payload.sub)
+    if (isAiBanned(user)) {
+      return {
+        ok: false,
+        status: 403,
+        code: 'ai_banned',
+        error:
+          'Hosted AI access is disabled for this account. Use your own API key in Settings.',
+      }
+    }
+    const allowed =
+      user.emailAddresses.some((e) => e.verification?.status === 'verified') ||
+      user.externalAccounts.some((a) => OAUTH_PROVIDERS.has(a.provider))
     if (!allowed) {
       return {
         ok: false,

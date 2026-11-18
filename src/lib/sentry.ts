@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/react'
 
 const DSN = import.meta.env.VITE_SENTRY_DSN || ''
 
-export type AppView = 'landing' | 'exercises' | 'tools' | 'community'
+export type AppView = 'landing' | 'exercises' | 'tools' | 'community' | 'settings'
 
 export function initSentry(): void {
   if (!DSN) return

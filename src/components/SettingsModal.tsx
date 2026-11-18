@@ -1,25 +1,22 @@
-import { useState, useEffect, useRef, type JSX, type ChangeEvent } from 'react'
+import { useState, useEffect, useRef, type JSX } from 'react'
 import { settingsStorage } from '../services/settingsStorage'
 import { byoAiKeys, type ByoAiKeys } from '../services/byoAiKeys'
-import {
-    downloadLearnerDataBackup,
-    importLearnerData,
-    readBackupFile,
-    resetLearnerData,
-    summarizeImport,
-} from '../services/learnerData'
 import { Z_INDEX } from '../constants'
 
 interface SettingsModalProps {
     isOpen: boolean
     onClose: () => void
     onReplayTour?: () => void
+    onOpenAccountPage?: () => void
 }
 
-function SettingsModal({ isOpen, onClose, onReplayTour }: SettingsModalProps): JSX.Element {
+function SettingsModal({
+    isOpen,
+    onClose,
+    onReplayTour,
+    onOpenAccountPage,
+}: SettingsModalProps): JSX.Element {
     const modalRef = useRef<HTMLDivElement>(null)
-    const fileInputRef = useRef<HTMLInputElement>(null)
-    const [dataStatus, setDataStatus] = useState<string | null>(null)
     const [byoStatus, setByoStatus] = useState<string | null>(null)
     const [byo, setByo] = useState<ByoAiKeys>(() => byoAiKeys.get())
     const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>(() => {
@@ -55,44 +52,6 @@ function SettingsModal({ isOpen, onClose, onReplayTour }: SettingsModalProps): J
         cursor: 'pointer',
         textAlign: 'left',
         marginBottom: 8,
-    }
-
-    const handleExportData = (): void => {
-        downloadLearnerDataBackup()
-        setDataStatus('Backup downloaded')
-    }
-
-    const handleImportClick = (): void => {
-        fileInputRef.current?.click()
-    }
-
-    const handleImportFile = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
-        const file = e.target.files?.[0]
-        e.target.value = ''
-        if (!file) return
-
-        try {
-            const backup = await readBackupFile(file)
-            const result = importLearnerData(backup)
-            const summary = summarizeImport(result)
-            const shouldReload = result.restoredKeys.length > 0
-            setDataStatus(shouldReload ? `${summary}. Reloading…` : summary)
-            if (shouldReload) {
-                window.setTimeout(() => window.location.reload(), 1200)
-            }
-        } catch (err) {
-            setDataStatus(err instanceof Error ? err.message : 'Import failed')
-        }
-    }
-
-    const handleResetData = (): void => {
-        const ok = window.confirm(
-            'Reset all learner data on this device?\n\nThis clears progress, notes, reflections, flashcards, snippets, and local analytics. This cannot be undone unless you exported a backup first.'
-        )
-        if (!ok) return
-        resetLearnerData()
-        setDataStatus('All data cleared — reloading…')
-        window.setTimeout(() => window.location.reload(), 600)
     }
 
     useEffect(() => {
@@ -444,51 +403,26 @@ function SettingsModal({ isOpen, onClose, onReplayTour }: SettingsModalProps): J
                     )}
                 </div>
 
-                <div style={sectionStyle}>
-                    <h3 style={{ margin: '0 0 12px', fontSize: '18px', fontWeight: '600' }}>Your data</h3>
-                    <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                        Progress, notes, and tools stay in this browser. When signed in, progress / notes / reflections / last lab location also sync to your account (Upstash). Export a backup before clearing site data.
-                    </p>
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="application/json,.json"
-                        style={{ display: 'none' }}
-                        onChange={handleImportFile}
-                    />
-                    <button type="button" onClick={handleExportData} style={buttonBaseStyle}>
-                        Export backup
-                        <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-muted)', marginTop: 4 }}>
-                            Download all learner data as JSON
-                        </div>
-                    </button>
-                    <button type="button" onClick={handleImportClick} style={buttonBaseStyle}>
-                        Import backup
-                        <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-muted)', marginTop: 4 }}>
-                            Restore from a previous export (reloads the app)
-                        </div>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleResetData}
-                        style={{
-                            ...buttonBaseStyle,
-                            marginBottom: 0,
-                            borderColor: 'var(--bg-error)',
-                            color: 'var(--text-primary)',
-                        }}
-                    >
-                        Reset all data
-                        <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-muted)', marginTop: 4 }}>
-                            Clears progress, notes, reflections, and local analytics on this device
-                        </div>
-                    </button>
-                    {dataStatus && (
-                        <p style={{ margin: '12px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>
-                            {dataStatus}
+                {onOpenAccountPage && (
+                    <div style={sectionStyle}>
+                        <h3 style={{ margin: '0 0 12px', fontSize: '18px', fontWeight: '600' }}>
+                            Account &amp; data
+                        </h3>
+                        <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                            Export/import backups, reset this device, and admin AI usage live on a separate page.
                         </p>
-                    )}
-                </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onOpenAccountPage()
+                                onClose()
+                            }}
+                            style={{ ...buttonBaseStyle, marginBottom: 0 }}
+                        >
+                            Open account &amp; data
+                        </button>
+                    </div>
+                )}
 
                 <div style={sectionStyle}>
                     <h3 style={{ margin: '0 0 12px', fontSize: '18px', fontWeight: '600' }}>About</h3>
@@ -507,7 +441,7 @@ function SettingsModal({ isOpen, onClose, onReplayTour }: SettingsModalProps): J
                             This course covers React fundamentals, performance optimization, architecture patterns, and interview preparation.
                         </p>
                         <p style={{ margin: 0, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
-                            <strong style={{ color: 'var(--text-primary)' }}>Privacy.</strong> BYO AI keys stay in this browser only and are never uploaded. When signed in, progress, notes, reflections, and last lab location sync to your Clerk account for cross-device restore. Flashcards, snippets, and local analytics stay device-only. Usage analytics may go to Google Analytics when configured; crash reports to Sentry when configured.
+                            <strong style={{ color: 'var(--text-primary)' }}>Privacy.</strong> BYO AI keys stay in this browser only and are never uploaded. When signed in, progress, notes, reflections, flashcards, snippets, and last lab location sync to your Clerk account for cross-device restore. Local analytics stay device-only. Usage analytics may go to Google Analytics when configured; crash reports to Sentry when configured.
                         </p>
                     </div>
                 </div>
