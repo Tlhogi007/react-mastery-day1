@@ -54,7 +54,9 @@ export function ThemedClerkProvider({
       {...(proxyUrl ? { proxyUrl } : {})}
       signInFallbackRedirectUrl="/"
       signUpFallbackRedirectUrl="/"
-      afterSignOutUrl="/#rm=landing"
+      // Hash-free — SignOutLandingRedirect + FORCE_LANDING_KEY open landing.
+      // `/#rm=landing` broke the next Sign in (Clerk rejects fragment redirect URLs).
+      afterSignOutUrl="/"
       localization={{
         signIn: {
           start: {

@@ -21,8 +21,7 @@ export function AuthButton(): JSX.Element {
   const { openSignIn } = useClerk()
   const { isLoaded, isSignedIn } = useAuth()
 
-  // Clerk `<Show>` renders nothing while loading — after sign-out that left the
-  // landing chrome blank. Prefer an explicit Sign in whenever we are not signed in.
+  // Prefer explicit auth state over `<Show>` — after sign-out Show stayed blank.
   if (isLoaded && isSignedIn) {
     return (
       <UserButton
@@ -44,11 +43,16 @@ export function AuthButton(): JSX.Element {
   return (
     <button
       type="button"
-      style={btnStyle}
-      disabled={!isLoaded}
+      style={{
+        ...btnStyle,
+        opacity: isLoaded ? 1 : 0.7,
+        cursor: isLoaded ? 'pointer' : 'wait',
+      }}
       onClick={() => {
+        if (!openSignIn) return
+        // Hash-free URL for Clerk; SPA restore still uses sessionStorage/hash locally.
         const url = prepareAuthReturnUrl()
-        openSignIn?.({
+        void openSignIn({
           forceRedirectUrl: url,
           fallbackRedirectUrl: url,
         })

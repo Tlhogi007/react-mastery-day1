@@ -180,19 +180,25 @@ function parseHash(): Partial<AuthReturnTo> | null {
   }
 }
 
-/** Capture current UI, sync hash, return absolute URL for Clerk redirect props. */
+/**
+ * Capture current UI for post-auth restore.
+ * Writes hash + sessionStorage for the SPA, but returns a hash-free absolute URL
+ * for Clerk — OAuth allowlists reject fragments, and `#rm=landing` after sign-out
+ * was blocking the next openSignIn.
+ */
 export function prepareAuthReturnUrl(overrides?: Partial<AuthReturnTo>): string {
   const state = snapshotFromStorage(overrides)
   persistSnapshot(state)
-  const hash = encodeHash(state)
   if (typeof window === 'undefined') return '/'
-  const next = `${window.location.pathname}${window.location.search}${hash}`
+  const pathSearch = `${window.location.pathname}${window.location.search}` || '/'
+  const hash = encodeHash(state)
   try {
-    window.history.replaceState(null, '', next)
+    // Keep SPA restore marker locally; never hand the fragment to Clerk.
+    window.history.replaceState(null, '', `${pathSearch}${hash}`)
   } catch {
     /* ignore */
   }
-  return `${window.location.origin}${next}`
+  return `${window.location.origin}${pathSearch}`
 }
 
 /** Prefer URL hash (OAuth return), else sessionStorage. */
