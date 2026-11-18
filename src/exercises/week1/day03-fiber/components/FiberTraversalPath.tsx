@@ -20,12 +20,16 @@ function FiberTraversalPath({
 }: FiberTraversalPathProps): JSX.Element {
   return (
     <div style={{
-      fontFamily: 'monospace',
-      fontSize: '14px',
+      fontFamily: 'var(--font-mono, monospace)',
+      fontSize: '13px',
       marginTop: '10px',
-      padding: '10px',
-      background: 'var(--bg-card)',
-      borderRadius: '4px'
+      padding: 'clamp(10px, 2.5vw, 12px)',
+      background: 'var(--bg-section)',
+      borderRadius: '4px',
+      lineHeight: 1.5,
+      overflowWrap: 'anywhere',
+      minWidth: 0,
+      boxSizing: 'border-box',
     }}>
       {processedFibers.length > 0 ? (
         <div>
@@ -39,7 +43,7 @@ function FiberTraversalPath({
         </div>
       ) : (
         <div style={{ color: 'var(--text-secondary)' }}>
-          Click "Start Processing" to see the traversal path
+          Click &quot;Start Processing&quot; to see the traversal path
         </div>
       )}
     </div>

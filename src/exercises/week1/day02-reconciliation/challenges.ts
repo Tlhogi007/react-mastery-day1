@@ -10,10 +10,8 @@ export const day02Challenges: Challenge[] = [
   return (
     <ul>
       {todos.map((todo, index) => (
-        <TodoItem 
-          key={index}  // ❌ BUG: Using index
-          todo={todo}
-        />
+        // ❌ BUG: index key
+        <TodoItem key={index} todo={todo} />
       ))}
     </ul>
   )
@@ -22,10 +20,8 @@ export const day02Challenges: Challenge[] = [
   return (
     <ul>
       {todos.map((todo) => (
-        <TodoItem 
-          key={todo.id}  // ✅ FIX: Using stable id
-          todo={todo}
-        />
+        // ✅ FIX: stable id
+        <TodoItem key={todo.id} todo={todo} />
       ))}
     </ul>
   )
@@ -114,38 +110,38 @@ export const day02Debugging: DebuggingScenario[] = [
     description: 'Users check items in a sortable list, but when they sort, the checked state appears on different items.',
     buggyCode: `function SortableList({ items }) {
   const [sortedItems, setSortedItems] = useState(items)
-  
+
   const sort = () => {
-    setSortedItems([...items].sort((a, b) => a.name.localeCompare(b.name)))
+    setSortedItems(
+      [...items].sort((a, b) => a.name.localeCompare(b.name))
+    )
   }
-  
+
   return (
     <div>
       <button onClick={sort}>Sort</button>
       {sortedItems.map((item, index) => (
-        <ListItem 
-          key={index}  // ❌ BUG
-          item={item}
-        />
+        // ❌ BUG: index key
+        <ListItem key={index} item={item} />
       ))}
     </div>
   )
 }`,
     fixedCode: `function SortableList({ items }) {
   const [sortedItems, setSortedItems] = useState(items)
-  
+
   const sort = () => {
-    setSortedItems([...items].sort((a, b) => a.name.localeCompare(b.name)))
+    setSortedItems(
+      [...items].sort((a, b) => a.name.localeCompare(b.name))
+    )
   }
-  
+
   return (
     <div>
       <button onClick={sort}>Sort</button>
       {sortedItems.map((item) => (
-        <ListItem 
-          key={item.id}  // ✅ FIX: Use stable id
-          item={item}
-        />
+        // ✅ FIX: stable id
+        <ListItem key={item.id} item={item} />
       ))}
     </div>
   )

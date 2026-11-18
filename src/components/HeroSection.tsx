@@ -1,5 +1,6 @@
 import { type JSX } from 'react'
 import { progressStorage } from '../services/progressStorage'
+import '../exercises/exerciseLayout.css'
 
 interface HeroSectionProps {
   day: number
@@ -27,51 +28,75 @@ function HeroSection({ day, title, description, progress }: HeroSectionProps): J
 
   const containerStyle: React.CSSProperties = {
     background: 'linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-card) 100%)',
-    padding: '60px 40px',
+    padding: 'clamp(20px, 4vw, 60px) clamp(16px, 4vw, 40px)',
     borderRadius: '16px',
-    marginBottom: '40px',
+    marginBottom: 'clamp(16px, 3vw, 40px)',
     border: '2px solid var(--border-primary)',
     boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
     position: 'relative',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    width: '100%',
+    maxWidth: '100%',
+    boxSizing: 'border-box',
   }
 
   const dayBadgeStyle: React.CSSProperties = {
-    width: '60px',
-    height: '60px',
+    width: 'clamp(44px, 8vw, 60px)',
+    height: 'clamp(44px, 8vw, 60px)',
     borderRadius: '12px',
     background: 'var(--button-primary)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '24px',
+    fontSize: 'clamp(1.1rem, 4vw, 1.5rem)',
     fontWeight: 'bold',
     color: 'var(--button-text)',
     flexShrink: 0
   }
 
   return (
-    <div style={containerStyle}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px', position: 'relative', zIndex: 1 }}>
+    <div className="hero-section" style={containerStyle}>
+      <div
+        className="hero-section__main"
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 'clamp(12px, 3vw, 20px)',
+          marginBottom: '20px',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
         <div style={dayBadgeStyle}>
           {day}
         </div>
-        <div style={{ flex: 1 }}>
-          <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 'bold', lineHeight: '1.2' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1
+            className="hero-section__title"
+            style={{
+              margin: 0,
+              fontSize: 'clamp(1.35rem, 4.5vw, 2rem)',
+              fontWeight: 'bold',
+              lineHeight: '1.2',
+            }}
+          >
             {title}
           </h1>
-          <p style={{ 
-            margin: '12px 0 0', 
-            fontSize: '18px', 
-            color: 'var(--text-secondary)',
-            lineHeight: '1.6'
-          }}>
+          <p
+            className="hero-section__description"
+            style={{
+              margin: '12px 0 0',
+              fontSize: 'clamp(0.95rem, 2.8vw, 1.125rem)',
+              color: 'var(--text-secondary)',
+              lineHeight: '1.5',
+            }}
+          >
             {description}
           </p>
         </div>
       </div>
 
-      <div style={{ position: 'relative', zIndex: 1 }}>
+      <div className="hero-section__progress" style={{ position: 'relative', zIndex: 1 }}>
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',

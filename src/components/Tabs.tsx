@@ -46,12 +46,14 @@ function Tabs({ tabs, defaultTab }: TabsProps): JSX.Element {
       <div
         role="tablist"
         aria-label="Lesson sections"
+        className="touch-scroll-x"
         style={{
           display: 'flex',
           gap: 0,
           borderBottom: '1px solid var(--border-color)',
           overflowX: 'auto',
           background: 'var(--bg-section)',
+          scrollSnapType: 'x proximity',
         }}
       >
         {tabs.map((tab) => {
@@ -67,6 +69,7 @@ function Tabs({ tabs, defaultTab }: TabsProps): JSX.Element {
               style={{
                 flex: '0 0 auto',
                 padding: '12px 14px',
+                minHeight: 44,
                 border: 'none',
                 borderBottom: isActive ? '2px solid var(--button-primary)' : '2px solid transparent',
                 marginBottom: -1,
@@ -77,6 +80,7 @@ function Tabs({ tabs, defaultTab }: TabsProps): JSX.Element {
                 background: 'transparent',
                 borderRadius: 0,
                 whiteSpace: 'nowrap',
+                scrollSnapAlign: 'start',
               }}
               onKeyDown={(e) => {
                 const currentIndex = tabs.findIndex((t) => t.id === tab.id)
@@ -95,7 +99,7 @@ function Tabs({ tabs, defaultTab }: TabsProps): JSX.Element {
         })}
       </div>
       <div
-        style={{ padding: 'clamp(16px, 3vw, 24px)' }}
+        style={{ padding: 'clamp(12px, 2.5vw, 24px)', minWidth: 0 }}
         role="tabpanel"
         id={`tabpanel-${activeTab}`}
         aria-labelledby={`tab-${activeTab}`}

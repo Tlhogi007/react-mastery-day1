@@ -471,13 +471,26 @@
 }
 
 @media (max-width: 768px) {
+  .landing-unique {
+    min-height: 100dvh;
+  }
+
   .landing-container {
-    padding: var(--space-5) var(--space-4) var(--space-6);
+    padding:
+      max(var(--space-5), env(safe-area-inset-top, 0px))
+      max(var(--space-4), env(safe-area-inset-right, 0px))
+      max(var(--space-6), env(safe-area-inset-bottom, 0px))
+      max(var(--space-4), env(safe-area-inset-left, 0px));
   }
 
   .hero-unique {
     min-height: auto;
     padding: var(--space-5) 0;
+    align-items: flex-start;
+  }
+
+  .brand-mark {
+    font-size: clamp(2.1rem, 12vw, 3.2rem);
   }
 
   .terminal-window {
@@ -491,6 +504,12 @@
 
   .concept-visual {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-container {
+    padding-inline: max(var(--space-3), env(safe-area-inset-left, 0px));
   }
 }
 

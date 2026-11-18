@@ -5,6 +5,7 @@
 
 import { type JSX } from 'react'
 import { buttonStyle } from '../../../../utils/styles'
+import '../../../exerciseLayout.css'
 
 interface FiberControlsProps {
     isProcessing: boolean
@@ -25,29 +26,42 @@ function FiberControls({
 }: FiberControlsProps): JSX.Element {
     return (
         <div style={{ marginTop: '15px' }}>
-            <button
-                onClick={onStart}
-                disabled={isProcessing}
-                style={{
-                    ...buttonStyle,
-                    opacity: isProcessing ? 0.5 : 1,
-                    marginRight: '10px'
-                }}
-            >
-                {isProcessing ? 'Processing...' : '▶️ Start Processing'}
-            </button>
-            <button
-                onClick={onReset}
-                style={buttonStyle}
-            >
-                🔄 Reset
-            </button>
+            <div className="fiber-controls-row lesson-action-stack">
+                <button
+                    type="button"
+                    className="lesson-full-btn"
+                    onClick={onStart}
+                    disabled={isProcessing}
+                    style={{
+                        ...buttonStyle,
+                        opacity: isProcessing ? 0.5 : 1,
+                        width: undefined,
+                        marginRight: undefined,
+                    }}
+                >
+                    {isProcessing ? 'Processing...' : '▶️ Start Processing'}
+                </button>
+                <button
+                    type="button"
+                    className="lesson-full-btn"
+                    onClick={onReset}
+                    style={{
+                        ...buttonStyle,
+                        width: undefined,
+                    }}
+                >
+                    🔄 Reset
+                </button>
+            </div>
             {wasInterrupted && (
                 <div style={{
                     marginTop: '15px',
-                    padding: '10px',
+                    padding: 'clamp(10px, 2.5vw, 12px)',
                     background: 'var(--bg-warning)',
-                    borderRadius: '4px'
+                    color: 'var(--text-on-warning)',
+                    borderRadius: '4px',
+                    lineHeight: 1.45,
+                    overflowWrap: 'anywhere',
                 }}>
                     ⚠️ Processing was interrupted! Fiber paused to handle urgent work.
                     Processed: {processedFibers.join(' → ')}
@@ -56,9 +70,12 @@ function FiberControls({
             {!isProcessing && processedFibers.length === fiberOrder.length && !wasInterrupted && (
                 <div style={{
                     marginTop: '15px',
-                    padding: '10px',
+                    padding: 'clamp(10px, 2.5vw, 12px)',
                     background: 'var(--bg-success)',
-                    borderRadius: '4px'
+                    color: 'var(--text-on-success)',
+                    borderRadius: '4px',
+                    lineHeight: 1.45,
+                    overflowWrap: 'anywhere',
                 }}>
                     ✅ All Fibers processed! Ready for commit phase.
                     Processed: {processedFibers.join(' → ')}

@@ -120,23 +120,26 @@ function InterviewPrepMode({ questions, duration = 30 }: InterviewPrepModeProps)
     } : null
 
     const containerStyle: React.CSSProperties = {
-        color: 'var(--text-primary)'
+        color: 'var(--text-primary)',
+        width: '100%',
+        minWidth: 0,
+        padding: 0,
     }
 
     return (
-        <div style={containerStyle}>
+        <div className="tool-panel" style={containerStyle}>
             <Card
-                title="Interview Prep Mode"
+                title="Interview Prep"
                 icon="🎤"
                 style={{ marginBottom: '24px' }}
             >
                 {!isActive && !showResults && (
-                    <div style={{ textAlign: 'center', padding: '40px' }}>
+                    <div style={{ textAlign: 'center', padding: 'clamp(1rem, 4vw, 2.5rem)' }}>
                         <h3 style={{ marginBottom: '16px' }}>Mock Technical Interview</h3>
                         <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
-                            Practice React-specific interview questions under time pressure.
+                            Practice React interview questions under time pressure.
                             <br />
-                            Duration: {duration} minutes • Questions: 10
+                            {duration} min · 10 questions
                         </p>
                         <button
                             onClick={handleStart}
@@ -207,8 +210,9 @@ function InterviewPrepMode({ questions, duration = 30 }: InterviewPrepModeProps)
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <div className="tool-nav-row">
                             <button
+                                type="button"
                                 onClick={handlePrevious}
                                 disabled={currentQuestionIndex === 0}
                                 style={{
@@ -224,6 +228,7 @@ function InterviewPrepMode({ questions, duration = 30 }: InterviewPrepModeProps)
                                 ← Previous
                             </button>
                             <button
+                                type="button"
                                 onClick={handleNext}
                                 style={{
                                     padding: '10px 20px',

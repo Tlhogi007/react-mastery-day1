@@ -14,6 +14,7 @@ import DailyReflection from '../../../components/DailyReflection'
 import VisualDiagram from '../../../components/VisualDiagram'
 import VisualDiagrams from '../../../components/VisualDiagrams'
 import { day05Challenges, day05Quiz, day05Debugging, day05RealWorld } from './challenges'
+import '../../exerciseLayout.css'
 
 function Day05Effects(): JSX.Element {
     const [count, setCount] = useState(0)
@@ -48,7 +49,7 @@ function Day05Effects(): JSX.Element {
                                     icon="🎯"
                                     style={{ marginBottom: '24px' }}
                                 >
-                                    <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                                    <ul className="lesson-task-list" style={{ margin: 0 }}>
                                         <li>Understand when useEffect runs in the React lifecycle</li>
                                         <li>Master cleanup functions and when they run</li>
                                         <li>Identify and fix stale closure bugs</li>
@@ -62,77 +63,45 @@ function Day05Effects(): JSX.Element {
                                     icon="💡"
                                     style={{ marginBottom: '24px' }}
                                 >
-                                    <div style={{
-                                        background: 'var(--bg-info)',
-                                        padding: '15px',
-                                        borderRadius: '8px',
-                                        marginBottom: '20px'
-                                    }}>
-                                        <p><strong>📝 Exercise:</strong> Click the button and watch the console to see when useEffect runs!</p>
-                                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '10px' }}>
-                                            Open your browser's developer console (F12 or Cmd+Option+I)
+                                    <div className="exercise-callout">
+                                        <p style={{ margin: 0 }}>
+                                            <strong>Exercise:</strong> Tap the button and watch when
+                                            useEffect runs (console on desktop, timing notes below).
+                                        </p>
+                                        <p className="exercise-callout-hint">
+                                            Desktop: open the browser console (F12 or Cmd+Option+I).
                                         </p>
                                     </div>
 
-                                    <div style={{
-                                        border: '2px solid var(--border-primary)',
-                                        padding: '20px',
-                                        borderRadius: '8px',
-                                        textAlign: 'center' as const,
-                                        background: 'var(--bg-section)',
-                                        marginBottom: '20px'
-                                    }}>
+                                    <div className="effect-timing-demo">
                                         <button
+                                            type="button"
+                                            className="lesson-full-btn effect-timing-demo__count"
                                             onClick={handleIncrement}
-                                            style={{
-                                                padding: '12px 24px',
-                                                fontSize: '18px',
-                                                backgroundColor: 'var(--button-primary)',
-                                                color: 'var(--button-text)',
-                                                border: 'none',
-                                                borderRadius: '4px',
-                                                cursor: 'pointer'
-                                            }}
                                         >
                                             Count: {count}
                                         </button>
-                                    </div>
 
-                                    <div style={{
-                                        padding: '15px',
-                                        background: 'var(--bg-section)',
-                                        borderRadius: '8px',
-                                        marginBottom: '20px'
-                                    }}>
-                                        <h3 style={{ marginTop: 0 }}>📊 Effect Timing Visualization</h3>
-                                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
-                                            {['render', 'commit', 'effect'].map((step) => {
-                                                const isActive = effectStep === step
-                                                const stepNames: Record<string, string> = {
-                                                    'render': '🔵 Render Phase',
-                                                    'commit': '🟢 Commit Phase',
-                                                    'effect': '⚡ Effect Runs'
-                                                }
-                                                return (
-                                                    <div
-                                                        key={step}
-                                                        style={{
-                                                            flex: '1 1 150px',
-                                                            minWidth: '150px',
-                                                            padding: '15px',
-                                                            background: isActive ? 'var(--bg-warning)' : 'var(--bg-tertiary)',
-                                                            borderRadius: '8px',
-                                                            textAlign: 'center',
-                                                            transition: 'all 0.3s',
-                                                            border: isActive ? '3px solid var(--border-warning)' : '1px solid var(--border-color)',
-                                                            transform: isActive ? 'scale(1.05)' : 'scale(1)',
-                                                            fontWeight: isActive ? 'bold' : 'normal'
-                                                        }}
-                                                    >
-                                                        <div style={{ fontSize: '14px' }}>{stepNames[step]}</div>
-                                                    </div>
-                                                )
-                                            })}
+                                        <div className="effect-timing-demo__panel">
+                                            <h3 className="effect-timing-demo__title">Effect Timing Visualization</h3>
+                                            <div className="effect-timing-demo__steps">
+                                                {(['render', 'commit', 'effect'] as const).map((step) => {
+                                                    const isActive = effectStep === step
+                                                    const stepNames: Record<string, string> = {
+                                                        render: 'Render Phase',
+                                                        commit: 'Commit Phase',
+                                                        effect: 'Effect Runs',
+                                                    }
+                                                    return (
+                                                        <div
+                                                            key={step}
+                                                            className={`effect-timing-demo__step${isActive ? ' is-active' : ''}`}
+                                                        >
+                                                            {stepNames[step]}
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
                                         </div>
                                     </div>
                                 </Card>
@@ -145,85 +114,79 @@ function Day05Effects(): JSX.Element {
                                     <div style={{ marginBottom: '20px' }}>
                                         <h4>⏰ useEffect Timing</h4>
                                         <p>useEffect runs in the commit phase, after DOM updates:</p>
-                                        <ul>
-                                            <li><strong>Render Phase:</strong> Component function executes, returns JSX</li>
-                                            <li><strong>Commit Phase:</strong> DOM updated, then effects run</li>
-                                            <li><strong>Order:</strong> Cleanup → Effect (for each effect)</li>
-                                            <li><strong>Why After DOM:</strong> Effects can safely access updated DOM</li>
-                                        </ul>
+                                        <div className="lesson-points">
+                                            <div className="lesson-points__item"><span><strong>Render Phase:</strong> Component function executes, returns JSX</span></div>
+                                            <div className="lesson-points__item"><span><strong>Commit Phase:</strong> DOM updated, then effects run</span></div>
+                                            <div className="lesson-points__item"><span><strong>Order:</strong> Cleanup → Effect (for each effect)</span></div>
+                                            <div className="lesson-points__item"><span><strong>Why After DOM:</strong> Effects can safely access updated DOM</span></div>
+                                        </div>
                                         <p><strong>Timeline:</strong></p>
-                                        <pre style={{ background: 'var(--bg-section)', padding: '10px', borderRadius: '4px', overflow: 'auto', fontSize: '12px', color: 'var(--text-primary)' }}>
-                                            {`1. Render Phase: Component function runs
-2. Commit Phase: DOM updated
-3. Cleanup: Previous effect cleanup runs (if any)
-4. Effect: New effect runs`}
-                                        </pre>
+                                        <pre className="lesson-code">{`1. Render: component function runs
+2. Commit: DOM updated
+3. Cleanup: previous effect cleanup (if any)
+4. Effect: new effect runs`}</pre>
                                     </div>
 
                                     <div style={{ marginBottom: '20px' }}>
                                         <h4>🧹 Cleanup Functions</h4>
                                         <p>Cleanup functions run before the next effect or on unmount:</p>
-                                        <ul>
-                                            <li><strong>When:</strong> Before next effect with same dependencies, or on unmount</li>
-                                            <li><strong>Purpose:</strong> Cancel subscriptions, timers, remove event listeners</li>
-                                            <li><strong>Order:</strong> Cleanup runs before new effect setup</li>
-                                            <li><strong>Example:</strong> Clear interval, unsubscribe, remove listener</li>
-                                        </ul>
+                                        <div className="lesson-points">
+                                            <div className="lesson-points__item"><span><strong>When:</strong> Before next effect with same deps, or on unmount</span></div>
+                                            <div className="lesson-points__item"><span><strong>Purpose:</strong> Cancel timers, subscriptions, listeners</span></div>
+                                            <div className="lesson-points__item"><span><strong>Order:</strong> Cleanup runs before new effect setup</span></div>
+                                            <div className="lesson-points__item"><span><strong>Example:</strong> clearInterval, unsubscribe, removeListener</span></div>
+                                        </div>
                                         <p><strong>Example:</strong></p>
-                                        <pre style={{ background: 'var(--bg-section)', padding: '10px', borderRadius: '4px', overflow: 'auto', fontSize: '12px', color: 'var(--text-primary)' }}>
-                                            {`useEffect(() => {
-  const interval = setInterval(() => {
+                                        <pre className="lesson-code">{`useEffect(() => {
+  const id = setInterval(() => {
     // Do something
   }, 1000)
-  
-  // Cleanup: runs before next effect or unmount
-  return () => {
-    clearInterval(interval)
-  }
-}, [deps])`}
-                                        </pre>
+
+  // Cleanup before next effect / unmount
+  return () => clearInterval(id)
+}, [deps])`}</pre>
                                     </div>
 
                                     <div style={{ marginBottom: '20px' }}>
                                         <h4>🔒 Stale Closures</h4>
                                         <p>Stale closures occur when effects capture old state/props values:</p>
-                                        <ul>
-                                            <li><strong>Cause:</strong> Missing or incomplete dependency array</li>
-                                            <li><strong>Symptom:</strong> Effect uses old values instead of current ones</li>
-                                            <li><strong>Fix 1:</strong> Add missing dependencies</li>
-                                            <li><strong>Fix 2:</strong> Use updater functions (setState(c =&gt; c + 1))</li>
-                                            <li><strong>Fix 3:</strong> Use refs to access latest values</li>
-                                        </ul>
+                                        <div className="lesson-points">
+                                            <div className="lesson-points__item"><span><strong>Cause:</strong> Missing or incomplete dependency array</span></div>
+                                            <div className="lesson-points__item"><span><strong>Symptom:</strong> Effect uses old values instead of current ones</span></div>
+                                            <div className="lesson-points__item"><span><strong>Fix 1:</strong> Add missing dependencies</span></div>
+                                            <div className="lesson-points__item"><span><strong>Fix 2:</strong> Updater functions (setState(c =&gt; c + 1))</span></div>
+                                            <div className="lesson-points__item"><span><strong>Fix 3:</strong> Use refs to access latest values</span></div>
+                                        </div>
                                         <p><strong>Example:</strong></p>
-                                        <pre style={{ background: 'var(--bg-section)', padding: '10px', borderRadius: '4px', overflow: 'auto', fontSize: '12px', color: 'var(--text-primary)' }}>
-                                            {`// ❌ Stale closure: count is always 0
+                                        <pre className="lesson-code">{`// ❌ Stale: count is always 0
 useEffect(() => {
-  const interval = setInterval(() => {
-    setCount(count + 1) // Uses stale count
+  const id = setInterval(() => {
+    // Uses stale count from mount
+    setCount(count + 1)
   }, 1000)
-  return () => clearInterval(interval)
-}, []) // Missing count dependency
+  return () => clearInterval(id)
+}, []) // missing count
 
-// ✅ Fix: Use updater function
+// ✅ Fix: updater function
 useEffect(() => {
-  const interval = setInterval(() => {
-    setCount(c => c + 1) // Always uses latest
+  const id = setInterval(() => {
+    // Always uses latest count
+    setCount(c => c + 1)
   }, 1000)
-  return () => clearInterval(interval)
-}, [])`}
-                                        </pre>
+  return () => clearInterval(id)
+}, [])`}</pre>
                                     </div>
 
                                     <div>
                                         <h4>📋 Dependency Array Rules</h4>
                                         <p>Dependency array determines when effect runs:</p>
-                                        <ul>
-                                            <li><strong>Empty []:</strong> Runs once on mount, cleanup on unmount</li>
-                                            <li><strong>With deps:</strong> Runs when dependencies change</li>
-                                            <li><strong>No array:</strong> Runs every render (usually wrong!)</li>
-                                            <li><strong>Rule:</strong> Include all values from component scope used in effect</li>
-                                        </ul>
-                                        <p><strong>ESLint Rule:</strong> Always use exhaustive-deps rule to catch missing dependencies</p>
+                                        <div className="lesson-points">
+                                            <div className="lesson-points__item"><span><strong>Empty []:</strong> Once on mount, cleanup on unmount</span></div>
+                                            <div className="lesson-points__item"><span><strong>With deps:</strong> Runs when dependencies change</span></div>
+                                            <div className="lesson-points__item"><span><strong>No array:</strong> Runs every render (usually wrong)</span></div>
+                                            <div className="lesson-points__item"><span><strong>Rule:</strong> Include every value from scope used in the effect</span></div>
+                                        </div>
+                                        <p><strong>ESLint Rule:</strong> Use exhaustive-deps to catch missing dependencies</p>
                                     </div>
                                 </Card>
 
@@ -289,7 +252,7 @@ useEffect(() => {
                                         <h2 style={{ marginBottom: '20px' }}>Practice Challenges</h2>
                                         <div style={{
                                             display: 'grid',
-                                            gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                                            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
                                             gap: '20px'
                                         }}>
                                             {day05Challenges.map((challenge) => (
@@ -337,7 +300,7 @@ useEffect(() => {
                                         <h2 style={{ marginBottom: '20px' }}>Debugging Scenarios</h2>
                                         <div style={{
                                             display: 'grid',
-                                            gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                                            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
                                             gap: '20px'
                                         }}>
                                             {day05Debugging.map((scenario) => (

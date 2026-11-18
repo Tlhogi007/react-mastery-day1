@@ -7,26 +7,38 @@ export const day06Challenges: Challenge[] = [
     description: 'A Context causes all consumers to re-render unnecessarily. Optimize it.',
     difficulty: 'medium',
     starterCode: `function App() {
-  const [user, setUser] = useState({ name: 'John', theme: 'dark' })
-  
+  const [user, setUser] = useState({
+    name: 'John',
+    theme: 'dark',
+  })
+
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider
+      value={{ user, setUser }}
+    >
       <Header />
       <Content />
     </UserContext.Provider>
   )
 }
 
-// Problem: Any change to user causes all consumers to re-render`,
+// Problem: any user change
+// re-renders all consumers`,
     solution: `// Split contexts by concern
 const UserContext = createContext()
 const ThemeContext = createContext()
 
 // Or memoize the value
 function App() {
-  const [user, setUser] = useState({ name: 'John', theme: 'dark' })
-  const value = useMemo(() => ({ user, setUser }), [user, setUser])
-  
+  const [user, setUser] = useState({
+    name: 'John',
+    theme: 'dark',
+  })
+  const value = useMemo(
+    () => ({ user, setUser }),
+    [user, setUser]
+  )
+
   return (
     <UserContext.Provider value={value}>
       <Header />
@@ -130,29 +142,44 @@ export const day06Debugging: DebuggingScenario[] = [
     title: 'All Consumers Re-render Unnecessarily',
     description: 'Changing one piece of context data causes all consumers to re-render, even those that don\'t use that data.',
     buggyCode: `function App() {
-  const [user, setUser] = useState({ name: 'John', theme: 'dark' })
-  
+  const [user, setUser] = useState({
+    name: 'John',
+    theme: 'dark',
+  })
+
   return (
-    <AppContext.Provider value={{ user, setUser }}>
-      {/* All components re-render when user changes */}
-      <Header /> {/* Only needs theme */}
-      <Profile /> {/* Only needs user.name */}
+    <AppContext.Provider
+      value={{ user, setUser }}
+    >
+      {/* Any user change re-renders all */}
+      {/* Header only needs theme */}
+      <Header />
+      {/* Profile only needs user.name */}
+      <Profile />
     </AppContext.Provider>
   )
 }`,
-    fixedCode: `// Split contexts
+    fixedCode: `// Split contexts by concern
 const UserContext = createContext()
 const ThemeContext = createContext()
 
 function App() {
-  const [user, setUser] = useState({ name: 'John' })
+  const [user, setUser] = useState({
+    name: 'John',
+  })
   const [theme, setTheme] = useState('dark')
-  
+
   return (
-    <UserContext.Provider value={{ user, setUser }}>
-      <ThemeContext.Provider value={{ theme, setTheme }}>
-        <Header /> {/* Only subscribes to ThemeContext */}
-        <Profile /> {/* Only subscribes to UserContext */}
+    <UserContext.Provider
+      value={{ user, setUser }}
+    >
+      <ThemeContext.Provider
+        value={{ theme, setTheme }}
+      >
+        {/* Theme only */}
+        <Header />
+        {/* User only */}
+        <Profile />
       </ThemeContext.Provider>
     </UserContext.Provider>
   )

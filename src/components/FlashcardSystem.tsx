@@ -84,12 +84,15 @@ function FlashcardSystem({ day }: FlashcardSystemProps): JSX.Element {
     }
 
     const containerStyle: React.CSSProperties = {
-        color: 'var(--text-primary)'
+        color: 'var(--text-primary)',
+        width: '100%',
+        minWidth: 0,
+        padding: 0,
     }
 
     const cardStyle: React.CSSProperties = {
-        minHeight: '300px',
-        padding: '40px',
+        minHeight: '220px',
+        padding: 'clamp(1rem, 4vw, 2.5rem)',
         background: 'var(--bg-card)',
         borderRadius: '12px',
         border: '2px solid var(--border-primary)',
@@ -101,7 +104,10 @@ function FlashcardSystem({ day }: FlashcardSystemProps): JSX.Element {
         marginBottom: '20px',
         boxShadow: 'var(--shadow-md)',
         transition: 'transform 0.3s ease',
-        position: 'relative'
+        position: 'relative',
+        width: '100%',
+        boxSizing: 'border-box',
+        textAlign: 'center',
     }
 
     const qualityButtonStyle: React.CSSProperties = {
@@ -115,14 +121,15 @@ function FlashcardSystem({ day }: FlashcardSystemProps): JSX.Element {
     }
 
     return (
-        <div style={containerStyle}>
+        <div className="tool-panel" style={containerStyle}>
             <Card
-                title="Flashcard System"
+                title="Flashcards"
                 icon="🎴"
                 style={{ marginBottom: '24px' }}
             >
-                <div style={{ marginBottom: '20px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <div className="tool-chip-row" style={{ marginBottom: '16px' }}>
                     <button
+                        type="button"
                         onClick={() => {
                             setMode('review')
                             loadNextCard()
@@ -136,9 +143,10 @@ function FlashcardSystem({ day }: FlashcardSystemProps): JSX.Element {
                             cursor: 'pointer'
                         }}
                     >
-                        Review ({stats.due} due)
+                        Review ({stats.due})
                     </button>
                     <button
+                        type="button"
                         onClick={() => {
                             setMode('browse')
                             loadNextCard()
@@ -152,9 +160,10 @@ function FlashcardSystem({ day }: FlashcardSystemProps): JSX.Element {
                             cursor: 'pointer'
                         }}
                     >
-                        Browse All ({stats.total})
+                        Browse ({stats.total})
                     </button>
                     <button
+                        type="button"
                         onClick={() => setMode('create')}
                         style={{
                             padding: '8px 16px',
@@ -165,15 +174,15 @@ function FlashcardSystem({ day }: FlashcardSystemProps): JSX.Element {
                             cursor: 'pointer'
                         }}
                     >
-                        Create New
+                        Create
                     </button>
                 </div>
 
-                <div style={{ marginBottom: '20px', display: 'flex', gap: '16px', fontSize: '14px', color: 'var(--text-secondary)' }}>
-                    <span>📊 Total: {stats.total}</span>
-                    <span>⏰ Due: {stats.due}</span>
-                    <span>✅ Mastered: {stats.mastered}</span>
-                    <span>⚠️ Struggling: {stats.struggling}</span>
+                <div className="tool-stats-row" style={{ marginBottom: '16px' }}>
+                    <span>Total: {stats.total}</span>
+                    <span>Due: {stats.due}</span>
+                    <span>Mastered: {stats.mastered}</span>
+                    <span>Struggling: {stats.struggling}</span>
                 </div>
 
                 {mode === 'create' && (
@@ -279,6 +288,7 @@ function FlashcardSystem({ day }: FlashcardSystemProps): JSX.Element {
                                     setShowAnswer(true)
                                 }
                             }}
+                            className="tool-flash-card"
                             style={cardStyle}
                         >
                             <div style={{ fontSize: '24px', marginBottom: '20px' }}>

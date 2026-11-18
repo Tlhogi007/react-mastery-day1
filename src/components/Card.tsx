@@ -6,23 +6,29 @@ interface CardProps {
   icon?: string
   badge?: string
   style?: React.CSSProperties
+  className?: string
   onClick?: () => void
 }
 
-function Card({ children, title, icon, badge, style, onClick }: CardProps): JSX.Element {
+function Card({ children, title, icon, badge, style, className, onClick }: CardProps): JSX.Element {
   const cardStyle: React.CSSProperties = {
     background: 'var(--bg-card)',
     border: '1px solid var(--border-color)',
     borderRadius: 'var(--radius-md)',
-    padding: '20px',
+    padding: 'clamp(14px, 3vw, 20px)',
     boxShadow: 'none',
     transition: 'background 0.15s ease',
     cursor: onClick ? 'pointer' : 'default',
+    width: '100%',
+    maxWidth: '100%',
+    boxSizing: 'border-box',
+    minWidth: 0,
     ...style
   }
 
   return (
     <div
+      className={className}
       style={cardStyle}
       onClick={onClick}
       onMouseEnter={(e) => {
@@ -43,13 +49,26 @@ function Card({ children, title, icon, badge, style, onClick }: CardProps): JSX.
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          gap: 10,
           marginBottom: '16px',
           paddingBottom: '16px',
-          borderBottom: '1px solid var(--border-light)'
+          borderBottom: '1px solid var(--border-light)',
+          flexWrap: 'wrap',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {icon && <span style={{ fontSize: '24px' }}>{icon}</span>}
-            {title && <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{title}</h3>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+            {icon && <span style={{ fontSize: '24px', flexShrink: 0 }}>{icon}</span>}
+            {title && (
+              <h3 style={{
+                margin: 0,
+                fontSize: 'clamp(1rem, 3vw, 1.125rem)',
+                fontWeight: '600',
+                lineHeight: 1.25,
+                minWidth: 0,
+              }}
+              >
+                {title}
+              </h3>
+            )}
           </div>
           {badge && (
             <span style={{

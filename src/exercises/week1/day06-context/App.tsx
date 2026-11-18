@@ -1,4 +1,5 @@
 import { useState, type JSX } from 'react'
+import '../../exerciseLayout.css'
 import Challenge from '../../../components/Challenge'
 import Quiz from '../../../components/Quiz'
 import DebuggingScenario from '../../../components/DebuggingScenario'
@@ -52,7 +53,7 @@ function Day06Context(): JSX.Element {
                   icon="🎯"
                   style={{ marginBottom: '24px' }}
                 >
-                  <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  <ul className="lesson-task-list" style={{ margin: 0 }}>
                     <li>Understand why all Context consumers re-render</li>
                     <li>Learn to split contexts by concern</li>
                     <li>Master memoizing provider values</li>
@@ -153,27 +154,29 @@ function Day06Context(): JSX.Element {
                   <div style={{ marginBottom: '20px' }}>
                     <h4>🌐 Why All Consumers Re-render</h4>
                     <p>When Context value changes, React re-renders ALL consumers:</p>
-                    <ul>
-                      <li><strong>No Selective Updates:</strong> React doesn't track which consumers use which values</li>
-                      <li><strong>Simple Implementation:</strong> Easier to implement, but less efficient</li>
-                      <li><strong>Blast Radius:</strong> One context update affects all consumers</li>
-                      <li><strong>Solution:</strong> Split contexts, memoize values, memoize consumers</li>
-                    </ul>
+                    <div className="lesson-points">
+                      <div className="lesson-points__item"><span><strong>No Selective Updates:</strong> React doesn&apos;t track which values each consumer uses</span></div>
+                      <div className="lesson-points__item"><span><strong>Simple Implementation:</strong> Easier to implement, but less efficient</span></div>
+                      <div className="lesson-points__item"><span><strong>Blast Radius:</strong> One context update affects all consumers</span></div>
+                      <div className="lesson-points__item"><span><strong>Solution:</strong> Split contexts, memoize values, memoize consumers</span></div>
+                    </div>
                     <p><strong>Example:</strong></p>
-                    <pre style={{ background: 'var(--bg-section)', padding: '10px', borderRadius: '4px', overflow: 'auto', fontSize: '12px', color: 'var(--text-primary)' }}>
-{`// ❌ Single context: all consumers re-render
-<AppContext.Provider value={{ user, theme }}>
-  <Header />      // Re-renders when theme changes
-  <Sidebar />     // Re-renders when user changes
-  <Content />     // Re-renders when anything changes
+                    <pre className="lesson-code">
+{`// ❌ Single context — all consumers re-render
+<AppContext.Provider
+  value={{ user, theme }}
+>
+  <Header />   {/* theme change hits this */}
+  <Sidebar />  {/* user change hits this */}
+  <Content />  {/* any change hits this */}
 </AppContext.Provider>
 
-// ✅ Split contexts: only relevant consumers re-render
+// ✅ Split — only relevant consumers re-render
 <UserContext.Provider value={user}>
   <ThemeContext.Provider value={theme}>
-    <Header />      // Only re-renders when user changes
-    <Sidebar />     // Only re-renders when theme changes
-    <Content />     // Never re-renders
+    <Header />   {/* user only */}
+    <Sidebar />  {/* theme only */}
+    <Content />  {/* neither */}
   </ThemeContext.Provider>
 </UserContext.Provider>`}
                     </pre>
@@ -182,44 +185,47 @@ function Day06Context(): JSX.Element {
                   <div style={{ marginBottom: '20px' }}>
                     <h4>✂️ Splitting Contexts</h4>
                     <p>Split contexts by concern to reduce blast radius:</p>
-                    <ul>
-                      <li><strong>By Concern:</strong> UserContext, ThemeContext, CartContext</li>
-                      <li><strong>By Update Frequency:</strong> Static context, Dynamic context</li>
-                      <li><strong>By Scope:</strong> Global context, Feature context</li>
-                      <li><strong>Rule:</strong> If values change independently, split them</li>
-                    </ul>
+                    <div className="lesson-points">
+                      <div className="lesson-points__item"><span><strong>By Concern:</strong> UserContext, ThemeContext, CartContext</span></div>
+                      <div className="lesson-points__item"><span><strong>By Update Frequency:</strong> Static vs dynamic context</span></div>
+                      <div className="lesson-points__item"><span><strong>By Scope:</strong> Global vs feature context</span></div>
+                      <div className="lesson-points__item"><span><strong>Rule:</strong> If values change independently, split them</span></div>
+                    </div>
                   </div>
 
                   <div style={{ marginBottom: '20px' }}>
                     <h4>💾 Memoizing Provider Values</h4>
                     <p>Memoize context values to prevent unnecessary re-renders:</p>
-                    <ul>
-                      <li><strong>Problem:</strong> New object every render → all consumers re-render</li>
-                      <li><strong>Solution:</strong> useMemo to create stable reference</li>
-                      <li><strong>When:</strong> Always memoize object/array context values</li>
-                      <li><strong>Dependencies:</strong> Include all values used in context value</li>
-                    </ul>
+                    <div className="lesson-points">
+                      <div className="lesson-points__item"><span><strong>Problem:</strong> New object every render → all consumers re-render</span></div>
+                      <div className="lesson-points__item"><span><strong>Solution:</strong> useMemo for a stable reference</span></div>
+                      <div className="lesson-points__item"><span><strong>When:</strong> Always memoize object/array context values</span></div>
+                      <div className="lesson-points__item"><span><strong>Dependencies:</strong> Include every value used in the context value</span></div>
+                    </div>
                     <p><strong>Example:</strong></p>
-                    <pre style={{ background: 'var(--bg-section)', padding: '10px', borderRadius: '4px', overflow: 'auto', fontSize: '12px', color: 'var(--text-primary)' }}>
+                    <pre className="lesson-code">
 {`// ❌ New object every render
 const value = { user, setUser }
-<Context.Provider value={value}>
+<Context.Provider value={value} />
 
-// ✅ Memoized: same reference when user unchanged
-const value = useMemo(() => ({ user, setUser }), [user])
-<Context.Provider value={value}>`}
+// ✅ Same reference when user unchanged
+const value = useMemo(
+  () => ({ user, setUser }),
+  [user]
+)
+<Context.Provider value={value} />`}
                     </pre>
                   </div>
 
                   <div>
                     <h4>🎯 Blast Radius Concept</h4>
                     <p>Blast radius = how many components re-render when context updates:</p>
-                    <ul>
-                      <li><strong>Large Blast Radius:</strong> Single context with many values → many re-renders</li>
-                      <li><strong>Small Blast Radius:</strong> Split contexts → fewer re-renders</li>
-                      <li><strong>Zero Blast Radius:</strong> Memoized consumers → no unnecessary re-renders</li>
-                      <li><strong>Goal:</strong> Minimize blast radius for better performance</li>
-                    </ul>
+                    <div className="lesson-points">
+                      <div className="lesson-points__item"><span><strong>Large:</strong> One fat context → many re-renders</span></div>
+                      <div className="lesson-points__item"><span><strong>Small:</strong> Split contexts → fewer re-renders</span></div>
+                      <div className="lesson-points__item"><span><strong>Zero:</strong> Memoized consumers → no waste</span></div>
+                      <div className="lesson-points__item"><span><strong>Goal:</strong> Minimize blast radius for better performance</span></div>
+                    </div>
                   </div>
                 </Card>
 
@@ -290,7 +296,7 @@ Content & Footer don't re-render!`
                     <h2 style={{ marginBottom: '20px' }}>Practice Challenges</h2>
                     <div style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
                       gap: '20px'
                     }}>
                       {day06Challenges.map((challenge) => (
@@ -338,7 +344,7 @@ Content & Footer don't re-render!`
                     <h2 style={{ marginBottom: '20px' }}>Debugging Scenarios</h2>
                     <div style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
                       gap: '20px'
                     }}>
                       {day06Debugging.map((scenario) => (

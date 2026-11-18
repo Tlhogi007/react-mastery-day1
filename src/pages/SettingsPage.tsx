@@ -76,7 +76,7 @@ export default function SettingsPage({ onBack }: SettingsPageProps): JSX.Element
   }
 
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto', padding: '8px 0 40px' }}>
+    <div style={{ maxWidth: 720, margin: '0 auto', padding: '8px 4px 40px', width: '100%', boxSizing: 'border-box' }}>
       <button
         type="button"
         onClick={onBack}

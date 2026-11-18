@@ -5,6 +5,7 @@
 import { useState, useEffect, type JSX } from 'react'
 import { reflectionStorage, type Reflection, type ReflectionPrompt } from '../services/reflectionStorage'
 import Card from './Card'
+import '../exercises/exerciseLayout.css'
 
 interface DailyReflectionProps {
     day: number
@@ -102,21 +103,21 @@ function DailyReflection({ day }: DailyReflectionProps): JSX.Element {
                 icon="🤔"
                 style={{ marginBottom: '24px' }}
             >
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.45 }}>
                     Take a moment to reflect on what you learned today. Your responses are saved automatically.
                 </p>
 
-                <div style={{ marginBottom: '20px', textAlign: 'right' }}>
+                <div className="lesson-action-stack reflection-export-row" style={{ marginBottom: '20px' }}>
                     <button
+                        type="button"
+                        className="lesson-full-btn"
                         onClick={handleExport}
                         style={{
-                            padding: '8px 16px',
-                            borderRadius: '6px',
                             border: '1px solid var(--border-primary)',
                             background: 'var(--bg-section)',
                             color: 'var(--text-primary)',
                             cursor: 'pointer',
-                            fontSize: '14px'
+                            fontSize: '14px',
                         }}
                     >
                         Export Reflections
@@ -124,8 +125,12 @@ function DailyReflection({ day }: DailyReflectionProps): JSX.Element {
                 </div>
 
                 {Object.entries(groupedPrompts).map(([category, categoryPrompts]) => (
-                    <div key={category} style={{ marginBottom: '30px' }}>
-                        <h3 style={{ marginBottom: '16px', color: 'var(--text-primary)' }}>
+                    <div key={category} style={{ marginBottom: '20px' }}>
+                        <h3 style={{
+                          margin: '0 0 10px',
+                          color: 'var(--text-primary)',
+                          fontSize: 'clamp(0.95rem, 3vw, 1.1rem)',
+                        }}>
                             {categoryLabels[category] || category}
                         </h3>
                         {categoryPrompts.map((prompt) => {
@@ -135,28 +140,41 @@ function DailyReflection({ day }: DailyReflectionProps): JSX.Element {
                             return (
                                 <div
                                     key={prompt.id}
+                                    className="reflection-prompt-card"
                                     style={{
-                                        marginBottom: '16px',
-                                        padding: '16px',
+                                        marginBottom: '10px',
+                                        padding: 'clamp(10px, 2.5vw, 14px)',
                                         background: 'var(--bg-section)',
                                         borderRadius: '8px',
-                                        border: '1px solid var(--border-primary)'
+                                        border: '1px solid var(--border-color)',
+                                        minWidth: 0,
+                                        boxSizing: 'border-box',
                                     }}
                                 >
                                     <div
                                         style={{
                                             display: 'flex',
                                             justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            marginBottom: '12px',
-                                            cursor: 'pointer'
+                                            alignItems: 'flex-start',
+                                            gap: 10,
+                                            marginBottom: isExpanded ? 12 : 0,
+                                            cursor: 'pointer',
+                                            minWidth: 0,
                                         }}
                                         onClick={() => setExpandedPrompt(isExpanded ? null : prompt.id)}
                                     >
-                                        <h4 style={{ margin: 0, flex: 1 }}>
+                                        <h4 style={{
+                                          margin: 0,
+                                          flex: '1 1 auto',
+                                          minWidth: 0,
+                                          fontSize: 'clamp(0.9rem, 2.8vw, 1rem)',
+                                          fontWeight: 550,
+                                          lineHeight: 1.4,
+                                          overflowWrap: 'anywhere',
+                                        }}>
                                             {prompt.prompt}
                                         </h4>
-                                        <span style={{ fontSize: '20px' }}>
+                                        <span style={{ fontSize: '16px', flexShrink: 0, lineHeight: 1.2 }} aria-hidden>
                                             {isExpanded ? '▼' : '▶'}
                                         </span>
                                     </div>

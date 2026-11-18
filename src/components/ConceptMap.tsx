@@ -139,15 +139,9 @@ function ConceptMap({ onConceptClick }: ConceptMapProps): JSX.Element {
 
     const containerStyle: React.CSSProperties = {
         color: 'var(--text-primary)',
-        padding: '20px'
-    }
-
-    const svgStyle: React.CSSProperties = {
+        padding: 0,
         width: '100%',
-        height: '600px',
-        border: '1px solid var(--border-primary)',
-        borderRadius: '8px',
-        background: 'var(--bg-section)'
+        minWidth: 0,
     }
 
     const getCategoryColor = (category: string): string => {
@@ -162,11 +156,11 @@ function ConceptMap({ onConceptClick }: ConceptMapProps): JSX.Element {
     }
 
     return (
-        <div style={containerStyle}>
-            <div style={{ marginBottom: '30px' }}>
-                <h1 style={{ marginBottom: '10px' }}>🗺️ Concept Map</h1>
-                <p style={{ color: 'var(--text-secondary)' }}>
-                    Interactive visualization of React concepts and their relationships. Click concepts to explore.
+        <div className="tool-panel" style={containerStyle}>
+            <div className="tool-panel__hero" style={{ marginBottom: '20px' }}>
+                <h1 className="tool-panel__title">Concept Map</h1>
+                <p className="tool-panel__lead">
+                    Tap concepts to explore relationships.
                 </p>
             </div>
 
@@ -175,11 +169,12 @@ function ConceptMap({ onConceptClick }: ConceptMapProps): JSX.Element {
                 icon="🌐"
                 style={{ marginBottom: '24px' }}
             >
-                <div style={{ marginBottom: '20px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <div className="tool-chip-row" style={{ marginBottom: '16px' }}>
                     <button
+                        type="button"
                         onClick={() => setFilterCategory('all')}
                         style={{
-                            padding: '6px 12px',
+                            padding: '8px 12px',
                             borderRadius: '6px',
                             border: 'none',
                             background: filterCategory === 'all' ? 'var(--button-primary)' : 'var(--bg-section)',
@@ -192,10 +187,11 @@ function ConceptMap({ onConceptClick }: ConceptMapProps): JSX.Element {
                     </button>
                     {categories.map(cat => (
                         <button
+                            type="button"
                             key={cat}
                             onClick={() => setFilterCategory(cat)}
                             style={{
-                                padding: '6px 12px',
+                                padding: '8px 12px',
                                 borderRadius: '6px',
                                 border: 'none',
                                 background: filterCategory === cat ? 'var(--button-primary)' : 'var(--bg-section)',
@@ -209,7 +205,8 @@ function ConceptMap({ onConceptClick }: ConceptMapProps): JSX.Element {
                     ))}
                 </div>
 
-                <svg style={svgStyle} viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+                <div className="tool-map-frame">
+                <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
                     {/* Draw connections */}
                     {filteredConcepts.map(concept => {
                         const connected = getConnectedConcepts(concept.id)
@@ -266,9 +263,10 @@ function ConceptMap({ onConceptClick }: ConceptMapProps): JSX.Element {
                         )
                     })}
                 </svg>
+                </div>
 
-                <div style={{ marginTop: '20px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                <div style={{ marginTop: '16px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                    <div className="tool-chip-row">
                         {categories.map(cat => (
                             <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 <div style={{

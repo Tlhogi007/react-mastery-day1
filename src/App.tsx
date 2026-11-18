@@ -119,8 +119,10 @@ function App(): JSX.Element {
     () => (savedReturn?.exercise as ExerciseKey) ?? 'day01-rendering-pipeline',
   )
   const [searchQuery, setSearchQuery] = useState<string>('')
-  const [showSidebar, setShowSidebar] = useState<boolean>(true)
-  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < BREAKPOINTS.MOBILE)
+  const [isMobile, setIsMobile] = useState<boolean>(() => window.innerWidth < BREAKPOINTS.MOBILE)
+  const [showSidebar, setShowSidebar] = useState<boolean>(
+    () => window.innerWidth >= BREAKPOINTS.MOBILE,
+  )
   const [showSettings, setShowSettings] = useState<boolean>(false)
   const [showAnalytics, setShowAnalytics] = useState<boolean>(false)
   const [showShortcutsHelp, setShowShortcutsHelp] = useState<boolean>(false)
@@ -263,14 +265,28 @@ function App(): JSX.Element {
 
   useEffect(() => {
     const handleResize = (): void => {
-      setIsMobile(window.innerWidth < BREAKPOINTS.MOBILE)
-      setShowSidebar(window.innerWidth >= BREAKPOINTS.MOBILE)
+      const mobile = window.innerWidth < BREAKPOINTS.MOBILE
+      setIsMobile(mobile)
+      setShowSidebar(!mobile)
     }
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  useEffect(() => {
+    if (!isMobile || !showSidebar) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [isMobile, showSidebar])
+
   const handleExerciseSelect = (key: ExerciseKey): void => {
+    // Don't carry Learn/Quiz/etc. across days — only auth restore should keep a tab.
+    if (key !== currentExercise) {
+      setActiveTab('learn')
+    }
     setCurrentExercise(key)
     setCurrentView('exercises')
     setShowTools(false)
@@ -410,11 +426,11 @@ function App(): JSX.Element {
 
   const appContainerStyle: React.CSSProperties = {
     display: 'flex',
-    minHeight: '100vh',
+    minHeight: '100dvh',
     background: 'transparent',
     width: '100%',
     margin: 0,
-    padding: 0
+    padding: 0,
   }
 
   const sidebarExpanded = showSidebar && !isMobile
@@ -423,10 +439,16 @@ function App(): JSX.Element {
     flex: 1,
     minWidth: 0,
     padding: isMobile
-      ? '16px 16px 48px'
+      ? '12px 12px calc(32px + env(safe-area-inset-bottom, 0px))'
       : sidebarExpanded
         ? '24px 28px 56px'
         : '24px 40px 56px',
+    paddingLeft: isMobile
+      ? 'max(12px, env(safe-area-inset-left, 0px))'
+      : undefined,
+    paddingRight: isMobile
+      ? 'max(12px, env(safe-area-inset-right, 0px))'
+      : undefined,
     width: '100%',
     margin: 0,
     boxSizing: 'border-box',
@@ -438,19 +460,22 @@ function App(): JSX.Element {
     background: 'var(--bg-card)',
     border: '1px solid var(--border-color)',
     borderRadius: 'var(--radius-md)',
-    padding: isMobile ? '12px 14px' : '14px 16px',
-    marginBottom: isMobile ? '16px' : '20px',
+    padding: isMobile ? '10px 12px' : '14px 16px',
+    marginBottom: isMobile ? '12px' : '20px',
     display: 'flex',
     alignItems: 'center',
     flexWrap: 'wrap',
-    gap: isMobile ? '10px' : '12px',
+    gap: isMobile ? '8px' : '12px',
     width: '100%',
     boxSizing: 'border-box',
     boxShadow: 'none',
+    position: isMobile ? 'sticky' : 'relative',
+    top: isMobile ? 'max(0px, env(safe-area-inset-top, 0px))' : undefined,
+    zIndex: isMobile ? 50 : undefined,
   }
 
   const headerBtnStyle: React.CSSProperties = {
-    padding: '8px 14px',
+    padding: isMobile ? '8px 12px' : '8px 14px',
     background: 'var(--bg-card)',
     border: '1px solid var(--border-color)',
     borderRadius: 10,
@@ -459,10 +484,12 @@ function App(): JSX.Element {
     fontWeight: 500,
     display: 'inline-flex',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     whiteSpace: 'nowrap',
     flexShrink: 0,
-    height: 38,
+    minHeight: 40,
+    height: isMobile ? 40 : 38,
     color: 'var(--text-primary)',
     boxShadow: 'var(--shadow-sm)',
   }
@@ -470,6 +497,27 @@ function App(): JSX.Element {
   const lessonTitle = currentExerciseData
     ? currentExerciseData.title.replace(/^Day \d+:\s*/i, '')
     : "Today's lesson"
+
+  const headerTitle = showTools
+    ? 'Tools'
+    : currentView === 'community'
+      ? 'Community'
+      : currentView === 'settings'
+        ? 'Account'
+        : lessonTitle
+
+  const headerSubtitle = showTools
+    ? 'Practice utilities'
+    : currentView === 'community'
+      ? 'Shared learnings'
+      : currentView === 'settings'
+        ? 'Data & admin'
+        : currentExerciseData
+          ? `Week ${currentExerciseData.week} · Day ${String(currentExerciseData.day).padStart(2, '0')}`
+          : 'Internals lab'
+
+  const showFocusControl =
+    !showTools && currentView === 'exercises'
 
   return (
     <>
@@ -502,7 +550,7 @@ function App(): JSX.Element {
             setShowLanding(false)
             setShowTools(false)
             setCurrentView('exercises')
-            setShowSidebar(true)
+            setShowSidebar(window.innerWidth >= BREAKPOINTS.MOBILE)
             if (!settingsStorage.hasCompletedOnboarding()) {
               // Let the lab shell mount before highlighting targets
               window.setTimeout(() => setShowTutorial(true), 450)
@@ -510,23 +558,34 @@ function App(): JSX.Element {
           }}
         />
       ) : (
-        <div style={appContainerStyle}>
+        <div style={appContainerStyle} className={isMobile ? 'app-shell-mobile' : undefined}>
+          {isMobile && showSidebar && (
+            <button
+              type="button"
+              aria-label="Close menu"
+              className="app-drawer-backdrop"
+              onClick={() => setShowSidebar(false)}
+            />
+          )}
           {/* Sidebar — stays mounted so width can animate instead of hard-cut */}
           <div
+            className={isMobile ? 'app-drawer-panel' : undefined}
             style={{
               position: isMobile ? 'fixed' : 'relative',
-              zIndex: 1000,
-              height: isMobile ? '100vh' : '100vh',
+              zIndex: isMobile ? 1001 : 1000,
+              height: isMobile ? '100dvh' : '100dvh',
               flexShrink: 0,
               overflow: 'hidden',
               ...(isMobile
                 ? {
-                    width: 280,
+                    width: 'min(300px, 86vw)',
                     left: 0,
                     top: 0,
-                    transform: showSidebar ? 'translateX(0)' : 'translateX(-100%)',
+                    transform: showSidebar ? 'translateX(0)' : 'translateX(-105%)',
                     transition: `transform ${layoutEase}`,
                     pointerEvents: showSidebar ? 'auto' : 'none',
+                    paddingTop: 'env(safe-area-inset-top, 0px)',
+                    boxShadow: showSidebar ? 'var(--shadow-md)' : 'none',
                   }
                 : {
                     width: showSidebar ? 260 : 0,
@@ -534,24 +593,7 @@ function App(): JSX.Element {
                   }),
             }}
           >
-            {isMobile && showSidebar && (
-              <div
-                style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: 'rgba(0,0,0,0.35)',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
-                  zIndex: 999,
-                  cursor: 'pointer',
-                }}
-                onClick={() => setShowSidebar(false)}
-              />
-            )}
-            <div style={{ width: isMobile ? 280 : 260, height: '100%' }}>
+            <div style={{ width: isMobile ? 'min(300px, 86vw)' : 260, height: '100%' }}>
               <MemoizedSidebar
                 exercises={exercises}
                 currentExercise={currentExercise}
@@ -559,14 +601,25 @@ function App(): JSX.Element {
                 onToolsClick={() => {
                   setShowTools(true)
                   setCurrentView('exercises')
+                  if (isMobile) setShowSidebar(false)
                 }}
                 onCommunityClick={() => {
                   setShowTools(false)
                   setCurrentView('community')
+                  if (isMobile) setShowSidebar(false)
                 }}
-                onSettingsClick={() => setShowSettings(true)}
-                onAnalyticsClick={() => setShowAnalytics(true)}
-                onShortcutsClick={() => setShowShortcutsHelp(true)}
+                onSettingsClick={() => {
+                  setShowSettings(true)
+                  if (isMobile) setShowSidebar(false)
+                }}
+                onAnalyticsClick={() => {
+                  setShowAnalytics(true)
+                  if (isMobile) setShowSidebar(false)
+                }}
+                onShortcutsClick={() => {
+                  setShowShortcutsHelp(true)
+                  if (isMobile) setShowSidebar(false)
+                }}
                 onToggleCollapse={() => setShowSidebar(!showSidebar)}
                 isCollapsed={false}
               />
@@ -591,47 +644,59 @@ function App(): JSX.Element {
                   type="button"
                   onClick={() => setShowSidebar(!showSidebar)}
                   style={headerBtnStyle}
-                  aria-label={showSidebar ? 'Collapse sidebar' : 'Expand sidebar'}
-                  title={showSidebar ? 'Collapse sidebar' : 'Expand sidebar'}
+                  aria-label={showSidebar ? 'Close menu' : 'Open menu'}
+                  title={showSidebar ? 'Close menu' : 'Open menu'}
+                  aria-expanded={showSidebar}
                 >
-                  {showSidebar ? '◀' : '▶'} Menu
+                  {isMobile ? (showSidebar ? 'Close' : 'Menu') : showSidebar ? '◀ Menu' : '▶ Menu'}
                 </button>
 
-                <div style={{
-                  minWidth: 0,
-                  flex: '1 1 160px',
-                }}>
-                  <h1 style={{
-                    margin: 0,
-                    fontFamily: 'var(--font-display)',
-                    fontSize: isMobile ? 16 : 18,
-                    fontWeight: 700,
-                    letterSpacing: '-0.02em',
-                    lineHeight: 1.2,
-                    color: 'var(--text-primary)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    {lessonTitle}
+                <div
+                  style={{
+                    minWidth: 0,
+                    flex: '1 1 0',
+                  }}
+                >
+                  <h1
+                    style={{
+                      margin: 0,
+                      fontFamily: 'var(--font-display)',
+                      fontSize: isMobile ? 16 : 18,
+                      fontWeight: 700,
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.2,
+                      color: 'var(--text-primary)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {headerTitle}
                   </h1>
-                  <p style={{
-                    margin: '3px 0 0',
-                    fontSize: 12,
-                    color: 'var(--text-muted)',
-                    lineHeight: 1.4,
-                  }}>
-                    {currentExerciseData
-                      ? `Week ${currentExerciseData.week} · Day ${String(currentExerciseData.day).padStart(2, '0')}`
-                      : 'Internals lab'}
+                  <p
+                    style={{
+                      margin: '3px 0 0',
+                      fontSize: 12,
+                      color: 'var(--text-muted)',
+                      lineHeight: 1.4,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {headerSubtitle}
                   </p>
                 </div>
 
-                <div style={{
-                  flex: isMobile ? '1 1 100%' : '1 1 200px',
-                  minWidth: isMobile ? '100%' : 180,
-                  maxWidth: isMobile ? '100%' : 280,
-                }}>
+                <div
+                  style={{
+                    flex: isMobile ? '1 1 100%' : '1 1 200px',
+                    minWidth: isMobile ? 0 : 180,
+                    maxWidth: isMobile ? '100%' : 280,
+                    // Phones: search on its own row under Menu/title/actions
+                    order: isMobile ? 3 : undefined,
+                  }}
+                >
                   <SearchBar
                     ref={searchInputRef}
                     onSearch={handleSearch}
@@ -641,60 +706,69 @@ function App(): JSX.Element {
                         ([, exercise]) => exercise.day === day
                       )?.[0] as ExerciseKey | undefined
                       if (exerciseKey) {
-                        setCurrentExercise(exerciseKey)
-                        if (isMobile) {
-                          setShowSidebar(false)
-                        }
+                        handleExerciseSelect(exerciseKey)
                       }
                     }}
                   />
                 </div>
 
-                <div style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
-                  <ThemeToggle />
-                </div>
-
-                <button
-                  type="button"
-                  data-tutorial="focus"
-                  onClick={() => {
-                    const newStudyMode = !studyMode
-                    setStudyMode(newStudyMode)
-                    analytics.trackFeatureUsage('study_mode', { enabled: newStudyMode })
-                    tracking.studyModeToggled(newStudyMode)
-                  }}
-                  title="Toggle focus mode"
+                <div
+                  className="app-header-actions"
                   style={{
-                    ...headerBtnStyle,
-                    borderColor: studyMode ? 'var(--button-primary)' : 'var(--border-color)',
-                    background: studyMode ? 'var(--button-primary)' : 'var(--bg-card)',
-                    color: studyMode ? 'var(--button-text)' : 'var(--text-primary)',
-                    fontWeight: 600,
+                    flex: '0 0 auto',
+                    marginLeft: 'auto',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: isMobile ? 6 : 10,
+                    // Keep actions on the first row (right) when search wraps
+                    order: isMobile ? 2 : undefined,
                   }}
                 >
-                  {studyMode ? 'Exit focus' : 'Focus'}
-                </button>
-
-                {clerkEnabled && (
-                  <div
-                    style={{
-                      flexShrink: 0,
-                      marginLeft: 'auto',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                    }}
-                  >
-                    <SignedInGreeting />
-                    <AuthButton />
-                  </div>
-                )}
+                  <ThemeToggle />
+                  {showFocusControl && (
+                    <button
+                      type="button"
+                      data-tutorial="focus"
+                      onClick={() => {
+                        const newStudyMode = !studyMode
+                        setStudyMode(newStudyMode)
+                        analytics.trackFeatureUsage('study_mode', { enabled: newStudyMode })
+                        tracking.studyModeToggled(newStudyMode)
+                      }}
+                      title="Toggle focus mode"
+                      style={{
+                        ...headerBtnStyle,
+                        borderColor: studyMode ? 'var(--button-primary)' : 'var(--border-color)',
+                        background: studyMode ? 'var(--button-primary)' : 'var(--bg-card)',
+                        color: studyMode ? 'var(--button-text)' : 'var(--text-primary)',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {studyMode ? 'Exit focus' : 'Focus'}
+                    </button>
+                  )}
+                  {clerkEnabled && (
+                    <div
+                      className="app-header-auth"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                      }}
+                    >
+                      {!isMobile && <SignedInGreeting />}
+                      <AuthButton />
+                    </div>
+                  )}
+                </div>
               </header>
 
-              <MemoizedProgressDashboard
-                key={dayCompleteTick}
-                exercises={exercises}
-              />
+              {!showTools && currentView === 'exercises' && (
+                <MemoizedProgressDashboard
+                  key={dayCompleteTick}
+                  exercises={exercises}
+                />
+              )}
 
               {!showTools &&
                 currentView === 'exercises' &&

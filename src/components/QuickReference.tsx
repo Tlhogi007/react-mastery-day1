@@ -364,9 +364,11 @@ setCount(c => c + 1)`}
 
     const containerStyle: React.CSSProperties = {
         color: 'var(--text-primary)',
-        padding: '20px',
+        padding: 0,
         maxWidth: '1200px',
-        margin: '0 auto'
+        margin: '0 auto',
+        width: '100%',
+        minWidth: 0,
     }
 
     const searchStyle: React.CSSProperties = {
@@ -381,11 +383,11 @@ setCount(c => c + 1)`}
     }
 
     return (
-        <div style={containerStyle}>
-            <div style={{ marginBottom: '30px' }}>
-                <h1 style={{ marginBottom: '10px' }}>📚 Quick Reference</h1>
-                <p style={{ color: 'var(--text-secondary)' }}>
-                    One-page React internals cheatsheet. Search and bookmark for quick access.
+        <div className="tool-panel" style={containerStyle}>
+            <div className="tool-panel__hero" style={{ marginBottom: '20px' }}>
+                <h1 className="tool-panel__title">Quick Reference</h1>
+                <p className="tool-panel__lead">
+                    React internals cheatsheet — search and skim.
                 </p>
             </div>
 

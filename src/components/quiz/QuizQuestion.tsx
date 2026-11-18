@@ -6,6 +6,7 @@
 import { type JSX } from 'react'
 import type { QuizQuestion as QuizQuestionType } from '../../types/challenges'
 import QuizOption from './QuizOption'
+import '../../exercises/exerciseLayout.css'
 
 interface QuizQuestionProps {
     question: QuizQuestionType
@@ -30,34 +31,18 @@ function QuizQuestion({
 }: QuizQuestionProps): JSX.Element {
     return (
         <>
-            <div style={{
-                padding: '20px',
-                background: 'var(--bg-section)',
-                borderRadius: '8px',
-                marginBottom: '20px',
-                fontSize: '18px',
-                fontWeight: '500'
-            }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
-                    <span style={{ flex: 1 }}>{question.question}</span>
+            <div className="quiz-question-card">
+                <div className="quiz-question-card__row">
+                    <span className="quiz-question-card__text">{question.question}</span>
                     {question.difficulty && (
-                        <span style={{
-                            padding: '4px 8px',
-                            background: question.difficulty === 'easy' ? 'var(--bg-success)' : question.difficulty === 'medium' ? 'var(--bg-warning)' : 'var(--bg-error)',
-                            color: question.difficulty === 'easy' ? 'var(--text-on-success)' : question.difficulty === 'medium' ? 'var(--text-on-warning)' : 'var(--text-on-error)',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap'
-                        }}>
+                        <span className={`quiz-difficulty quiz-difficulty--${question.difficulty}`}>
                             {question.difficulty}
                         </span>
                     )}
                 </div>
             </div>
 
-            <div role="radiogroup" aria-labelledby="quiz-question">
+            <div className="quiz-options" role="radiogroup" aria-labelledby="quiz-question">
                 <h4 id="quiz-question" style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}>
                     {question.question}
                 </h4>
@@ -75,27 +60,14 @@ function QuizQuestion({
             </div>
 
             {selectedAnswer !== null && (
-                <div style={{
-                    marginTop: '20px',
-                    padding: '15px',
-                    background: 'var(--bg-info)',
-                    color: 'var(--text-on-info)',
-                    borderRadius: '8px'
-                }}>
-                    <strong style={{ color: 'var(--text-on-info)' }}>Explanation:</strong>
-                    <p style={{ marginTop: '10px', color: 'var(--text-on-info)' }}>{question.explanation}</p>
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '15px', flexWrap: 'wrap' }}>
+                <div className="quiz-explanation">
+                    <strong>Explanation:</strong>
+                    <p>{question.explanation}</p>
+                    <div className="quiz-explanation__actions">
                         <button
+                            type="button"
+                            className="lesson-full-btn quiz-next-btn"
                             onClick={onNext}
-                            style={{
-                                padding: '10px 20px',
-                                background: 'var(--button-primary)',
-                                color: 'var(--button-text)',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '16px'
-                            }}
                             aria-label={
                                 !isLastQuestion
                                     ? 'Next question'
@@ -112,16 +84,9 @@ function QuizQuestion({
                         </button>
                         {onSkip && selectedAnswer === null && (
                             <button
+                                type="button"
+                                className="lesson-full-btn quiz-skip-btn"
                                 onClick={onSkip}
-                                style={{
-                                    padding: '10px 20px',
-                                    background: 'transparent',
-                                    color: 'var(--text-secondary)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontSize: '16px'
-                                }}
                                 aria-label="Skip question"
                             >
                                 ⏭️ Skip

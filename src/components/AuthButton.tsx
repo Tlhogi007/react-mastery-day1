@@ -38,7 +38,19 @@ export function AuthButton(): JSX.Element {
         </button>
       </Show>
       <Show when="signed-in">
-        <UserButton />
+        <UserButton
+          userProfileMode="modal"
+          appearance={{
+            elements: {
+              rootBox: { display: 'inline-flex', alignItems: 'center' },
+              userButtonAvatarBox: { width: 32, height: 32 },
+              userButtonPopoverCard: {
+                width: 'min(280px, calc(100vw - 24px))',
+                maxWidth: 'calc(100vw - 24px)',
+              },
+            },
+          }}
+        />
       </Show>
     </>
   )

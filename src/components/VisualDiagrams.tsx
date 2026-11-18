@@ -4,6 +4,7 @@
  */
 
 import { useState, type JSX } from 'react'
+import '../exercises/exerciseLayout.css'
 
 interface VisualDiagramsProps {
   type: 'fiber-tree' | 'virtual-dom-diff' | 'reconciliation' | 'context-propagation'
@@ -51,15 +52,10 @@ function VisualDiagrams({ type }: VisualDiagramsProps): JSX.Element {
     const currentStep = steps[step % steps.length]
 
     return (
-      <div style={{ 
-        padding: '20px', 
-        background: 'var(--bg-card)', 
-        borderRadius: '8px',
-        border: '1px solid var(--border-color)'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ margin: 0 }}>🌳 Fiber Tree Structure</h3>
-          <div style={{ display: 'flex', gap: '8px' }}>
+      <div className="diagram-card">
+        <div className="diagram-header">
+          <h3>Fiber Tree Structure</h3>
+          <div className="diagram-nav">
             <button
               onClick={() => setStep(s => Math.max(0, s - 1))}
               disabled={step === 0}
@@ -97,18 +93,7 @@ function VisualDiagrams({ type }: VisualDiagramsProps): JSX.Element {
           {currentStep.description}
         </p>
 
-        <div style={{
-          padding: '20px',
-          background: 'var(--bg-secondary)',
-          borderRadius: '6px',
-          fontFamily: 'monospace',
-          fontSize: '13px',
-          lineHeight: '1.8',
-          color: 'var(--text-primary)',
-          whiteSpace: 'pre',
-          overflowX: 'auto',
-          border: '1px solid var(--border-color)'
-        }}>
+        <div className="diagram-code" style={{ lineHeight: 1.8 }}>
           {currentStep.tree}
         </div>
 
@@ -121,12 +106,12 @@ function VisualDiagrams({ type }: VisualDiagramsProps): JSX.Element {
           fontSize: '13px'
         }}>
           <strong>💡 Key Points:</strong>
-          <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
-            <li>Each component/element has a corresponding Fiber node</li>
-            <li>Fiber nodes are linked via child, sibling, and return pointers</li>
-            <li>The alternate property points to the previous tree (for diffing)</li>
-            <li>This structure enables React's reconciliation algorithm</li>
-          </ul>
+          <div className="lesson-points">
+            <div className="lesson-points__item"><span>Each component/element has a corresponding Fiber node</span></div>
+            <div className="lesson-points__item"><span>Fiber nodes are linked via child, sibling, and return pointers</span></div>
+            <div className="lesson-points__item"><span>The alternate property points to the previous tree (for diffing)</span></div>
+            <div className="lesson-points__item"><span>This structure enables React's reconciliation algorithm</span></div>
+          </div>
         </div>
       </div>
     )
@@ -175,16 +160,12 @@ function VisualDiagrams({ type }: VisualDiagramsProps): JSX.Element {
     const currentStep = reconciliationSteps[step % reconciliationSteps.length]
 
     return (
-      <div style={{ 
-        padding: '20px', 
-        background: 'var(--bg-card)', 
-        borderRadius: '8px',
-        border: '1px solid var(--border-color)'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ margin: 0 }}>🔄 Reconciliation Process</h3>
-          <div style={{ display: 'flex', gap: '8px' }}>
+      <div className="diagram-card">
+        <div className="diagram-header">
+          <h3>Reconciliation Process</h3>
+          <div className="diagram-nav">
             <button
+              type="button"
               onClick={() => setStep(s => Math.max(0, s - 1))}
               disabled={step === 0}
               style={{
@@ -221,37 +202,16 @@ function VisualDiagrams({ type }: VisualDiagramsProps): JSX.Element {
           Step {step + 1}: {currentStep.title} - {currentStep.description}
         </p>
 
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 1fr', 
-          gap: '20px',
-          marginBottom: '16px'
-        }}>
-          <div>
+        <div className="diagram-compare">
+          <div style={{ minWidth: 0 }}>
             <h4 style={{ marginBottom: '8px', fontSize: '14px' }}>Before</h4>
-            <div style={{ 
-              padding: '12px', 
-              background: 'var(--bg-section)', 
-              borderRadius: '4px',
-              fontFamily: 'monospace',
-              fontSize: '12px',
-              whiteSpace: 'pre',
-              border: '1px solid var(--border-color)'
-            }}>
+            <div className="diagram-code">
               {currentStep.before}
             </div>
           </div>
-          <div>
+          <div style={{ minWidth: 0 }}>
             <h4 style={{ marginBottom: '8px', fontSize: '14px' }}>After</h4>
-            <div style={{ 
-              padding: '12px', 
-              background: 'var(--bg-section)', 
-              borderRadius: '4px',
-              fontFamily: 'monospace',
-              fontSize: '12px',
-              whiteSpace: 'pre',
-              border: '1px solid var(--border-color)'
-            }}>
+            <div className="diagram-code">
               {currentStep.after}
             </div>
           </div>
@@ -276,12 +236,12 @@ function VisualDiagrams({ type }: VisualDiagramsProps): JSX.Element {
           fontSize: '13px'
         }}>
           <strong>💡 Key Points:</strong>
-          <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
-            <li>React compares element types first</li>
-            <li>Keys help identify which items are the same</li>
-            <li>When type/key match, React updates props</li>
-            <li>When type/key differ, React unmounts and mounts</li>
-          </ul>
+          <div className="lesson-points">
+            <div className="lesson-points__item"><span>React compares element types first</span></div>
+            <div className="lesson-points__item"><span>Keys help identify which items are the same</span></div>
+            <div className="lesson-points__item"><span>When type/key match, React updates props</span></div>
+            <div className="lesson-points__item"><span>When type/key differ, React unmounts and mounts</span></div>
+          </div>
         </div>
       </div>
     )
@@ -319,29 +279,28 @@ Only User Consumers Re-render:
       {
         title: 'Memoized Provider Value',
         description: 'Memoize provider value to prevent unnecessary re-renders',
-        diagram: `// ❌ Without memoization
+        diagram: `// ❌ New object every render
 const value = { user, setUser }
-// New object every render → all consumers re-render
+// → all consumers re-render
 
-// ✅ With memoization
-const value = useMemo(() => ({ user, setUser }), [user])
-// Same reference when user unchanged → no re-renders`
+// ✅ Memoized reference
+const value = useMemo(
+  () => ({ user, setUser }),
+  [user]
+)
+// → stable when user unchanged`
       }
     ]
 
     const currentStep = contextSteps[step % contextSteps.length]
 
     return (
-      <div style={{ 
-        padding: '20px', 
-        background: 'var(--bg-card)', 
-        borderRadius: '8px',
-        border: '1px solid var(--border-color)'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ margin: 0 }}>🌐 Context Re-render Propagation</h3>
-          <div style={{ display: 'flex', gap: '8px' }}>
+      <div className="diagram-card">
+        <div className="diagram-header">
+          <h3>Context Re-render Propagation</h3>
+          <div className="diagram-nav">
             <button
+              type="button"
               onClick={() => setStep(s => Math.max(0, s - 1))}
               disabled={step === 0}
               style={{
@@ -352,12 +311,13 @@ const value = useMemo(() => ({ user, setUser }), [user])
                 borderRadius: '4px',
                 cursor: step === 0 ? 'not-allowed' : 'pointer',
                 fontSize: '12px',
-                opacity: step === 0 ? 0.5 : 1
+                opacity: step === 0 ? 0.5 : 1,
               }}
             >
               ← Prev
             </button>
             <button
+              type="button"
               onClick={() => setStep(s => (s + 1) % contextSteps.length)}
               style={{
                 padding: '6px 12px',
@@ -366,7 +326,7 @@ const value = useMemo(() => ({ user, setUser }), [user])
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer',
-                fontSize: '12px'
+                fontSize: '12px',
               }}
             >
               Next →
@@ -374,41 +334,32 @@ const value = useMemo(() => ({ user, setUser }), [user])
           </div>
         </div>
 
-        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '20px' }}>
-          Step {step + 1}: {currentStep.title} - {currentStep.description}
+        <p className="diagram-step-copy">
+          <strong>Step {step + 1}: {currentStep.title}</strong>
+          {' — '}
+          {currentStep.description}
         </p>
 
-        <div style={{
-          padding: '20px',
-          background: 'var(--bg-secondary)',
-          borderRadius: '6px',
-          fontFamily: 'monospace',
-          fontSize: '13px',
-          lineHeight: '1.8',
-          color: 'var(--text-primary)',
-          whiteSpace: 'pre',
-          overflowX: 'auto',
-          border: '1px solid var(--border-color)',
-          marginBottom: '16px'
-        }}>
+        <div className="diagram-code" style={{ lineHeight: 1.8, marginBottom: 16 }}>
           {currentStep.diagram}
         </div>
 
-        <div style={{ 
-          marginTop: '16px', 
-          padding: '12px', 
-          background: 'var(--bg-info)', 
-          color: 'var(--text-on-info)',
-          borderRadius: '6px',
-          fontSize: '13px'
-        }}>
-          <strong>💡 Key Points:</strong>
-          <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
-            <li>All Context consumers re-render when value changes</li>
-            <li>Split contexts by concern to reduce blast radius</li>
-            <li>Memoize provider values to prevent unnecessary re-renders</li>
-            <li>Use React.memo on expensive consumer components</li>
-          </ul>
+        <div
+          style={{
+            padding: '12px',
+            background: 'var(--bg-info)',
+            color: 'var(--text-on-info)',
+            borderRadius: '6px',
+            fontSize: '13px',
+          }}
+        >
+          <strong>Key Points:</strong>
+          <div className="lesson-points">
+            <div className="lesson-points__item"><span>All Context consumers re-render when value changes</span></div>
+            <div className="lesson-points__item"><span>Split contexts by concern to reduce blast radius</span></div>
+            <div className="lesson-points__item"><span>Memoize provider values to prevent unnecessary re-renders</span></div>
+            <div className="lesson-points__item"><span>Use React.memo on expensive consumer components</span></div>
+          </div>
         </div>
       </div>
     )
@@ -457,16 +408,12 @@ const value = useMemo(() => ({ user, setUser }), [user])
   const currentDiff = diffSteps[step % diffSteps.length]
 
   return (
-    <div style={{ 
-      padding: '20px', 
-      background: 'var(--bg-card)', 
-      borderRadius: '8px',
-      border: '1px solid var(--border-color)'
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h3 style={{ margin: 0 }}>🔄 Virtual DOM Diffing</h3>
-        <div style={{ display: 'flex', gap: '8px' }}>
+    <div className="diagram-card">
+      <div className="diagram-header">
+        <h3>Virtual DOM Diffing</h3>
+        <div className="diagram-nav">
           <button
+            type="button"
             onClick={() => setStep(s => Math.max(0, s - 1))}
             disabled={step === 0}
             style={{
@@ -483,6 +430,7 @@ const value = useMemo(() => ({ user, setUser }), [user])
             ← Prev
           </button>
           <button
+            type="button"
             onClick={() => setStep(s => (s + 1) % diffSteps.length)}
             style={{
               padding: '6px 12px',
@@ -503,37 +451,16 @@ const value = useMemo(() => ({ user, setUser }), [user])
         Step {step + 1}: {currentDiff.title}
       </p>
 
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '1fr 1fr', 
-        gap: '20px',
-        marginBottom: '16px'
-      }}>
-        <div>
+      <div className="diagram-compare">
+        <div style={{ minWidth: 0 }}>
           <h4 style={{ marginBottom: '8px', fontSize: '14px' }}>Before</h4>
-          <div style={{ 
-            padding: '12px', 
-            background: 'var(--bg-section)', 
-            borderRadius: '4px',
-            fontFamily: 'monospace',
-            fontSize: '12px',
-            whiteSpace: 'pre',
-            border: '1px solid var(--border-color)'
-          }}>
+          <div className="diagram-code">
             {currentDiff.before}
           </div>
         </div>
-        <div>
+        <div style={{ minWidth: 0 }}>
           <h4 style={{ marginBottom: '8px', fontSize: '14px' }}>After</h4>
-          <div style={{ 
-            padding: '12px', 
-            background: 'var(--bg-section)', 
-            borderRadius: '4px',
-            fontFamily: 'monospace',
-            fontSize: '12px',
-            whiteSpace: 'pre',
-            border: '1px solid var(--border-color)'
-          }}>
+          <div className="diagram-code">
             {currentDiff.after}
           </div>
         </div>
@@ -559,12 +486,12 @@ const value = useMemo(() => ({ user, setUser }), [user])
         fontSize: '13px'
       }}>
         <strong>💡 Key Points:</strong>
-        <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
-          <li>React compares the new Virtual DOM with the previous one</li>
-          <li>Only the differences are applied to the real DOM</li>
-          <li>This minimizes expensive DOM operations</li>
-          <li>Keys help React identify which items changed</li>
-        </ul>
+        <div className="lesson-points">
+            <div className="lesson-points__item"><span>React compares the new Virtual DOM with the previous one</span></div>
+            <div className="lesson-points__item"><span>Only the differences are applied to the real DOM</span></div>
+            <div className="lesson-points__item"><span>This minimizes expensive DOM operations</span></div>
+            <div className="lesson-points__item"><span>Keys help React identify which items changed</span></div>
+          </div>
       </div>
     </div>
   )

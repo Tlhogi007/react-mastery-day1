@@ -308,6 +308,32 @@
   font-weight: 600;
 }
 
+@media (max-width: 768px) {
+  .community-page,
+  .community-article-view {
+    padding-inline: max(var(--space-3), env(safe-area-inset-left, 0px));
+    padding-bottom: max(var(--space-6), env(safe-area-inset-bottom, 0px));
+  }
+
+  .community-article {
+    padding: 1rem;
+  }
+
+  .article-header h1 {
+    font-size: 1.35rem;
+  }
+
+  .article-content {
+    font-size: 1rem;
+  }
+
+  .article-content table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 @media (max-width: 600px) {
   .community-filters {
     flex-direction: column;

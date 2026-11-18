@@ -7,7 +7,7 @@ import { type JSX } from 'react'
 
 function KeyConceptsSection(): JSX.Element {
     return (
-        <>
+        <div className="lesson-prose">
             <div style={{ marginBottom: '20px' }}>
                 <h4>🔍 Type Comparison Rule</h4>
                 <p>React's reconciliation algorithm first checks if element types match:</p>
@@ -16,7 +16,7 @@ function KeyConceptsSection(): JSX.Element {
                     <li><strong>Different Type:</strong> React unmounts the old element completely and mounts a new one</li>
                 </ul>
                 <p><strong>Example:</strong></p>
-                <pre style={{ background: 'var(--bg-section)', padding: '10px', borderRadius: '4px', overflow: 'auto', color: 'var(--text-primary)' }}>
+                <pre className="lesson-code">
                     {`// Same type - React updates props
 <div className="old"> → <div className="new"> ✅ Updates
 
@@ -70,7 +70,7 @@ function KeyConceptsSection(): JSX.Element {
                 </ol>
                 <p><strong>Performance Impact:</strong> With 1000 items, proper keys make updates ~1000x faster than without keys!</p>
             </div>
-        </>
+        </div>
     )
 }
 

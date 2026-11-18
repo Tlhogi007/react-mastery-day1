@@ -20,6 +20,7 @@ import AIGenerationPrompt from './quiz/AIGenerationPrompt'
 import QuestionPrompt from './quiz/QuestionPrompt'
 import LoadingSkeleton from '../components/ui/LoadingSkeleton'
 import type { QuizQuestion } from '../types/challenges'
+import '../exercises/exerciseLayout.css'
 
 interface QuizProps {
     questions: QuizQuestion[]
@@ -226,51 +227,21 @@ function Quiz({ questions, title = 'Self-Assessment Quiz', day, enableAI = false
             />
 
             {/* Time indicator and AI section indicator */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '15px',
-                gap: '10px',
-                flexWrap: 'wrap'
-            }}>
+            <div className="quiz-status-row">
                 {quizStartTime && !completed && (
-                    <div style={{
-                        padding: '8px 12px',
-                        background: 'var(--bg-section)',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        color: 'var(--text-secondary)',
-                        border: '1px solid var(--border-color)'
-                    }}>
+                    <div className="quiz-status-chip">
                         ⏱️ {formatTime(currentTime)}
                     </div>
                 )}
                 {isAISection && (
-                    <div style={{
-                        padding: '8px 12px',
-                        background: 'var(--bg-info)',
-                        color: 'var(--text-on-info)',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        textAlign: 'center',
-                        border: '1px solid var(--border-primary)',
-                        marginLeft: 'auto'
-                    }}>
+                    <div className="quiz-status-chip quiz-status-chip--info">
                         ✨ AI Question {currentQuestionIndex - localQuestionsCount + 1} of {allQuestions.length - localQuestionsCount}
                     </div>
                 )}
                 {!isAISection && !completed && (
-                    <div style={{
-                        padding: '6px 10px',
-                        background: 'var(--bg-section)',
-                        borderRadius: '4px',
-                        fontSize: '11px',
-                        color: 'var(--text-secondary)',
-                        border: '1px solid var(--border-color)',
-                        marginLeft: 'auto'
-                    }}>
-                        💡 Press 1-4 to select, Space/Enter for next
+                    <div className="quiz-input-hint">
+                        <span className="quiz-input-hint__desktop">Press 1-4 to select, Space/Enter for next</span>
+                        <span className="quiz-input-hint__touch">Tap an answer, then Next</span>
                     </div>
                 )}
             </div>

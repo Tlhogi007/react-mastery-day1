@@ -12,6 +12,7 @@ import InterviewPrepMode from '../components/InterviewPrepMode'
 import CodeReviewLibrary from '../components/CodeReviewLibrary'
 import Tabs from '../components/Tabs'
 import type { QuizQuestion } from '../types/challenges'
+import './Tools.css'
 
 interface ToolsProps {
     onBack?: () => void
@@ -59,41 +60,42 @@ function Tools({ onBack, onNavigateToDay }: ToolsProps): JSX.Element {
     }, [])
 
     return (
-        <div style={{ color: 'var(--text-primary)', minHeight: '100vh', padding: '20px' }}>
-            <div style={{ marginBottom: '30px' }}>
+        <div className="tools-page" style={{ color: 'var(--text-primary)', minHeight: '100%', padding: '0 0 24px' }}>
+            <div className="tools-page__intro">
                 {onBack && (
                     <button
+                        type="button"
+                        className="tools-page__back"
                         onClick={onBack}
                         style={{
-                            marginBottom: '20px',
-                            padding: '8px 16px',
+                            padding: '10px 16px',
+                            minHeight: 40,
                             borderRadius: '6px',
                             border: '1px solid var(--border-primary)',
                             background: 'var(--bg-section)',
                             color: 'var(--text-primary)',
                             cursor: 'pointer',
                             fontSize: '14px',
-                            display: 'flex',
+                            display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '8px'
+                            gap: '8px',
                         }}
                     >
-                        ← Back to Exercises
+                        <span className="tools-page__back-label-full">← Back to Exercises</span>
+                        <span className="tools-page__back-label-short">← Back</span>
                     </button>
                 )}
-                <div style={{ textAlign: 'center' }}>
-                    <h1 style={{ marginBottom: '10px' }}>🛠️ Learning Tools</h1>
-                    <p style={{ color: 'var(--text-secondary)' }}>
-                        Access all learning tools and resources in one place
-                    </p>
-                </div>
+                <h1>Learning Tools</h1>
+                <p>
+                    Quick reference, flashcards, snippets, maps, and interview drills.
+                </p>
             </div>
 
             <Tabs
                 tabs={[
                     {
                         id: 'quick-reference',
-                        label: 'Quick Reference',
+                        label: 'Reference',
                         icon: '📚',
                         content: <QuickReference />
                     },
@@ -105,7 +107,7 @@ function Tools({ onBack, onNavigateToDay }: ToolsProps): JSX.Element {
                     },
                     {
                         id: 'snippets',
-                        label: 'Code Snippets',
+                        label: 'Snippets',
                         icon: '💻',
                         content: <CodeSnippetsLibrary />
                     },
@@ -117,19 +119,19 @@ function Tools({ onBack, onNavigateToDay }: ToolsProps): JSX.Element {
                     },
                     {
                         id: 'learning-path',
-                        label: 'Learning Path',
+                        label: 'Path',
                         icon: '🧭',
                         content: <LearningPathRecommendations onNavigateToDay={onNavigateToDay} />
                     },
                     {
                         id: 'interview',
-                        label: 'Interview Prep',
+                        label: 'Interview',
                         icon: '🎤',
                         content: <InterviewPrepMode questions={allQuizQuestions} duration={30} />
                     },
                     {
                         id: 'code-review',
-                        label: 'Code Review',
+                        label: 'Review',
                         icon: '🔍',
                         content: <CodeReviewLibrary />
                     }

@@ -1,4 +1,5 @@
 import { useState, type JSX } from 'react'
+import '../../exerciseLayout.css'
 import Challenge from '../../../components/Challenge'
 import Quiz from '../../../components/Quiz'
 import DebuggingScenario from '../../../components/DebuggingScenario'
@@ -82,7 +83,7 @@ function Day02Reconciliation(): JSX.Element {
                   icon="🎯"
                   style={{ marginBottom: '24px' }}
                 >
-                  <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  <ul className="lesson-task-list" style={{ margin: 0 }}>
                     <li>Understand Type Comparison Rule</li>
                     <li>Master Keys and Identity</li>
                     <li>Learn List Diffing Complexity</li>
@@ -141,62 +142,45 @@ function Day02Reconciliation(): JSX.Element {
                 >
                   <KeyConceptsSection />
 
-                  <div style={{ 
-                    background: 'var(--bg-warning)',
-                    padding: '15px',
-                    borderRadius: '8px',
-                    marginTop: '20px',
-                    color: 'var(--text-primary)'
-                  }}>
-                    <h4>🐛 The Index Key Bug Explained</h4>
-          <p><strong>What happens when you reorder with index keys:</strong></p>
-          <pre style={{ background: 'var(--bg-section)', padding: '10px', borderRadius: '4px', overflow: 'auto', fontSize: '12px', color: 'var(--text-primary)' }}>
-{`// Initial render
-[
-  { key: 0, text: "Item A", checked: true, notes: "my notes" },
-  { key: 1, text: "Item B", checked: false, notes: "" },
-  { key: 2, text: "Item C", checked: false, notes: "" }
-]
+                  <div
+                    className="lesson-prose"
+                    style={{
+                      background: 'var(--bg-warning)',
+                      padding: 'clamp(12px, 3vw, 15px)',
+                      borderRadius: '8px',
+                      marginTop: '20px',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    <h4 style={{ marginTop: 0 }}>🐛 The Index Key Bug Explained</h4>
+                    <p style={{ marginBottom: 8 }}>
+                      <strong>Index keys — reorder Item A down:</strong>
+                    </p>
+                    <pre className="lesson-code">{`// Before
+[ key:0 ItemA★, key:1 ItemB, key:2 ItemC ]
 
-// After moving Item A down (position 0 → 1)
-[
-  { key: 0, text: "Item B", checked: false, notes: "" },  // ❌ React: "Key 0 = same component"
-  { key: 1, text: "Item A", checked: true, notes: "my notes" },   // ❌ React: "Key 1 = same component"
-  { key: 2, text: "Item C", checked: false, notes: "" }
-]
+// After (keys stay on the slot)
+[ key:0 ItemB, key:1 ItemA★, key:2 ItemC ]
+// ❌ React: “key 0 / 1 = same component” → props swap, fiber stays`}</pre>
+                    <ul>
+                      <li>React matches by <strong>key</strong>, not by the item data.</li>
+                      <li>Index keys keep the fiber at that position; props update underneath.</li>
+                      <li>Local state, focus, and handlers can stick to the wrong row.</li>
+                      <li>Controlled props may look fine — the identity bug is still there.</li>
+                    </ul>
 
-// React's reconciliation:
-// - Key 0: "Same component" → Updates props (text, checked, notes) from new data
-//   BUT: React thinks this is still the component that was at index 0!
-// - Key 1: "Same component" → Updates props from new data
-//   BUT: React thinks this is still the component that was at index 1!
-// Result: 
-// - Props update from data (text, checked, notes values update)
-// - BUT: Component instances are matched incorrectly by position!
-// - Focus, event handlers, and internal component state may stick to wrong items
-// - The bug is subtle because controlled props update, but component identity is wrong`}
-          </pre>
-          <p><strong>With proper keys:</strong></p>
-          <pre style={{ background: 'var(--bg-section)', padding: '10px', borderRadius: '4px', overflow: 'auto', fontSize: '12px', color: 'var(--text-primary)' }}>
-{`// Initial render
-[
-  { key: "a", text: "Item A", checked: true },
-  { key: "b", text: "Item B", checked: false },
-  { key: "c", text: "Item C", checked: false }
-]
+                    <p style={{ marginBottom: 8 }}>
+                      <strong>Stable id keys:</strong>
+                    </p>
+                    <pre className="lesson-code">{`// Before
+[ key:"a" ItemA★, key:"b" ItemB, key:"c" ItemC ]
 
-// After moving Item A down
-[
-  { key: "b", text: "Item B", checked: false },  // ✅ React: "Key b = Item B"
-  { key: "a", text: "Item A", checked: true },  // ✅ React: "Key a = Item A"
-  { key: "c", text: "Item C", checked: false }
-]
-
-// React's thinking:
-// - Key "a": "This is Item A" → Moves to new position, keeps checked=true
-// - Key "b": "This is Item B" → Moves to new position, keeps checked=false
-// Result: Checked state stays with the correct item!`}
-                    </pre>
+// After
+[ key:"b" ItemB, key:"a" ItemA★, key:"c" ItemC ]
+// ✅ Fiber for "a" moves with Item A — state stays correct`}</pre>
+                    <p style={{ marginBottom: 0, fontSize: 14, lineHeight: 1.45 }}>
+                      Same key → same component instance. Checked state and notes travel with the item.
+                    </p>
                   </div>
                 </Card>
 
@@ -264,7 +248,7 @@ function Day02Reconciliation(): JSX.Element {
                     <h2 style={{ marginBottom: '20px' }}>Practice Challenges</h2>
                     <div style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
                       gap: '20px'
                     }}>
                       {day02Challenges.map((challenge) => (
@@ -312,7 +296,7 @@ function Day02Reconciliation(): JSX.Element {
                     <h2 style={{ marginBottom: '20px' }}>Debugging Scenarios</h2>
                     <div style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
                       gap: '20px'
                     }}>
                       {day02Debugging.map((scenario) => (

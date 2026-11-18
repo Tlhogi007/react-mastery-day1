@@ -25,15 +25,17 @@ function CodeReviewLibrary(): JSX.Element {
 
     const containerStyle: React.CSSProperties = {
         color: 'var(--text-primary)',
-        padding: '20px'
+        padding: 0,
+        width: '100%',
+        minWidth: 0,
     }
 
     return (
-        <div style={containerStyle}>
-            <div style={{ marginBottom: '30px' }}>
-                <h1 style={{ marginBottom: '10px' }}>🔍 Code Review Library</h1>
-                <p style={{ color: 'var(--text-secondary)' }}>
-                    Practice reviewing real-world React code. Find bugs and compare with expert solutions.
+        <div className="tool-panel" style={containerStyle}>
+            <div className="tool-panel__hero" style={{ marginBottom: '20px' }}>
+                <h1 className="tool-panel__title">Code Review</h1>
+                <p className="tool-panel__lead">
+                    Find bugs in React code and compare with expert solutions.
                 </p>
             </div>
 
@@ -43,8 +45,8 @@ function CodeReviewLibrary(): JSX.Element {
                     icon="📚"
                     style={{ marginBottom: '24px' }}
                 >
-                    <div style={{ marginBottom: '20px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                        <div style={{ flex: 1, minWidth: '200px' }}>
+                    <div className="tool-filters" style={{ marginBottom: '20px' }}>
+                        <div>
                             <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px' }}>Day</label>
                             <select
                                 value={filterDay}
@@ -64,7 +66,7 @@ function CodeReviewLibrary(): JSX.Element {
                                 ))}
                             </select>
                         </div>
-                        <div style={{ flex: 1, minWidth: '200px' }}>
+                        <div>
                             <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px' }}>Difficulty</label>
                             <select
                                 value={filterDifficulty}
@@ -90,7 +92,7 @@ function CodeReviewLibrary(): JSX.Element {
                         Found {filteredExercises.length} exercise{filteredExercises.length !== 1 ? 's' : ''}
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))', gap: '16px' }}>
                         {filteredExercises.map(exercise => (
                             <div
                                 key={exercise.id}

@@ -8,42 +8,43 @@ export const day05Challenges: Challenge[] = [
     difficulty: 'hard',
     starterCode: `function Counter() {
   const [count, setCount] = useState(0)
-  
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      console.log(count) // ❌ Always logs 0
+    const id = setInterval(() => {
+      // ❌ Always logs 0
+      console.log(count)
       setCount(count + 1)
     }, 1000)
-    
-    return () => clearInterval(interval)
-  }, []) // Missing count dependency
-  
+
+    return () => clearInterval(id)
+  }, []) // missing count
+
   return <div>{count}</div>
 }`,
-    solution: `// Approach 1: Add dependency
+    solution: `// Approach 1: add dependency
 useEffect(() => {
-  const interval = setInterval(() => {
+  const id = setInterval(() => {
     setCount(count + 1)
   }, 1000)
-  return () => clearInterval(interval)
-}, [count]) // ✅ Include count
+  return () => clearInterval(id)
+}, [count]) // ✅ include count
 
-// Approach 2: Functional update
+// Approach 2: functional update
 useEffect(() => {
-  const interval = setInterval(() => {
-    setCount(prev => prev + 1) // ✅ Use functional update
+  const id = setInterval(() => {
+    setCount(prev => prev + 1)
   }, 1000)
-  return () => clearInterval(interval)
+  return () => clearInterval(id)
 }, [])
 
-// Approach 3: useRef for latest value
+// Approach 3: ref for latest value
 const countRef = useRef(count)
 countRef.current = count
 useEffect(() => {
-  const interval = setInterval(() => {
+  const id = setInterval(() => {
     setCount(countRef.current + 1)
   }, 1000)
-  return () => clearInterval(interval)
+  return () => clearInterval(id)
 }, [])`,
     hints: [
       'Add missing dependencies to dependency array',

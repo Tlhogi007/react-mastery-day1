@@ -1,4 +1,5 @@
 import { type JSX } from 'react'
+import '../../exerciseLayout.css'
 import Challenge from '../../../components/Challenge'
 import Quiz from '../../../components/Quiz'
 import DebuggingScenario from '../../../components/DebuggingScenario'
@@ -38,7 +39,7 @@ function Day04Memoization(): JSX.Element {
                   icon="🎯"
                   style={{ marginBottom: '24px' }}
                 >
-                  <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  <ul className="lesson-task-list" style={{ margin: 0 }}>
                     <li>Understand when and why React re-renders components</li>
                     <li>Master React.memo for component-level optimization</li>
                     <li>Use useMemo for expensive calculations</li>
@@ -80,7 +81,7 @@ function Day04Memoization(): JSX.Element {
                       <li><strong>When NOT to Use:</strong> Components that receive new object/function props every render</li>
                     </ul>
                     <p><strong>Example:</strong></p>
-                    <pre style={{ background: 'var(--bg-section)', padding: '10px', borderRadius: '4px', overflow: 'auto', fontSize: '12px', color: 'var(--text-primary)' }}>
+                    <pre className="lesson-code">
 {`const MemoizedComponent = memo(function Component({ data }) {
   return <div>{data.value}</div>
 })
@@ -104,13 +105,15 @@ const data = useMemo(() => ({ value: 42 }), [])
                       <li><strong>When NOT to Use:</strong> Simple calculations (overhead isn't worth it)</li>
                     </ul>
                     <p><strong>Example:</strong></p>
-                    <pre style={{ background: 'var(--bg-section)', padding: '10px', borderRadius: '4px', overflow: 'auto', fontSize: '12px', color: 'var(--text-primary)' }}>
+                    <pre className="lesson-code">
 {`// ❌ Without useMemo: recalculates every render
-const filtered = items.filter(item => item.name.includes(filter))
+const filtered = items.filter(item =>
+  item.name.includes(filter)
+)
 
-// ✅ With useMemo: only recalculates when items or filter change
-const filtered = useMemo(() => 
-  items.filter(item => item.name.includes(filter)),
+// ✅ With useMemo: only when items/filter change
+const filtered = useMemo(
+  () => items.filter(item => item.name.includes(filter)),
   [items, filter]
 )`}
                     </pre>
@@ -126,7 +129,7 @@ const filtered = useMemo(() =>
                       <li><strong>When NOT to Use:</strong> Functions that are recreated anyway (no benefit)</li>
                     </ul>
                     <p><strong>Example:</strong></p>
-                    <pre style={{ background: 'var(--bg-section)', padding: '10px', borderRadius: '4px', overflow: 'auto', fontSize: '12px', color: 'var(--text-primary)' }}>
+                    <pre className="lesson-code">
 {`// ❌ Without useCallback: new function every render
 const handleClick = () => setCount(c => c + 1)
 
@@ -135,7 +138,7 @@ const handleClick = useCallback(() => {
   setCount(c => c + 1)
 }, [])
 
-// Now MemoizedButton won't re-render unnecessarily
+// MemoizedButton skips unnecessary re-renders
 <MemoizedButton onClick={handleClick} />`}
                     </pre>
                   </div>
@@ -150,23 +153,33 @@ const handleClick = useCallback(() => {
                       <li><strong>Impact:</strong> New object/function props cause re-renders even if values are the same</li>
                     </ul>
                     <p><strong>This is why memoization matters:</strong></p>
-                    <pre style={{ background: 'var(--bg-section)', padding: '10px', borderRadius: '4px', overflow: 'auto', fontSize: '12px', color: 'var(--text-primary)' }}>
+                    <pre className="lesson-code">
 {`// Every render creates new objects/functions
 function App() {
-  const data = { value: 42 }  // ❌ New object every render
-  const handleClick = () => {} // ❌ New function every render
-  
-  return <MemoizedComponent data={data} onClick={handleClick} />
-  // MemoizedComponent re-renders every time!
+  const data = { value: 42 } // ❌ new object
+  const handleClick = () => {} // ❌ new function
+
+  return (
+    <MemoizedComponent
+      data={data}
+      onClick={handleClick}
+    />
+  )
+  // Re-renders every time — props look "new"
 }
 
 // Memoization provides stable references
 function App() {
-  const data = useMemo(() => ({ value: 42 }), [])  // ✅ Same object
-  const handleClick = useCallback(() => {}, [])    // ✅ Same function
-  
-  return <MemoizedComponent data={data} onClick={handleClick} />
-  // MemoizedComponent only re-renders when App re-renders for other reasons
+  const data = useMemo(() => ({ value: 42 }), []) // ✅
+  const handleClick = useCallback(() => {}, []) // ✅
+
+  return (
+    <MemoizedComponent
+      data={data}
+      onClick={handleClick}
+    />
+  )
+  // Skips re-render when references stay the same
 }`}
                     </pre>
                   </div>
@@ -244,7 +257,7 @@ Deps different? → Create new function`
                     <h2 style={{ marginBottom: '20px' }}>Practice Challenges</h2>
                     <div style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
                       gap: '20px'
                     }}>
                       {day04Challenges.map((challenge) => (
@@ -298,7 +311,7 @@ Deps different? → Create new function`
                     <h2 style={{ marginBottom: '20px' }}>Debugging Scenarios</h2>
                     <div style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
                       gap: '20px'
                     }}>
                       {day04Debugging.map((scenario) => (

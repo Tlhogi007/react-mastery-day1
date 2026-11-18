@@ -126,7 +126,7 @@ function CodeReviewExerciseComponent({ exercise, onComplete }: CodeReviewExercis
                             marginBottom: '12px'
                         }}>
                             <h5 style={{ marginTop: 0, marginBottom: '8px', color: 'var(--text-on-info)' }}>Hints:</h5>
-                            <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                            <ul className="lesson-task-list" style={{ margin: 0 }}>
                                 {exercise.hints.map((hint, index) => (
                                     <li key={index} style={{ marginBottom: '4px' }}>{hint}</li>
                                 ))}

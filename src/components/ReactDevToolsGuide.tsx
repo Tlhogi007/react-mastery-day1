@@ -1,4 +1,5 @@
 import { useState, type JSX } from 'react'
+import '../exercises/exerciseLayout.css'
 
 interface DevToolsGuideProps {
     day: number
@@ -11,50 +12,67 @@ function ReactDevToolsGuide({ day, focusAreas = [] }: DevToolsGuideProps): JSX.E
     const containerStyle: React.CSSProperties = {
         border: '2px solid var(--border-primary)',
         borderRadius: '8px',
-        padding: '20px',
+        padding: 'clamp(12px, 3vw, 20px)',
         background: 'var(--bg-card)',
-        marginTop: '20px'
+        marginTop: '20px',
+        width: '100%',
+        maxWidth: '100%',
+        minWidth: 0,
+        boxSizing: 'border-box',
+        // Don't clip the tab row — overflow:hidden was cutting off "Setup"
+        overflow: 'visible',
     }
 
     const tabStyle = (isActive: boolean): React.CSSProperties => ({
-        padding: '10px 20px',
+        padding: '10px 12px',
         background: isActive ? 'var(--button-primary)' : 'var(--bg-section)',
         color: isActive ? 'var(--button-text)' : 'var(--text-primary)',
         border: 'none',
         borderRadius: '4px 4px 0 0',
         cursor: 'pointer',
-        marginRight: '5px',
-        fontWeight: isActive ? 'bold' : 'normal'
+        fontWeight: isActive ? 700 : 500,
+        fontSize: 13,
+        flex: '1 1 0',
+        minWidth: 0,
+        textAlign: 'center',
     })
 
     const contentStyle: React.CSSProperties = {
-        padding: '20px',
+        padding: 'clamp(12px, 3vw, 20px)',
         background: 'var(--bg-section)',
         borderRadius: '0 8px 8px 8px',
-        marginTop: '-1px'
+        marginTop: '-1px',
+        minWidth: 0,
+        overflowWrap: 'anywhere',
+        lineHeight: 1.45,
     }
 
     return (
         <div style={containerStyle}>
-            <h3>🛠️ React DevTools Integration</h3>
-            <p style={{ marginTop: '10px', color: 'var(--text-secondary)' }}>
+            <h3 style={{ margin: 0, fontSize: 'clamp(1rem, 3.2vw, 1.2rem)' }}>
+              React DevTools Integration
+            </h3>
+            <p style={{ marginTop: '10px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
                 Learn to use React DevTools to debug and profile your components
             </p>
 
-            <div style={{ marginTop: '20px', borderBottom: '2px solid var(--border-color)' }}>
+            <div className="devtools-tabs">
                 <button
+                    type="button"
                     onClick={() => setActiveTab('profiler')}
                     style={tabStyle(activeTab === 'profiler')}
                 >
                     Profiler
                 </button>
                 <button
+                    type="button"
                     onClick={() => setActiveTab('components')}
                     style={tabStyle(activeTab === 'components')}
                 >
                     Components
                 </button>
                 <button
+                    type="button"
                     onClick={() => setActiveTab('setup')}
                     style={tabStyle(activeTab === 'setup')}
                 >
@@ -62,7 +80,7 @@ function ReactDevToolsGuide({ day, focusAreas = [] }: DevToolsGuideProps): JSX.E
                 </button>
             </div>
 
-            <div style={contentStyle}>
+            <div className="devtools-guide-content" style={contentStyle}>
                 {activeTab === 'setup' && (
                     <div>
                         <h4>Installation:</h4>

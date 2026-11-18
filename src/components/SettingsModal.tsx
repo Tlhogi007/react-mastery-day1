@@ -100,19 +100,21 @@ function SettingsModal({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px'
+        padding: 'max(12px, env(safe-area-inset-top, 0px)) 12px max(12px, env(safe-area-inset-bottom, 0px))',
     }
 
     const modalStyle: React.CSSProperties = {
         background: 'var(--bg-card)',
         borderRadius: '16px',
-        padding: '32px',
+        padding: 'clamp(20px, 4vw, 32px)',
         maxWidth: '500px',
         width: '100%',
-        maxHeight: '90vh',
+        maxHeight: 'min(90dvh, 90vh)',
         overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
         boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-        border: '1px solid var(--border-color)'
+        border: '1px solid var(--border-color)',
+        marginBottom: 'max(0px, env(safe-area-inset-bottom, 0px))',
     }
 
     const sectionStyle: React.CSSProperties = {

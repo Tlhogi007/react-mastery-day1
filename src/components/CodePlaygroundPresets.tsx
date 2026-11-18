@@ -5,6 +5,7 @@
 
 import { useState, type JSX } from 'react'
 import CodePlayground from './CodePlayground'
+import '../exercises/exerciseLayout.css'
 
 export interface CodePreset {
     id: string
@@ -839,40 +840,13 @@ function CodePlaygroundPresets({ presets, onPresetSelect }: CodePlaygroundPreset
 
     return (
         <div style={{ marginTop: '20px' }}>
-            <div style={{
-                display: 'flex',
-                gap: '12px',
-                flexWrap: 'wrap',
-                marginBottom: '16px'
-            }}>
+            <div className="code-preset-row">
                 {presets.map(preset => (
                     <button
+                        type="button"
                         key={preset.id}
+                        className={`code-preset-btn${selectedPreset?.id === preset.id ? ' code-preset-btn--active' : ''}`}
                         onClick={() => handlePresetClick(preset)}
-                        style={{
-                            padding: '8px 16px',
-                            background: selectedPreset?.id === preset.id
-                                ? 'var(--button-primary)'
-                                : 'var(--bg-section)',
-                            color: selectedPreset?.id === preset.id
-                                ? 'var(--button-text)'
-                                : 'var(--text-primary)',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={(e) => {
-                            if (selectedPreset?.id !== preset.id) {
-                                e.currentTarget.style.background = 'var(--bg-tertiary)'
-                            }
-                        }}
-                        onMouseLeave={(e) => {
-                            if (selectedPreset?.id !== preset.id) {
-                                e.currentTarget.style.background = 'var(--bg-section)'
-                            }
-                        }}
                     >
                         💻 {preset.title}
                     </button>

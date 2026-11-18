@@ -1,0 +1,1250 @@
+/* Shared mobile-friendly layout for day exercise cards */
+
+.exercise-callout {
+  background: var(--bg-info);
+  padding: clamp(12px, 3vw, 16px);
+  border-radius: 8px;
+  margin-bottom: 20px;
+  color: var(--text-on-info, var(--text-primary));
+}
+
+.exercise-callout-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.exercise-callout-head > p {
+  flex: 1 1 180px;
+  min-width: 0;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.exercise-callout-toggle {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-primary);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.exercise-callout-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 8px 0 0;
+  line-height: 1.4;
+}
+
+.exercise-action-stage {
+  border: 2px solid var(--border-primary);
+  padding: clamp(14px, 3vw, 20px);
+  border-radius: 8px;
+  text-align: center;
+  background: var(--bg-section);
+  margin-bottom: 20px;
+}
+
+.exercise-action-stage > button {
+  min-height: 44px;
+  max-width: 100%;
+}
+
+.exercise-pipeline {
+  padding: clamp(12px, 3vw, 16px);
+  background: var(--bg-section);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.exercise-pipeline h3 {
+  margin-top: 0;
+  font-size: clamp(1rem, 3vw, 1.15rem);
+}
+
+.exercise-pipeline-steps {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.exercise-pipeline-step {
+  flex: 1 1 140px;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+  box-sizing: border-box;
+}
+
+.exercise-objectives ul {
+  margin: 0;
+  padding-left: 1.15rem;
+}
+
+.exercise-objectives li {
+  margin-bottom: 0.35rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 768px) {
+  .exercise-callout-toggle {
+    width: 100%;
+  }
+
+  .exercise-pipeline-step {
+    flex: 1 1 calc(50% - 10px);
+  }
+}
+
+@media (max-width: 480px) {
+  .exercise-pipeline-step {
+    flex: 1 1 100%;
+  }
+}
+
+/* Diagrams, DevTools, playgrounds used inside day lessons */
+.diagram-card {
+  container-type: inline-size;
+  container-name: diagram-card;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: clamp(12px, 3vw, 20px);
+  background: var(--bg-card);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.diagram-header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.diagram-step-copy {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+  line-height: 1.45;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+
+.diagram-nav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.diagram-nav > button {
+  flex: 1 1 0;
+  min-height: 40px;
+  box-sizing: border-box;
+}
+
+@container diagram-card (min-width: 560px) {
+  .diagram-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .diagram-header h3 {
+    flex: 1 1 auto;
+  }
+
+  .diagram-nav {
+    width: auto;
+    display: inline-flex;
+  }
+
+  .diagram-nav > button {
+    flex: 0 0 auto;
+    min-height: 36px;
+  }
+}
+
+.diagram-header h3 {
+  margin: 0;
+  font-size: clamp(1rem, 3.2vw, 1.15rem);
+  min-width: 0;
+  line-height: 1.3;
+  overflow-wrap: break-word;
+}
+
+.diagram-compare {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.diagram-code {
+  padding: 12px;
+  background: var(--bg-section);
+  border-radius: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  white-space: pre;
+  border: 1px solid var(--border-color);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.diagram-key-points {
+  margin: 8px 0 0;
+}
+
+.code-preset-row {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.code-preset-btn {
+  display: block;
+  width: 100% !important;
+  max-width: 100%;
+  padding: 10px 12px;
+  min-height: 40px;
+  background-color: var(--bg-section);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+/* Beat global `button` / `button:hover` (sticky hover on touch) */
+button.code-preset-btn--active,
+button.code-preset-btn--active:hover,
+button.code-preset-btn--active:focus {
+  background-color: var(--button-primary);
+  color: var(--button-text);
+  border-color: var(--button-primary);
+}
+
+button.code-preset-btn:hover:not(.code-preset-btn--active) {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/*
+ * Mark complete: desktop = inline auto-width button.
+ * Full-width stack only on mobile / narrow content columns.
+ */
+.mark-complete-row {
+  container-type: inline-size;
+  container-name: mark-complete;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.mark-complete-row__desc {
+  margin: 0;
+  flex: 1 1 auto;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  min-width: 0;
+}
+
+.mark-complete-btn {
+  display: inline-block !important;
+  width: auto !important;
+  max-width: none !important;
+  min-height: 36px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  font-size: 13px;
+  font-weight: 600;
+  box-sizing: border-box;
+  text-align: center;
+  flex: none !important;
+  flex-shrink: 0;
+  align-self: auto !important;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .mark-complete-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .mark-complete-row__desc {
+    flex: none;
+  }
+
+  .mark-complete-btn {
+    display: block !important;
+    width: 100% !important;
+    min-height: 44px;
+    padding: 10px 12px;
+    align-self: stretch !important;
+  }
+}
+
+/* Narrow content column (e.g. preview pane) while viewport stays wide */
+@container mark-complete (max-width: 559px) {
+  .mark-complete-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .mark-complete-row__desc {
+    flex: none;
+  }
+
+  .mark-complete-btn {
+    display: block !important;
+    width: 100% !important;
+    min-height: 44px;
+    padding: 10px 12px;
+    align-self: stretch !important;
+  }
+}
+
+.lesson-action-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+}
+
+.lesson-action-stack > .lesson-full-btn {
+  display: block;
+  width: 100%;
+}
+
+.lesson-full-btn {
+  display: inline-block;
+  width: 100%;
+  max-width: 100%;
+  min-height: 40px;
+  box-sizing: border-box;
+  text-align: center;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 16px;
+  font-weight: 600;
+}
+
+/* Challenge hint/solution pair: stack on narrow, row when room */
+.challenge-actions {
+  container-type: inline-size;
+  container-name: challenge-actions;
+}
+
+@container challenge-actions (min-width: 560px) {
+  .challenge-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .challenge-actions > .lesson-full-btn {
+    width: auto;
+    flex: 1 1 160px;
+  }
+}
+
+.reflection-export-row {
+  align-items: flex-end;
+}
+
+.visual-diagram-card {
+  container-type: inline-size;
+  container-name: visual-diagram;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: clamp(12px, 3vw, 20px);
+  background: var(--bg-card);
+  margin-top: 20px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.visual-diagram-visual {
+  margin-top: 8px;
+  min-height: 0;
+  padding: clamp(10px, 2.5vw, 14px) !important;
+  font-size: 12px;
+}
+
+.visual-diagram-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+@container visual-diagram (min-width: 560px) {
+  .visual-diagram-card .diagram-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .visual-diagram-nav {
+    width: auto;
+  }
+
+  .visual-diagram-nav__btn {
+    flex: 0 0 auto;
+    min-height: 36px;
+  }
+}
+
+.visual-diagram-nav__btn {
+  flex: 1 1 0;
+  min-height: 40px;
+  min-width: 40px;
+  padding: 6px 12px;
+  background: var(--button-primary);
+  color: var(--button-text);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.visual-diagram-nav__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.visual-diagram-nav__count {
+  font-size: 14px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Day 3 Fiber demo: lighter nested tree + desktop side-by-side controls */
+.fiber-demo-children {
+  margin-left: clamp(8px, 3vw, 16px);
+  margin-top: 8px;
+  min-width: 0;
+}
+
+.fiber-controls-row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.fiber-controls-row > .lesson-full-btn {
+  flex: 1 1 160px;
+}
+
+@media (max-width: 768px) {
+  .lesson-action-stack {
+    align-items: stretch;
+  }
+
+  .reflection-export-row {
+    align-items: stretch;
+  }
+
+  .fiber-controls-row {
+    flex-direction: column;
+  }
+
+  .fiber-controls-row > .lesson-full-btn {
+    flex: none;
+    width: 100% !important;
+  }
+
+  .fiber-demo-children {
+    margin-left: 8px;
+  }
+
+  .diagram-nav > button,
+  .visual-diagram-nav__btn {
+    min-height: 44px;
+  }
+
+  .visual-diagram-nav__count {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Keep ASCII/tree diagrams from soft-wrapping into a mess */
+  .visual-diagram-visual {
+    white-space: pre;
+    overflow-x: auto;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .lesson-full-btn {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 44px;
+    padding: 12px 16px;
+  }
+
+  .code-preset-btn {
+    min-height: 44px;
+  }
+}
+
+/*
+ * Prefer .lesson-points (divs) over <ul>.
+ * Content must be a single child <span> — never put <strong>/<code>
+ * as direct siblings of text (flex ancestors would split them).
+ */
+.lesson-points {
+  display: block !important;
+  margin: 0.35rem 0 0.75rem;
+  padding: 0 !important;
+  text-align: left !important;
+}
+
+.lesson-points__item {
+  display: block !important;
+  position: relative;
+  margin: 0 0 0.45rem;
+  padding: 0 0 0 1em !important;
+  line-height: 1.45;
+  text-align: left !important;
+  justify-content: unset !important;
+  gap: 0 !important;
+}
+
+.lesson-points__item::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.lesson-points__item > span {
+  display: inline !important;
+}
+
+/* Analytics panel collapsible sections */
+.analytics-accordion > summary {
+  list-style: none;
+}
+
+.analytics-accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
+.analytics-accordion > summary::after {
+  content: '▾';
+  color: var(--text-secondary);
+  font-size: 0.9em;
+  flex-shrink: 0;
+}
+
+.analytics-accordion:not([open]) > summary::after {
+  content: '▸';
+}
+
+.analytics-accordion > summary:focus-visible {
+  outline: 2px solid var(--accent-b);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Day 5 effect-timing interactive callout */
+.effect-timing-demo {
+  container-type: inline-size;
+  container-name: effect-timing;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
+  min-width: 0;
+}
+
+.effect-timing-demo__count {
+  background: var(--button-primary);
+  color: var(--button-text);
+  font-size: 1.05rem;
+}
+
+.effect-timing-demo__panel {
+  padding: 12px;
+  background: var(--bg-section);
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.effect-timing-demo__title {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.effect-timing-demo__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.effect-timing-demo__step {
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  text-align: center;
+  font-size: 13px;
+  border: 1px solid var(--border-color);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.effect-timing-demo__step.is-active {
+  background: var(--bg-warning);
+  border-color: var(--border-warning);
+  font-weight: 700;
+}
+
+@container effect-timing (min-width: 520px) {
+  .effect-timing-demo__steps {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .effect-timing-demo__step {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
+.lesson-points--numbered .lesson-points__item {
+  padding-left: 0 !important;
+}
+
+.lesson-points--numbered .lesson-points__item::before {
+  content: none;
+}
+
+.lesson-task-list {
+  margin: 0 !important;
+  padding: 0 !important;
+  padding-inline-start: 0 !important;
+  list-style: none !important;
+  list-style-type: none !important;
+  text-align: left !important;
+}
+
+.lesson-task-list > li {
+  position: relative;
+  display: block !important;
+  margin: 0 0 0.45rem !important;
+  padding: 0 0 0 1.05em !important;
+  padding-inline-start: 1.05em !important;
+  text-indent: 0 !important;
+  text-align: left !important;
+  line-height: 1.45;
+  list-style: none !important;
+  justify-content: unset !important;
+  gap: 0 !important;
+}
+
+.lesson-task-list > li::marker {
+  content: none !important;
+  font-size: 0 !important;
+}
+
+.lesson-task-list > li::before {
+  content: '•' !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 1em;
+  text-align: left;
+}
+
+/* Inline lesson <pre> snippets — soft-wrap by default (narrow preview columns too) */
+.lesson-code {
+  background: var(--bg-section);
+  padding: 10px;
+  border-radius: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  color: var(--text-primary);
+  font-size: 12px;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.lesson-code > code {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  white-space: inherit;
+  overflow-wrap: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  background: transparent;
+  padding: 0;
+}
+
+/* Day 2 todo demo: one horizontal strip on desktop, stacked on phones */
+.todo-demo-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.todo-demo-row__title {
+  flex: 1 1 120px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 16px;
+}
+
+.todo-demo-row__note {
+  flex: 1 1 160px;
+  min-width: 0;
+  width: auto;
+  padding: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.todo-demo-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 auto;
+}
+
+.devtools-tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 16px;
+  border-bottom: 2px solid var(--border-color);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  flex-wrap: nowrap;
+}
+
+/*
+ * Lesson lists: kill UA marker gutter (often ~40px) and draw our own bullet
+ * flush to the left edge of the card content.
+ */
+.devtools-guide-content ol,
+.devtools-guide-content ul,
+.lesson-prose ol,
+.lesson-prose ul,
+.diagram-key-points,
+[role='tabpanel'] ol,
+[role='tabpanel'] ul {
+  margin: 0.5rem 0 0.75rem;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.devtools-guide-content li,
+.lesson-prose li,
+.diagram-key-points li,
+[role='tabpanel'] li {
+  position: relative;
+  margin: 0 0 0.4rem;
+  padding-left: 1.1em;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.devtools-guide-content ul > li::before,
+.lesson-prose ul > li::before,
+.diagram-key-points > li::before,
+[role='tabpanel'] ul > li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: inherit;
+}
+
+.devtools-guide-content ol,
+.lesson-prose ol,
+[role='tabpanel'] ol {
+  counter-reset: lesson-ol;
+}
+
+.devtools-guide-content ol > li,
+.lesson-prose ol > li,
+[role='tabpanel'] ol > li {
+  counter-increment: lesson-ol;
+}
+
+.devtools-guide-content ol > li::before,
+.lesson-prose ol > li::before,
+[role='tabpanel'] ol > li::before {
+  content: counter(lesson-ol) '.';
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.devtools-guide-content ol ol,
+.devtools-guide-content ol ul,
+.devtools-guide-content ul ul,
+.devtools-guide-content ul ol,
+.lesson-prose ol ol,
+.lesson-prose ol ul,
+.lesson-prose ul ul,
+.lesson-prose ul ol,
+[role='tabpanel'] ol ol,
+[role='tabpanel'] ol ul,
+[role='tabpanel'] ul ul,
+[role='tabpanel'] ul ol {
+  margin-top: 0.35rem;
+  margin-bottom: 0.25rem;
+  padding-left: 0.25em;
+}
+
+.devtools-tabs > button {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  min-height: 40px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.code-playground-root {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.code-playground-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.code-playground-footer > span:first-child {
+  flex: 1 1 180px;
+  min-width: 0;
+  line-height: 1.4;
+}
+
+.quiz-header {
+  container-type: inline-size;
+  container-name: quiz-header;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 14px;
+  width: 100%;
+}
+
+.quiz-header__title {
+  margin: 0;
+  font-size: clamp(1rem, 3.2vw, 1.2rem);
+  line-height: 1.3;
+}
+
+.quiz-header__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.quiz-header__badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--bg-info);
+  color: var(--text-primary);
+  width: fit-content;
+  flex: 0 0 auto;
+}
+
+.quiz-header__ai-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.35;
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.quiz-header__progress {
+  font-size: 13px;
+  color: var(--text-secondary);
+  flex: 0 0 auto;
+  margin-left: 0;
+}
+
+.quiz-header__progress-detail {
+  margin-left: 8px;
+  font-size: 12px;
+}
+
+@container quiz-header (max-width: 520px) {
+  .quiz-header__meta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .quiz-header__ai-toggle {
+    flex: none;
+    width: 100%;
+  }
+}
+
+.quiz-status-row {
+  container-type: inline-size;
+  container-name: quiz-status;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 6px 12px;
+  width: 100%;
+}
+
+.quiz-status-chip {
+  padding: 4px 8px;
+  background: transparent;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  border: none;
+  box-sizing: border-box;
+  width: auto;
+  flex: 0 0 auto;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+.quiz-status-chip--info {
+  background: var(--bg-info);
+  color: var(--text-on-info);
+  border: 1px solid var(--border-primary);
+  padding: 4px 8px;
+}
+
+.quiz-input-hint {
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border: none;
+  margin-left: 0;
+  line-height: 1.35;
+  box-sizing: border-box;
+  width: auto;
+  flex: 1 1 160px;
+  min-width: 0;
+  text-align: left;
+  opacity: 0.85;
+}
+
+.quiz-question-card {
+  padding: clamp(12px, 3vw, 16px);
+  background: var(--bg-section);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: clamp(1rem, 3.2vw, 1.125rem);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.quiz-question-card__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.quiz-question-card__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.quiz-difficulty {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.quiz-difficulty--easy {
+  background: var(--bg-success);
+  color: var(--text-on-success);
+}
+
+.quiz-difficulty--medium {
+  background: var(--bg-warning);
+  color: var(--text-on-warning);
+}
+
+.quiz-difficulty--hard {
+  background: var(--bg-error);
+  color: var(--text-on-error);
+}
+
+.quiz-options {
+  width: 100%;
+}
+
+.quiz-option {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: clamp(10px, 2.5vw, 12px);
+  margin: 8px 0;
+  background: var(--bg-section);
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.quiz-option--correct {
+  background: var(--bg-success);
+  border-color: var(--bg-success);
+}
+
+.quiz-option--wrong {
+  background: var(--bg-warning);
+  border-color: var(--border-warning);
+}
+
+.quiz-option__inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.quiz-option__letter {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+.quiz-option__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.quiz-option__mark {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.quiz-explanation {
+  container-type: inline-size;
+  container-name: quiz-explanation;
+  margin-top: 16px;
+  padding: clamp(12px, 3vw, 15px);
+  background: var(--bg-info);
+  color: var(--text-on-info);
+  border-radius: 8px;
+}
+
+.quiz-explanation p {
+  margin: 10px 0 0;
+  color: var(--text-on-info);
+  line-height: 1.45;
+}
+
+.quiz-next-btn {
+  background: var(--button-primary) !important;
+  color: var(--button-text) !important;
+}
+
+.quiz-skip-btn {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.quiz-explanation__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.quiz-explanation__actions > .lesson-full-btn {
+  width: 100% !important;
+}
+
+@container quiz-explanation (min-width: 560px) {
+  .quiz-explanation__actions {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .quiz-explanation__actions > .lesson-full-btn {
+    width: auto !important;
+  }
+}
+
+.quiz-input-hint__touch {
+  display: none;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .quiz-input-hint__desktop {
+    display: none;
+  }
+
+  .quiz-input-hint__touch {
+    display: inline;
+  }
+}
+
+/* Shell already shows day title + progress on phones — drop the duplicate hero. */
+@media (max-width: 768px) {
+  .hero-section {
+    display: none;
+  }
+
+  .quiz-input-hint__desktop {
+    display: none;
+  }
+
+  .quiz-input-hint__touch {
+    display: inline;
+  }
+
+  .lesson-code,
+  .diagram-code {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .todo-demo-row__note {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .todo-demo-row__meta {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+
+  .article-content ol,
+  .article-content ul,
+  .tool-panel ol,
+  .tool-panel ul {
+    padding: 0;
+    list-style: none;
+    margin: 0.5rem 0 1rem;
+    text-align: left;
+  }
+
+  .article-content ul > li,
+  .tool-panel ul > li {
+    position: relative;
+    padding-left: 1.1em;
+    text-align: left;
+  }
+
+  .article-content ul > li::before,
+  .tool-panel ul > li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+
+  [role='tabpanel'] li strong,
+  .tool-panel li strong,
+  .lesson-prose li strong {
+    display: inline;
+  }
+}

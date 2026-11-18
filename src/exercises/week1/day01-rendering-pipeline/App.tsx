@@ -15,11 +15,16 @@ import VisualDiagrams from '../../../components/VisualDiagrams'
 import PersonalNotes from '../../../components/PersonalNotes'
 import DailyReflection from '../../../components/DailyReflection'
 import { day01Challenges, day01Quiz, day01Debugging, day01RealWorld } from './challenges'
+import '../../exerciseLayout.css'
 
 function Day01RenderingPipeline(): JSX.Element {
     const [count, setCount] = useState<number>(0)
     const [pipelineStep, setPipelineStep] = useState<string | null>(null)
-    const [showConsoleLogs, setShowConsoleLogs] = useState<boolean>(true)
+    const isCoarsePointer =
+        typeof window !== 'undefined' &&
+        window.matchMedia('(hover: none), (pointer: coarse)').matches
+    // Opt-in: logging during render is noisy (and floods DevTools if anything re-renders a lot)
+    const [showConsoleLogs, setShowConsoleLogs] = useState<boolean>(false)
 
     // This runs during COMMIT phase
     useEffect(() => {
@@ -109,9 +114,10 @@ function Day01RenderingPipeline(): JSX.Element {
                                 <Card
                                     title="Learning Objectives"
                                     icon="🎯"
+                                    className="exercise-objectives"
                                     style={{ marginBottom: '24px' }}
                                 >
-                                    <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                                    <ul>
                                         <li>Understand Render Phase vs Commit Phase</li>
                                         <li>Learn about Virtual DOM</li>
                                         <li>Understand Diffing basics</li>
@@ -124,43 +130,34 @@ function Day01RenderingPipeline(): JSX.Element {
                                     icon="💡"
                                     style={{ marginBottom: '24px' }}
                                 >
-                                    <div style={{
-                                        background: 'var(--bg-info)',
-                                        padding: '15px',
-                                        borderRadius: '8px',
-                                        marginBottom: '20px'
-                                    }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                            <p style={{ margin: 0 }}><strong>📝 Exercise:</strong> Click the button and watch the console to see the rendering pipeline in action!</p>
+                                    <div className="exercise-callout">
+                                        <div className="exercise-callout-head">
+                                            <p>
+                                                <strong>Exercise:</strong> Tap the button and watch the
+                                                pipeline steps (and console, if available).
+                                            </p>
                                             <button
+                                                type="button"
+                                                className="exercise-callout-toggle"
                                                 onClick={() => setShowConsoleLogs(!showConsoleLogs)}
                                                 style={{
-                                                    padding: '6px 12px',
-                                                    borderRadius: '6px',
-                                                    border: '1px solid var(--border-primary)',
                                                     background: showConsoleLogs ? 'var(--button-primary)' : 'var(--bg-section)',
-                                                    color: showConsoleLogs ? 'var(--text-inverse)' : 'var(--text-primary)',
-                                                    cursor: 'pointer',
-                                                    fontSize: '12px'
+                                                    color: showConsoleLogs ? 'var(--button-text)' : 'var(--text-primary)',
                                                 }}
                                             >
-                                                {showConsoleLogs ? '🔊 Console Logs ON' : '🔇 Console Logs OFF'}
+                                                {showConsoleLogs ? 'Console Logs ON' : 'Console Logs OFF'}
                                             </button>
                                         </div>
-                                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '10px' }}>
-                                            Open your browser's developer console (F12 or Cmd+Option+I)
+                                        <p className="exercise-callout-hint">
+                                            {isCoarsePointer
+                                                ? 'On phones, use the live pipeline below — console tools are usually on desktop.'
+                                                : 'Open the browser console (F12 or Cmd+Option+I) to see phase logs.'}
                                         </p>
                                     </div>
 
-                                    <div style={{
-                                        border: '2px solid var(--border-primary)',
-                                        padding: '20px',
-                                        borderRadius: '8px',
-                                        textAlign: 'center' as const,
-                                        background: 'var(--bg-section)',
-                                        marginBottom: '20px'
-                                    }}>
+                                    <div className="exercise-action-stage">
                                         <button
+                                            type="button"
                                             onClick={handleClick}
                                             style={buttonStyle}
                                         >
@@ -168,38 +165,28 @@ function Day01RenderingPipeline(): JSX.Element {
                                         </button>
                                     </div>
 
-                                    <div style={{
-                                        padding: '15px',
-                                        background: 'var(--bg-section)',
-                                        borderRadius: '8px',
-                                        marginBottom: '20px'
-                                    }}>
-                                        <h3 style={{ marginTop: 0 }}>📊 Live Pipeline Visualization</h3>
+                                    <div className="exercise-pipeline">
+                                        <h3>Live Pipeline Visualization</h3>
                                         <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '15px' }}>
                                             Click the button above to see the pipeline steps in real-time
                                         </p>
-                                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
+                                        <div className="exercise-pipeline-steps">
                                             {['user-action', 'state-update', 'render-phase', 'commit-phase'].map((step) => {
                                                 const isActive = pipelineStep === step
                                                 const stepNames: Record<string, string> = {
-                                                    'user-action': '👆 User Action',
-                                                    'state-update': '📝 State Update',
-                                                    'render-phase': '🔵 Render Phase',
-                                                    'commit-phase': '🟢 Commit Phase'
+                                                    'user-action': 'User Action',
+                                                    'state-update': 'State Update',
+                                                    'render-phase': 'Render Phase',
+                                                    'commit-phase': 'Commit Phase'
                                                 }
                                                 return (
                                                     <div
                                                         key={step}
+                                                        className="exercise-pipeline-step"
                                                         style={{
-                                                            flex: '1 1 150px',
-                                                            minWidth: '150px',
-                                                            padding: '15px',
                                                             background: isActive ? 'var(--bg-warning)' : 'var(--bg-tertiary)',
-                                                            borderRadius: '8px',
-                                                            textAlign: 'center',
-                                                            transition: 'all 0.3s',
                                                             border: isActive ? '3px solid var(--border-warning)' : '1px solid var(--border-color)',
-                                                            transform: isActive ? 'scale(1.05)' : 'scale(1)',
+                                                            transform: isActive ? 'scale(1.02)' : 'scale(1)',
                                                             fontWeight: isActive ? 'bold' : 'normal'
                                                         }}
                                                     >
@@ -210,7 +197,7 @@ function Day01RenderingPipeline(): JSX.Element {
                                                                 fontSize: '12px',
                                                                 color: 'var(--text-primary)'
                                                             }}>
-                                                                ⚡ Active
+                                                                Active
                                                             </div>
                                                         )}
                                                     </div>
@@ -369,7 +356,7 @@ function Day01RenderingPipeline(): JSX.Element {
                                         <h2 style={{ marginBottom: '20px' }}>Practice Challenges</h2>
                                         <div style={{
                                             display: 'grid',
-                                            gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                                            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
                                             gap: '20px'
                                         }}>
                                             {day01Challenges.map((challenge) => (
@@ -418,7 +405,7 @@ function Day01RenderingPipeline(): JSX.Element {
                                         <h2 style={{ marginBottom: '20px' }}>Debugging Scenarios</h2>
                                         <div style={{
                                             display: 'grid',
-                                            gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                                            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
                                             gap: '20px'
                                         }}>
                                             {day01Debugging.map((scenario) => (

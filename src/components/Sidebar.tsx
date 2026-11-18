@@ -1,4 +1,4 @@
-import { type JSX } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties, type JSX } from 'react'
 import type { ExerciseKey, Exercise, ExercisesRegistry } from '../types/exercises'
 import FadeIn from './animations/FadeIn'
 import { authorStamp, buildInfo, formatBuildStamp } from '../lib/buildInfo'
@@ -28,14 +28,58 @@ function Sidebar({
   onToggleCollapse,
   isCollapsed = false,
 }: SidebarProps): JSX.Element {
-  const exercisesByWeek = Object.entries(exercises).reduce(
-    (acc, [key, exercise]) => {
-      if (!acc[exercise.week]) acc[exercise.week] = []
-      acc[exercise.week].push({ key, exercise })
-      return acc
-    },
-    {} as Record<number, Array<{ key: ExerciseKey; exercise: Exercise }>>
+  const exercisesByWeek = useMemo(() => {
+    const acc: Record<number, Array<{ key: ExerciseKey; exercise: Exercise }>> = {}
+    for (const [key, exercise] of Object.entries(exercises)) {
+      const week = exercise.week
+      if (!acc[week]) acc[week] = []
+      acc[week].push({ key: key as ExerciseKey, exercise })
+    }
+    for (const week of Object.keys(acc)) {
+      acc[Number(week)].sort((a, b) => a.exercise.day - b.exercise.day)
+    }
+    return acc
+  }, [exercises])
+
+  const weekNumbers = useMemo(
+    () => Object.keys(exercisesByWeek).map(Number).sort((a, b) => a - b),
+    [exercisesByWeek]
   )
+
+  const currentWeek = exercises[currentExercise]?.week ?? weekNumbers[0] ?? 1
+
+  const [openWeeks, setOpenWeeks] = useState<Set<number>>(() => new Set([currentWeek]))
+
+  useEffect(() => {
+    setOpenWeeks((prev) => {
+      if (prev.has(currentWeek)) return prev
+      const next = new Set(prev)
+      next.add(currentWeek)
+      return next
+    })
+  }, [currentWeek])
+
+  const toggleWeek = (week: number): void => {
+    setOpenWeeks((prev) => {
+      const next = new Set(prev)
+      if (next.has(week)) next.delete(week)
+      else next.add(week)
+      return next
+    })
+  }
+
+  const linkBtnStyle: CSSProperties = {
+    textAlign: 'left',
+    width: '100%',
+    padding: '8px 10px',
+    border: 'none',
+    borderRadius: 4,
+    background: 'transparent',
+    color: 'var(--text-secondary)',
+    fontSize: 13,
+    fontWeight: 500,
+    cursor: 'pointer',
+  }
 
   return (
     <aside
@@ -43,19 +87,24 @@ function Sidebar({
       aria-label="Study outline"
       data-tutorial="sidebar"
       style={{
-        width: isCollapsed ? 64 : 260,
+        width: isCollapsed ? 64 : '100%',
+        maxWidth: isCollapsed ? 64 : 300,
         background: 'var(--bg-card)',
         borderRight: '1px solid var(--border-color)',
-        padding: isCollapsed ? '12px 8px' : '20px 14px',
+        padding: isCollapsed ? '12px 8px' : '16px 14px',
+        paddingBottom: 'max(16px, env(safe-area-inset-bottom, 0px))',
         position: 'sticky',
         top: 0,
-        height: '100vh',
+        height: '100%',
+        minHeight: '100dvh',
         overflowY: 'auto',
         overflowX: 'hidden',
         flexShrink: 0,
         transition: 'width 0.2s ease',
         display: 'flex',
         flexDirection: 'column',
+        boxSizing: 'border-box',
+        WebkitOverflowScrolling: 'touch',
       }}
     >
       <FadeIn>
@@ -104,12 +153,13 @@ function Sidebar({
                 <span>eact Mastery</span>
               </div>
               <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                Internals lab · Week 1
+                Internals lab · Week {currentWeek}
               </p>
             </div>
           )}
           {onToggleCollapse && (
             <button
+              type="button"
               onClick={onToggleCollapse}
               aria-label={isCollapsed ? 'Expand outline' : 'Collapse outline'}
               style={{
@@ -133,121 +183,145 @@ function Sidebar({
         <nav
           data-tutorial="tools-community"
           style={{
-            marginBottom: 20,
-            paddingBottom: 16,
+            marginBottom: 16,
+            paddingBottom: 12,
             borderBottom: '1px solid var(--border-color)',
             display: 'flex',
             flexDirection: 'column',
-            gap: 2,
+            gap: 0,
           }}
         >
-          {[
-            { label: 'Tools', onClick: onToolsClick },
-            { label: 'Community', onClick: onCommunityClick },
-          ]
-            .filter((item) => item.onClick)
-            .map((item) => (
-              <button
-                key={item.label}
-                type="button"
-                onClick={item.onClick}
-                style={{
-                  textAlign: 'left',
-                  padding: '8px 10px',
-                  border: 'none',
-                  borderRadius: 4,
-                  background: 'transparent',
-                  color: 'var(--text-secondary)',
-                  fontSize: 13,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
+          {onToolsClick && (
+            <button type="button" onClick={onToolsClick} style={linkBtnStyle}>
+              Tools
+            </button>
+          )}
+          {onToolsClick && onCommunityClick && (
+            <div
+              aria-hidden
+              style={{
+                height: 1,
+                margin: '4px 10px',
+                background: 'var(--border-color)',
+              }}
+            />
+          )}
+          {onCommunityClick && (
+            <button type="button" onClick={onCommunityClick} style={linkBtnStyle}>
+              Community
+            </button>
+          )}
         </nav>
       )}
 
       <div data-tutorial="sidebar-days">
-      {Object.entries(exercisesByWeek)
-        .sort(([a], [b]) => Number(a) - Number(b))
-        .map(([week, items]) => (
-          <div key={week} style={{ marginBottom: 24 }}>
-            {!isCollapsed && (
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: 'var(--text-muted)',
-                  letterSpacing: '0.04em',
-                  textTransform: 'uppercase',
-                  marginBottom: 8,
-                  padding: '0 10px',
-                }}
-              >
-                Week {week}
-              </div>
-            )}
-            {items
-              .sort((a, b) => a.exercise.day - b.exercise.day)
-              .map(({ key, exercise }) => {
-                const isActive = key === currentExercise
-                const title = exercise.title.replace(/^Day \d+:\s*/i, '')
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => onExerciseSelect(key)}
-                    title={`Day ${exercise.day}: ${title}`}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 10,
-                      padding: isCollapsed ? '10px 6px' : '8px 10px',
-                      marginBottom: 2,
-                      border: 'none',
-                      borderRadius: 4,
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      background: isActive ? 'var(--bg-info)' : 'transparent',
-                      color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                      justifyContent: isCollapsed ? 'center' : 'flex-start',
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 12,
-                        fontWeight: 500,
-                        color: isActive ? 'var(--button-primary)' : 'var(--text-muted)',
-                        minWidth: 18,
-                        paddingTop: 1,
-                      }}
-                    >
-                      {String(exercise.day).padStart(2, '0')}
-                    </span>
-                    {!isCollapsed && (
-                      <span style={{ flex: 1, minWidth: 0 }}>
+        {weekNumbers.map((week) => {
+          const items = exercisesByWeek[week] ?? []
+          const isOpen = isCollapsed || openWeeks.has(week)
+          const panelId = `sidebar-week-${week}`
+
+          return (
+            <div key={week} style={{ marginBottom: isCollapsed ? 4 : 10 }}>
+              {!isCollapsed && (
+                <button
+                  type="button"
+                  onClick={() => toggleWeek(week)}
+                  aria-expanded={isOpen}
+                  aria-controls={panelId}
+                  title={isOpen ? 'Collapse week' : 'Expand week'}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 8,
+                    padding: '8px 10px',
+                    border: 'none',
+                    borderRadius: 4,
+                    background: isOpen ? 'var(--bg-section)' : 'transparent',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    textAlign: 'left',
+                  }}
+                >
+                  <span>Week {week}</span>
+                  <span aria-hidden style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                    {isOpen ? '▾' : '▸'}
+                  </span>
+                </button>
+              )}
+
+              {isOpen && (
+                <div
+                  id={panelId}
+                  role="region"
+                  aria-label={`Week ${week} lessons`}
+                  style={{ marginTop: isCollapsed ? 0 : 4 }}
+                >
+                  {items.map(({ key, exercise }) => {
+                    const isActive = key === currentExercise
+                    const title = exercise.title.replace(/^Day \d+:\s*/i, '')
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => onExerciseSelect(key)}
+                        title={`Day ${exercise.day}: ${title}`}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 10,
+                          padding: isCollapsed ? '10px 6px' : '8px 10px',
+                          marginBottom: 2,
+                          border: 'none',
+                          borderRadius: 4,
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          background: isActive ? 'var(--bg-info)' : 'transparent',
+                          color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                          justifyContent: isCollapsed ? 'center' : 'flex-start',
+                        }}
+                      >
                         <span
                           style={{
-                            display: 'block',
-                            fontSize: 13,
-                            fontWeight: isActive ? 600 : 500,
-                            lineHeight: 1.35,
-                            color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: 12,
+                            fontWeight: 500,
+                            color: isActive ? 'var(--button-primary)' : 'var(--text-muted)',
+                            minWidth: 18,
+                            paddingTop: 1,
                           }}
                         >
-                          {title}
+                          {String(exercise.day).padStart(2, '0')}
                         </span>
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-          </div>
-        ))}
+                        {!isCollapsed && (
+                          <span
+                            style={{
+                              flex: 1,
+                              minWidth: 0,
+                              display: 'block',
+                              fontSize: 13,
+                              fontWeight: isActive ? 600 : 500,
+                              lineHeight: 1.35,
+                              color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                            }}
+                          >
+                            {title}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
 
       {!isCollapsed && (
@@ -304,4 +378,3 @@ function Sidebar({
 }
 
 export default Sidebar
-

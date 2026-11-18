@@ -3,11 +3,12 @@
  * Shows analytics data with export functionality and charts
  */
 
-import { useState, useMemo, type JSX } from 'react'
+import { useState, useMemo, type CSSProperties, type JSX } from 'react'
 import { analytics } from '../services/analytics'
 import { progressStorage } from '../services/progressStorage'
 import { questionHistory } from '../services/questionHistory'
 import { formatTimeMinutes } from '../utils/timeFormatter'
+import '../exercises/exerciseLayout.css'
 
 interface AnalyticsPanelProps {
     onClose: () => void
@@ -109,37 +110,83 @@ function AnalyticsPanel({ onClose }: AnalyticsPanelProps): JSX.Element {
         }
     }
 
-    const containerStyle: React.CSSProperties = {
+    const containerStyle: CSSProperties = {
         position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        inset: 0,
         background: 'rgba(0, 0, 0, 0.5)',
         zIndex: 2000,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px'
+        padding:
+            'max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px))',
+        boxSizing: 'border-box',
     }
 
-    const panelStyle: React.CSSProperties = {
+    const panelStyle: CSSProperties = {
         background: 'var(--bg-card)',
         borderRadius: '12px',
-        padding: '30px',
-        maxWidth: '800px',
+        padding: 'clamp(16px, 4vw, 30px)',
+        maxWidth: 'min(800px, 100%)',
         width: '100%',
-        maxHeight: '90vh',
+        minWidth: 0,
+        maxHeight: 'min(90dvh, 90vh)',
         overflowY: 'auto',
-        border: '2px solid var(--border-primary)'
+        overflowX: 'hidden',
+        WebkitOverflowScrolling: 'touch',
+        border: '2px solid var(--border-primary)',
+        boxSizing: 'border-box',
+        margin: '0 auto',
+        scrollbarGutter: 'stable',
     }
 
-    const statCardStyle: React.CSSProperties = {
+    const sectionStyle: CSSProperties = {
+        padding: 'clamp(12px, 3vw, 20px)',
+        background: 'var(--bg-section)',
+        borderRadius: '8px',
+        border: '1px solid var(--border-color)',
+        marginBottom: '16px',
+        minWidth: 0,
+    }
+
+    const detailsStyle: CSSProperties = {
+        ...sectionStyle,
+    }
+
+    const summaryStyle: CSSProperties = {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 10,
+        cursor: 'pointer',
+        listStyle: 'none',
+        color: 'var(--text-primary)',
+        fontWeight: 600,
+        fontSize: '1.05rem',
+        lineHeight: 1.3,
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+    }
+
+    const chipBtnStyle: CSSProperties = {
+        padding: '6px 12px',
+        background: 'var(--bg-card)',
+        color: 'var(--text-primary)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '13px',
+        fontWeight: 500,
+        flexShrink: 0,
+    }
+
+    const statCardStyle: CSSProperties = {
         padding: '15px',
         background: 'var(--bg-section)',
         borderRadius: '8px',
         border: '1px solid var(--border-color)',
-        marginBottom: '15px'
+        marginBottom: '15px',
+        minWidth: 0,
     }
 
     return (
@@ -163,7 +210,7 @@ function AnalyticsPanel({ onClose }: AnalyticsPanelProps): JSX.Element {
                 </div>
 
                 {/* Stats Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '30px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: '12px', marginBottom: '24px' }}>
                     <div style={statCardStyle}>
                         <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '5px' }}>Exercises Completed</div>
                         <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{userProgress.exercisesCompleted}</div>
@@ -191,13 +238,7 @@ function AnalyticsPanel({ onClose }: AnalyticsPanelProps): JSX.Element {
                 </div>
 
                 {/* Export Section */}
-                <div style={{
-                    padding: '20px',
-                    background: 'var(--bg-section)',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border-color)',
-                    marginBottom: '20px'
-                }}>
+                <div style={sectionStyle}>
                     <h3 style={{ marginTop: 0, marginBottom: '15px' }}>Export Analytics</h3>
                     <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
@@ -217,6 +258,7 @@ function AnalyticsPanel({ onClose }: AnalyticsPanelProps): JSX.Element {
                             CSV
                         </label>
                         <button
+                            type="button"
                             onClick={handleExport}
                             style={{
                                 padding: '8px 16px',
@@ -226,7 +268,7 @@ function AnalyticsPanel({ onClose }: AnalyticsPanelProps): JSX.Element {
                                 borderRadius: '6px',
                                 cursor: 'pointer',
                                 fontSize: '14px',
-                                marginLeft: 'auto'
+                                marginLeft: 'auto',
                             }}
                         >
                             📥 Export
@@ -234,118 +276,165 @@ function AnalyticsPanel({ onClose }: AnalyticsPanelProps): JSX.Element {
                     </div>
                 </div>
 
-                {/* Progress Chart */}
+                {/* Progress by Day — native details so collapse always works */}
                 {progressData.length > 0 && (
-                    <div style={{
-                        padding: '20px',
-                        background: 'var(--bg-section)',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-color)',
-                        marginBottom: '20px'
-                    }}>
-                        <h3 style={{ marginTop: 0, marginBottom: '15px' }}>Progress by Day</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <details open style={detailsStyle} className="analytics-accordion">
+                        <summary style={summaryStyle}>
+                            <span>Progress by Day</span>
+                        </summary>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: 12 }}>
                             {progressData.map(({ day, exercises, quizzes, avgScore }) => (
-                                <div key={day} style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '12px',
-                                    padding: '10px',
-                                    background: 'var(--bg-card)',
-                                    borderRadius: '6px',
-                                    border: '1px solid var(--border-color)'
-                                }}>
-                                    <div style={{ minWidth: '60px', fontWeight: '600' }}>Day {day}</div>
-                                    <div style={{ flex: 1, display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <div
+                                    key={day}
+                                    style={{
+                                        display: 'flex',
+                                        flexWrap: 'nowrap',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        gap: 12,
+                                        padding: '10px 12px',
+                                        background: 'var(--bg-card)',
+                                        borderRadius: '6px',
+                                        border: '1px solid var(--border-color)',
+                                        minWidth: 0,
+                                        width: '100%',
+                                        boxSizing: 'border-box',
+                                    }}
+                                >
+                                    <div style={{ fontWeight: 600, flexShrink: 0 }}>Day {day}</div>
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            flexWrap: 'wrap',
+                                            justifyContent: 'flex-end',
+                                            gap: 8,
+                                            minWidth: 0,
+                                            marginLeft: 'auto',
+                                        }}
+                                    >
                                         {exercises > 0 && (
-                                            <div style={{
-                                                padding: '4px 8px',
-                                                background: 'var(--bg-success)',
-                                                color: 'var(--text-on-success)',
-                                                borderRadius: '4px',
-                                                fontSize: '12px'
-                                            }}>
+                                            <div
+                                                style={{
+                                                    padding: '4px 8px',
+                                                    background: 'var(--bg-success)',
+                                                    color: 'var(--text-on-success)',
+                                                    borderRadius: '4px',
+                                                    fontSize: '12px',
+                                                    whiteSpace: 'nowrap',
+                                                }}
+                                            >
                                                 ✓ {exercises} exercise{exercises !== 1 ? 's' : ''}
                                             </div>
                                         )}
                                         {quizzes > 0 && (
-                                            <div style={{
-                                                padding: '4px 8px',
-                                                background: avgScore >= 70 ? 'var(--bg-success)' : 'var(--bg-warning)',
-                                                color: avgScore >= 70 ? 'var(--text-on-success)' : 'var(--text-on-warning)',
-                                                borderRadius: '4px',
-                                                fontSize: '12px'
-                                            }}>
-                                                📝 {quizzes} quiz{quizzes !== 1 ? 'zes' : ''} ({avgScore > 0 ? `${Math.round(avgScore)}%` : 'N/A'})
+                                            <div
+                                                style={{
+                                                    padding: '4px 8px',
+                                                    background: avgScore >= 70 ? 'var(--bg-success)' : 'var(--bg-warning)',
+                                                    color: avgScore >= 70 ? 'var(--text-on-success)' : 'var(--text-on-warning)',
+                                                    borderRadius: '4px',
+                                                    fontSize: '12px',
+                                                    whiteSpace: 'nowrap',
+                                                }}
+                                            >
+                                                📝 {quizzes} quiz{quizzes !== 1 ? 'zes' : ''} (
+                                                {avgScore > 0 ? `${Math.round(avgScore)}%` : 'N/A'})
                                             </div>
                                         )}
                                     </div>
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </details>
                 )}
 
                 {/* Review Weak Areas */}
                 {weakAreas.length > 0 && (
-                    <div style={{
-                        padding: '20px',
-                        background: 'var(--bg-section)',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-color)',
-                        marginBottom: '20px'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                            <h3 style={{ marginTop: 0 }}>📚 Review Weak Areas</h3>
+                    <div style={sectionStyle}>
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                gap: 10,
+                                marginBottom: showWeakAreas ? 12 : 0,
+                            }}
+                        >
+                            <h3 style={{ margin: 0 }}>📚 Review Weak Areas</h3>
                             <button
+                                type="button"
                                 onClick={() => setShowWeakAreas(!showWeakAreas)}
-                                style={{
-                                    padding: '6px 12px',
-                                    background: 'var(--button-secondary)',
-                                    color: 'var(--button-text)',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontSize: '13px'
-                                }}
+                                style={chipBtnStyle}
                             >
                                 {showWeakAreas ? 'Hide' : 'Show'} ({weakAreas.length})
                             </button>
                         </div>
                         {showWeakAreas && (
-                            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                            <div style={{ maxHeight: '300px', overflowY: 'auto', minWidth: 0 }}>
                                 {weakAreas.slice(0, 10).map((entry, idx) => (
-                                    <div key={entry.questionId} style={{
-                                        padding: '10px',
-                                        background: 'var(--bg-card)',
-                                        borderRadius: '4px',
-                                        marginBottom: '8px',
-                                        fontSize: '13px',
-                                        border: '1px solid var(--border-color)'
-                                    }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                                            <span style={{ fontWeight: '500' }}>Question {idx + 1}</span>
+                                    <div
+                                        key={entry.questionId}
+                                        style={{
+                                            padding: '10px',
+                                            background: 'var(--bg-card)',
+                                            borderRadius: '4px',
+                                            marginBottom: '8px',
+                                            fontSize: '13px',
+                                            border: '1px solid var(--border-color)',
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                flexWrap: 'wrap',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                gap: 6,
+                                                marginBottom: '4px',
+                                            }}
+                                        >
+                                            <span style={{ fontWeight: 500 }}>Question {idx + 1}</span>
                                             <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                                                {entry.attempts} attempt{entry.attempts !== 1 ? 's' : ''} |
-                                                Last seen: {new Date(entry.lastSeen).toLocaleDateString()}
+                                                {entry.attempts} attempt{entry.attempts !== 1 ? 's' : ''} ·{' '}
+                                                {new Date(entry.lastSeen).toLocaleDateString()}
                                             </span>
                                         </div>
                                         {entry.difficulty && (
-                                            <span style={{
-                                                padding: '2px 6px',
-                                                background: entry.difficulty === 'easy' ? 'var(--bg-success)' : entry.difficulty === 'medium' ? 'var(--bg-warning)' : 'var(--bg-error)',
-                                                color: entry.difficulty === 'easy' ? 'var(--text-on-success)' : entry.difficulty === 'medium' ? 'var(--text-on-warning)' : 'var(--text-on-error)',
-                                                borderRadius: '3px',
-                                                fontSize: '11px',
-                                                textTransform: 'uppercase'
-                                            }}>
+                                            <span
+                                                style={{
+                                                    padding: '2px 6px',
+                                                    background:
+                                                        entry.difficulty === 'easy'
+                                                            ? 'var(--bg-success)'
+                                                            : entry.difficulty === 'medium'
+                                                              ? 'var(--bg-warning)'
+                                                              : 'var(--bg-error)',
+                                                    color:
+                                                        entry.difficulty === 'easy'
+                                                            ? 'var(--text-on-success)'
+                                                            : entry.difficulty === 'medium'
+                                                              ? 'var(--text-on-warning)'
+                                                              : 'var(--text-on-error)',
+                                                    borderRadius: '3px',
+                                                    fontSize: '11px',
+                                                    textTransform: 'uppercase',
+                                                }}
+                                            >
                                                 {entry.difficulty}
                                             </span>
                                         )}
                                     </div>
                                 ))}
                                 {weakAreas.length > 10 && (
-                                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '8px', textAlign: 'center' }}>
+                                    <p
+                                        style={{
+                                            fontSize: '12px',
+                                            color: 'var(--text-secondary)',
+                                            marginTop: '8px',
+                                            textAlign: 'center',
+                                        }}
+                                    >
                                         ... and {weakAreas.length - 10} more questions
                                     </p>
                                 )}
@@ -354,32 +443,48 @@ function AnalyticsPanel({ onClose }: AnalyticsPanelProps): JSX.Element {
                     </div>
                 )}
 
-                {/* Recent Events */}
-                <div style={{
-                    padding: '20px',
-                    background: 'var(--bg-section)',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border-color)'
-                }}>
-                    <h3 style={{ marginTop: 0, marginBottom: '15px' }}>Recent Activity</h3>
-                    <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                {/* Recent Events — no nested scroll; outer panel already scrolls */}
+                <details open style={{ ...detailsStyle, marginBottom: 0 }} className="analytics-accordion">
+                    <summary style={summaryStyle}>
+                        <span>Recent Activity</span>
+                    </summary>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12, minWidth: 0 }}>
                         {summary.recentEvents.length === 0 ? (
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>No recent activity</p>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>No recent activity</p>
                         ) : (
                             summary.recentEvents.map((event, idx) => (
-                                <div key={idx} style={{
-                                    padding: '8px',
-                                    background: 'var(--bg-card)',
-                                    borderRadius: '4px',
-                                    marginBottom: '8px',
-                                    fontSize: '13px'
-                                }}>
-                                    <strong>{event.event}</strong> - {new Date(event.timestamp).toLocaleString()}
+                                <div
+                                    key={idx}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'baseline',
+                                        justifyContent: 'space-between',
+                                        gap: 12,
+                                        padding: '8px 12px',
+                                        background: 'var(--bg-card)',
+                                        borderRadius: '4px',
+                                        fontSize: '13px',
+                                        minWidth: 0,
+                                        boxSizing: 'border-box',
+                                    }}
+                                >
+                                    <strong style={{ flexShrink: 0 }}>{event.event}</strong>
+                                    <span
+                                        style={{
+                                            color: 'var(--text-secondary)',
+                                            textAlign: 'right',
+                                            marginLeft: 'auto',
+                                            fontSize: '12px',
+                                            overflowWrap: 'anywhere',
+                                        }}
+                                    >
+                                        {new Date(event.timestamp).toLocaleString()}
+                                    </span>
                                 </div>
                             ))
                         )}
                     </div>
-                </div>
+                </details>
             </div>
         </div>
     )

@@ -6,6 +6,7 @@
 import { useEffect, useState, type JSX } from 'react'
 import { BYO_KEYS_CHANGED_EVENT, byoAiKeys } from '../../services/byoAiKeys'
 import { AiQuotaBadge } from '../AiQuotaBadge'
+import '../../exercises/exerciseLayout.css'
 
 interface QuizHeaderProps {
     title: string
@@ -46,26 +47,20 @@ function QuizHeader({
     }, [])
 
     return (
-        <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '20px',
-            flexWrap: 'wrap',
-            gap: '10px'
-        }}>
-            <h3 style={{ margin: 0 }}>{title}</h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+        <div className="quiz-header">
+            <h3 className="quiz-header__title">{title}</h3>
+            <div className="quiz-header__progress">
+                Question {currentQuestionIndex + 1} of {totalQuestions}
+                {aiQuestionsLoaded && (
+                    <span className="quiz-header__progress-detail">
+                        ({localQuestionsCount} local + {totalQuestions - localQuestionsCount} AI)
+                    </span>
+                )}
+            </div>
+            <div className="quiz-header__meta">
                 {usingByo && (
                     <span
-                        style={{
-                            fontSize: 12,
-                            fontWeight: 600,
-                            padding: '4px 8px',
-                            borderRadius: 6,
-                            background: 'var(--bg-info)',
-                            color: 'var(--text-primary)',
-                        }}
+                        className="quiz-header__badge"
                         title="Your API key stays in this browser and is never sent to React Mastery servers"
                     >
                         Using your key · not shared quota
@@ -73,14 +68,13 @@ function QuizHeader({
                 )}
                 {!usingByo && <AiQuotaBadge />}
                 {enableAI && day && (
-                    <label style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        cursor: loadingAI ? 'not-allowed' : 'pointer',
-                        opacity: loadingAI ? 0.6 : 1,
-                        fontSize: '14px'
-                    }}>
+                    <label
+                        className="quiz-header__ai-toggle"
+                        style={{
+                            cursor: loadingAI ? 'not-allowed' : 'pointer',
+                            opacity: loadingAI ? 0.6 : 1,
+                        }}
+                    >
                         <input
                             type="checkbox"
                             checked={aiEnabled}
@@ -89,7 +83,8 @@ function QuizHeader({
                             style={{
                                 width: '18px',
                                 height: '18px',
-                                cursor: loadingAI ? 'not-allowed' : 'pointer'
+                                cursor: loadingAI ? 'not-allowed' : 'pointer',
+                                flexShrink: 0,
                             }}
                         />
                         <span>
@@ -101,14 +96,6 @@ function QuizHeader({
                         </span>
                     </label>
                 )}
-                <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-                    Question {currentQuestionIndex + 1} of {totalQuestions}
-                    {aiQuestionsLoaded && (
-                        <span style={{ marginLeft: '8px', fontSize: '12px' }}>
-                            ({localQuestionsCount} local + {totalQuestions - localQuestionsCount} AI)
-                        </span>
-                    )}
-                </div>
             </div>
         </div>
     )

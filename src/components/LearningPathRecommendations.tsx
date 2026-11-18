@@ -49,13 +49,16 @@ function LearningPathRecommendations({ onNavigateToDay }: LearningPathRecommenda
     }
 
     const containerStyle: React.CSSProperties = {
-        color: 'var(--text-primary)'
+        color: 'var(--text-primary)',
+        width: '100%',
+        minWidth: 0,
+        padding: 0,
     }
 
     return (
-        <div style={containerStyle}>
+        <div className="tool-panel" style={containerStyle}>
             <Card
-                title="Learning Path Recommendations"
+                title="Learning Path"
                 icon="🧭"
                 style={{ marginBottom: '24px' }}
             >
@@ -67,7 +70,7 @@ function LearningPathRecommendations({ onNavigateToDay }: LearningPathRecommenda
                         borderRadius: '8px',
                         marginBottom: '16px'
                     }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                             <div>
                                 <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
                                     Current Progress
@@ -127,10 +130,10 @@ function LearningPathRecommendations({ onNavigateToDay }: LearningPathRecommenda
                                         borderLeftWidth: '4px'
                                     }}
                                 >
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ fontSize: '24px' }}>{getTypeIcon(rec.type)}</span>
-                                            <div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 8, marginBottom: '8px', flexWrap: 'wrap' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                                            <span style={{ fontSize: '24px', flexShrink: 0 }}>{getTypeIcon(rec.type)}</span>
+                                            <div style={{ minWidth: 0 }}>
                                                 <h4 style={{ margin: 0, fontSize: '16px' }}>{rec.title}</h4>
                                                 <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                                                     {rec.type.charAt(0).toUpperCase() + rec.type.slice(1)} • {rec.priority} priority

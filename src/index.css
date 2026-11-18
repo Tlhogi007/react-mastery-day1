@@ -247,23 +247,54 @@ html {
   background-size: auto, auto, 48px 48px, 48px 48px;
   background-attachment: fixed;
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  min-height: 100dvh;
   background: transparent;
   color: var(--text-primary);
   font-family: var(--font-ui);
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
   margin: 0;
   padding: 0;
   background: transparent;
+  overflow-x: clip;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+pre,
+table {
+  max-width: 100%;
+}
+
+pre {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 a {
@@ -394,9 +425,41 @@ select {
 }
 
 @media (max-width: 768px) {
-  h1 { font-size: 2em; }
-  h2 { font-size: 1.5em; }
-  h3 { font-size: 1.25em; }
+  h1 { font-size: 1.55rem; }
+  h2 { font-size: 1.3rem; }
+  h3 { font-size: 1.1rem; }
+
+  html {
+    background-attachment: scroll;
+  }
+
+  button,
+  .app-icon-button {
+    min-height: 40px;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px; /* avoid iOS zoom on focus */
+  }
+
+  /* Lesson / tool code blocks stay readable without blowing layout */
+  pre {
+    font-size: 0.78rem;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 { font-size: 1.35rem; }
+  h2 { font-size: 1.2rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -420,6 +483,31 @@ select {
 .cl-socialButtonsBlockButton:hover,
 .cl-socialButtonsBlockButton:focus-visible {
   background-color: var(--bg-section) !important;
+}
+
+/* Keep UserButton menu inside narrow / mobile viewports */
+.cl-userButtonPopoverCard,
+.cl-userButtonPopoverCardBox {
+  max-width: min(280px, calc(100vw - 24px)) !important;
+  width: min(280px, calc(100vw - 24px)) !important;
+  box-sizing: border-box !important;
+}
+
+.cl-userButtonPopoverMain {
+  max-width: 100% !important;
+}
+
+@media (max-width: 768px) {
+  .cl-userButton-root,
+  .cl-userButtonTrigger {
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+  .cl-userButtonPopoverCard {
+    /* Prefer anchoring near the trigger; clamp if floating-ui overflows */
+    max-width: calc(100vw - 24px) !important;
+  }
 }
 
 .cl-userButtonPopoverActionButton__signOut:hover,

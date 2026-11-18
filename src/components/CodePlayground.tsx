@@ -4,6 +4,7 @@
  */
 
 import { useState, useRef, useEffect, type JSX } from 'react'
+import '../exercises/exerciseLayout.css'
 
 interface CodePlaygroundProps {
     initialCode: string
@@ -67,6 +68,8 @@ function CodePlayground({
     const [code, setCode] = useState<string>(initialCode)
     const [error, setError] = useState<string | null>(null)
     const [showPreview, setShowPreview] = useState<boolean>(false)
+    const [softWrap, setSoftWrap] = useState<boolean>(false)
+    const rootRef = useRef<HTMLDivElement>(null)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const previewRef = useRef<HTMLDivElement>(null)
     const lineNumbersRef = useRef<HTMLDivElement>(null)
@@ -74,6 +77,28 @@ function CodePlayground({
     useEffect(() => {
         setCode(initialCode)
     }, [initialCode])
+
+    // Soft-wrap based on the playground column width (not the viewport),
+    // so nested lab/preview panels wrap correctly on desktop too.
+    useEffect(() => {
+        const el = rootRef.current
+        if (!el || typeof ResizeObserver === 'undefined') return
+
+        const update = (width: number): void => {
+            const coarse =
+                typeof window !== 'undefined' &&
+                window.matchMedia('(pointer: coarse)').matches
+            setSoftWrap(width < 640 || coarse)
+        }
+
+        update(el.getBoundingClientRect().width)
+        const ro = new ResizeObserver((entries) => {
+            const width = entries[0]?.contentRect.width ?? el.getBoundingClientRect().width
+            update(width)
+        })
+        ro.observe(el)
+        return () => ro.disconnect()
+    }, [])
 
     // Sync line numbers scroll with textarea
     useEffect(() => {
@@ -177,7 +202,11 @@ function CodePlayground({
         overflow: 'hidden',
         background: 'var(--bg-card)',
         marginTop: '20px',
-        boxShadow: 'var(--shadow-md)'
+        boxShadow: 'var(--shadow-md)',
+        width: '100%',
+        maxWidth: '100%',
+        minWidth: 0,
+        boxSizing: 'border-box',
     }
 
     const headerStyle: React.CSSProperties = {
@@ -188,6 +217,8 @@ function CodePlayground({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        gap: 8,
+        flexWrap: 'wrap',
         fontSize: '14px'
     }
 
@@ -197,53 +228,61 @@ function CodePlayground({
         height: `${height}px`,
         display: 'flex',
         overflow: 'hidden',
-        borderTop: '1px solid var(--border-light)'
+        borderTop: '1px solid var(--border-light)',
+        maxWidth: '100%',
     }
 
     const lineNumbersStyle: React.CSSProperties = {
-        padding: '15px 8px',
+        padding: softWrap ? '12px 6px' : '15px 8px',
         fontFamily: '"Fira Code", "Consolas", "Monaco", "Courier New", monospace',
-        fontSize: '14px',
+        fontSize: softWrap ? '12px' : '14px',
         lineHeight: '1.6',
         color: 'var(--text-muted)',
         background: 'var(--bg-tertiary)',
         borderRight: '1px solid var(--border-light)',
         userSelect: 'none',
         textAlign: 'right',
-        minWidth: '50px',
+        minWidth: softWrap ? '36px' : '50px',
         overflowY: 'auto',
         overflowX: 'hidden',
         whiteSpace: 'pre',
         flexShrink: 0,
         height: '100%',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
     }
 
     const codeEditorWrapperStyle: React.CSSProperties = {
         position: 'relative',
         flex: 1,
-        overflow: 'hidden'
+        minWidth: 0,
+        overflow: 'auto',
+        WebkitOverflowScrolling: 'touch',
     }
 
     const textareaStyle: React.CSSProperties = {
         width: '100%',
+        minWidth: 0,
         height: '100%',
-        padding: '15px',
+        padding: softWrap ? '12px' : '15px',
         fontFamily: '"Fira Code", "Consolas", "Monaco", "Courier New", monospace',
-        fontSize: '14px',
+        fontSize: softWrap ? '12px' : '13px',
         lineHeight: '1.6',
         border: 'none',
         resize: 'none' as const,
         outline: 'none',
         tabSize: 2,
-        whiteSpace: 'pre',
-        overflowWrap: 'normal',
+        // Soft-wrap in narrow columns; prefer wrap at spaces (not mid-token)
+        whiteSpace: softWrap ? 'pre-wrap' : 'pre',
+        overflowWrap: softWrap ? 'break-word' : 'normal',
+        wordBreak: 'normal',
         overflowX: 'auto',
         overflowY: 'auto',
         position: 'relative',
         zIndex: showPreview ? 0 : 1,
         margin: 0,
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        background: 'transparent',
+        color: 'var(--text-primary)',
     }
 
     const previewStyle: React.CSSProperties = {
@@ -252,19 +291,22 @@ function CodePlayground({
         left: 0,
         width: '100%',
         height: '100%',
-        padding: '15px',
+        padding: softWrap ? '12px' : '15px',
         fontFamily: '"Fira Code", "Consolas", "Monaco", "Courier New", monospace',
-        fontSize: '14px',
+        fontSize: softWrap ? '12px' : '14px',
         lineHeight: '1.6',
         pointerEvents: 'none',
-        whiteSpace: 'pre-wrap',
-        overflow: 'hidden',
+        whiteSpace: softWrap ? 'pre-wrap' : 'pre',
+        overflowWrap: softWrap ? 'break-word' : 'normal',
+        wordBreak: 'normal',
+        overflow: 'auto',
+        WebkitOverflowScrolling: 'touch',
         zIndex: 1,
         background: 'var(--code-bg, var(--bg-secondary))',
         margin: 0,
         border: 'none',
         boxSizing: 'border-box',
-        color: 'var(--text-primary)'
+        color: 'var(--text-primary)',
     }
 
     // Calculate line numbers
@@ -272,10 +314,10 @@ function CodePlayground({
     const lineNumbers = Array.from({ length: lineCount }, (_, i) => i + 1)
 
     return (
-        <div style={containerStyle}>
+        <div ref={rootRef} className="code-playground-root" style={containerStyle}>
             <div style={headerStyle}>
                 <span>{title}</span>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                     {!readOnly && (
                         <button
                             onClick={() => setShowPreview(!showPreview)}
@@ -298,6 +340,7 @@ function CodePlayground({
                 </div>
             </div>
             <div style={editorContainerStyle}>
+                {!softWrap && (
                 <div
                     ref={lineNumbersRef}
                     style={lineNumbersStyle}
@@ -308,6 +351,7 @@ function CodePlayground({
                         </div>
                     ))}
                 </div>
+                )}
                 <div style={codeEditorWrapperStyle}>
                     {showPreview && (
                         <div
@@ -344,17 +388,17 @@ function CodePlayground({
                 </div>
             )}
             {!readOnly && (
-                <div style={{
-                    padding: '10px 15px',
-                    background: 'var(--bg-section)',
-                    fontSize: '12px',
-                    color: 'var(--text-secondary)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                }}>
-                    <span>💡 Edit the code above to experiment. Tab for indent, Enter for auto-indent.</span>
-                    <span style={{ fontFamily: 'monospace' }}>
+                <div
+                    className="code-playground-footer"
+                    style={{
+                        padding: '10px 12px',
+                        background: 'var(--bg-section)',
+                        fontSize: '12px',
+                        color: 'var(--text-secondary)',
+                    }}
+                >
+                    <span>Edit above to experiment.</span>
+                    <span style={{ fontFamily: 'monospace', flexShrink: 0 }}>
                         {code.split('\n').length} lines
                     </span>
                 </div>

@@ -26,32 +26,14 @@ function QuizOption({
   const isSelected = selectedAnswer === index
   const isCorrect = index === question.correctAnswer
 
-  const optionStyle: React.CSSProperties = {
-    padding: '12px',
-    margin: '8px 0',
-    background: isSelected
-      ? isCorrect
-        ? 'var(--bg-success)'
-        : 'var(--bg-warning)'
-      : 'var(--bg-section)',
-    border: `2px solid ${isSelected
-      ? isCorrect
-        ? 'var(--bg-success)'
-        : 'var(--border-warning)'
-      : 'var(--border-color)'
-    }`,
-    borderRadius: '6px',
-    cursor: completed ? 'default' : 'pointer',
-    transition: 'all 0.2s'
-  }
-
   return (
     <div
+      className={`quiz-option${isSelected ? ' quiz-option--selected' : ''}${isSelected && isCorrect ? ' quiz-option--correct' : ''}${isSelected && !isCorrect ? ' quiz-option--wrong' : ''}`}
       onClick={() => !completed && onSelect(index)}
-      style={optionStyle}
       role="button"
       tabIndex={completed ? -1 : 0}
       aria-label={`Option ${String.fromCharCode(65 + index)}: ${option}`}
+      style={{ cursor: completed ? 'default' : 'pointer' }}
       onKeyDown={(e) => {
         if (!completed && (e.key === 'Enter' || e.key === ' ')) {
           e.preventDefault()
@@ -59,27 +41,13 @@ function QuizOption({
         }
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <div style={{
-          width: '24px',
-          height: '24px',
-          borderRadius: '50%',
-          background: isSelected
-            ? isCorrect
-              ? 'var(--bg-success)'
-              : 'var(--bg-warning)'
-            : 'var(--bg-tertiary)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: '12px',
-          fontWeight: 'bold'
-        }}>
+      <div className="quiz-option__inner">
+        <div className="quiz-option__letter">
           {String.fromCharCode(65 + index)}
         </div>
-        <div>{option}</div>
+        <div className="quiz-option__text">{option}</div>
         {isSelected && (
-          <div style={{ marginLeft: 'auto' }}>
+          <div className="quiz-option__mark" aria-hidden>
             {isCorrect ? '✅' : '❌'}
           </div>
         )}

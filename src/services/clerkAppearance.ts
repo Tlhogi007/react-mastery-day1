@@ -163,10 +163,16 @@ export function getClerkAppearance(mode: AppColorMode = resolveAppColorMode()) {
         border: `1px solid ${p.border}`,
         boxShadow: p.shadow,
         color: p.colorForeground,
+        width: 'min(280px, calc(100vw - 24px))',
+        maxWidth: 'calc(100vw - 24px)',
+      },
+      userButtonPopoverCardBox: {
+        maxWidth: 'calc(100vw - 16px)',
       },
       userButtonPopoverMain: {
         backgroundColor: p.colorBackground,
         color: p.colorForeground,
+        padding: '8px 0',
       },
       userButtonPopoverActionButton: {
         borderRadius: 8,

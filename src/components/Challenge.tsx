@@ -1,6 +1,7 @@
 import { useState, type JSX } from 'react'
 import type { Challenge } from '../types/challenges'
 import CodePlayground from './CodePlayground'
+import '../exercises/exerciseLayout.css'
 
 interface ChallengeProps {
   challenge: Challenge
@@ -14,9 +15,14 @@ function Challenge({ challenge }: ChallengeProps): JSX.Element {
   const containerStyle: React.CSSProperties = {
     border: '2px solid var(--border-primary)',
     borderRadius: '8px',
-    padding: '20px',
+    padding: 'clamp(12px, 3vw, 20px)',
     background: 'var(--bg-card)',
-    marginTop: '20px'
+    marginTop: '20px',
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    boxSizing: 'border-box',
+    overflow: 'hidden',
   }
 
   const difficultyColors: Record<string, string> = {
@@ -27,9 +33,11 @@ function Challenge({ challenge }: ChallengeProps): JSX.Element {
 
   return (
     <div style={containerStyle}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '15px' }}>
-        <div>
-          <h3>💻 Practice Challenge: {challenge.title}</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 10, marginBottom: '15px', flexWrap: 'wrap' }}>
+        <div style={{ minWidth: 0, flex: '1 1 200px' }}>
+          <h3 style={{ margin: 0, fontSize: 'clamp(1rem, 3.2vw, 1.2rem)', lineHeight: 1.3 }}>
+            Practice Challenge: {challenge.title}
+          </h3>
           <div style={{
             display: 'inline-block',
             padding: '4px 8px',
@@ -58,33 +66,31 @@ function Challenge({ challenge }: ChallengeProps): JSX.Element {
         height={200}
       />
 
-      <div style={{ marginTop: '20px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+      <div className="lesson-action-stack challenge-actions" style={{ marginTop: '20px' }}>
         {challenge.hints.length > 0 && (
           <button
+            type="button"
+            className="lesson-full-btn"
             onClick={() => setShowHint(prev => Math.min(prev + 1, challenge.hints.length))}
             disabled={showHint >= challenge.hints.length}
             style={{
-              padding: '8px 16px',
               background: 'var(--button-primary)',
               color: 'var(--button-text)',
-              border: 'none',
-              borderRadius: '4px',
               cursor: showHint >= challenge.hints.length ? 'not-allowed' : 'pointer',
-              opacity: showHint >= challenge.hints.length ? 0.5 : 1
+              opacity: showHint >= challenge.hints.length ? 0.5 : 1,
             }}
           >
-            {showHint === 0 ? '💡 Show Hint' : `💡 Show Hint ${showHint + 1}`}
+            {showHint === 0 ? 'Show Hint' : `Show Hint ${showHint + 1}`}
           </button>
         )}
         <button
+          type="button"
+          className="lesson-full-btn"
           onClick={() => setShowSolution(!showSolution)}
           style={{
-            padding: '8px 16px',
             background: showSolution ? 'var(--bg-warning)' : 'var(--button-primary)',
-            color: 'var(--button-text)',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
+            color: showSolution ? 'var(--text-on-warning)' : 'var(--button-text)',
+            cursor: 'pointer',
           }}
         >
           {showSolution ? 'Hide Solution' : 'Show Solution'}

@@ -1,4 +1,5 @@
 import { useState, useRef, type JSX } from 'react'
+import '../../exerciseLayout.css'
 import Challenge from '../../../components/Challenge'
 import Quiz from '../../../components/Quiz'
 import DebuggingScenario from '../../../components/DebuggingScenario'
@@ -116,12 +117,12 @@ function Day03Fiber(): JSX.Element {
                                     icon="🎯"
                                     style={{ marginBottom: '24px' }}
                                 >
-                                    <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                                        <li>Understand Fiber Node Structure</li>
-                                        <li>Learn about current vs workInProgress tree</li>
-                                        <li>Master the Unit of Work model</li>
-                                        <li>Answer: Why was Fiber introduced?</li>
-                                    </ul>
+                                    <div className="lesson-points">
+                                        <div className="lesson-points__item"><span>Understand Fiber Node Structure</span></div>
+                                        <div className="lesson-points__item"><span>Learn about current vs workInProgress tree</span></div>
+                                        <div className="lesson-points__item"><span>Master the Unit of Work model</span></div>
+                                        <div className="lesson-points__item"><span>Answer: Why was Fiber introduced?</span></div>
+                                    </div>
                                 </Card>
 
                                 <Card
@@ -129,13 +130,18 @@ function Day03Fiber(): JSX.Element {
                                     icon="🎯"
                                     style={{ marginBottom: '24px' }}
                                 >
-                                    <p><strong>Instructions:</strong></p>
-                                    <ol>
-                                        <li>Click "Start Processing" to see Fiber process each component one by one</li>
-                                        <li>Watch the ⚡ indicator move through the component tree</li>
-                                        <li>Try clicking "Interrupt!" while processing - see how Fiber can pause!</li>
-                                        <li>Notice how Fiber processes: App → Header → Logo → Content → Footer</li>
-                                    </ol>
+                                    <div className="lesson-prose">
+                                      <p><strong>Instructions:</strong></p>
+                                      <div className="lesson-points lesson-points--numbered">
+                                          <div className="lesson-points__item"><span>1. Click &quot;Start Processing&quot; to see Fiber process each component one by one</span></div>
+                                          <div className="lesson-points__item"><span>2. Watch the ⚡ indicator move through the component tree</span></div>
+                                          <div className="lesson-points__item"><span>3. Try clicking &quot;Interrupt!&quot; while processing — see how Fiber can pause!</span></div>
+                                          <div className="lesson-points__item"><span>4. Notice how Fiber processes:{' '}
+                                            <span style={{ overflowWrap: 'anywhere' }}>
+                                              App → Header → Logo → Content → Footer
+                                            </span></span></div>
+                                      </div>
+                                    </div>
                                     <FiberControls
                                         isProcessing={isProcessing}
                                         wasInterrupted={wasInterrupted}
@@ -178,70 +184,57 @@ function Day03Fiber(): JSX.Element {
                                     style={{ marginBottom: '24px' }}
                                 >
 
-                                    <div style={{ marginBottom: '20px' }}>
+                                    <div className="lesson-prose" style={{ marginBottom: '20px' }}>
                                         <h4>🌳 Fiber Node Structure</h4>
                                         <p>Each Fiber node represents a component or DOM element and contains:</p>
-                                        <pre style={{ background: 'var(--bg-section)', padding: '10px', borderRadius: '4px', overflow: 'auto', color: 'var(--text-primary)' }}>
-                                            {`interface FiberNode {
-  // Component info
+                                        <pre className="lesson-code">{`interface FiberNode {
   type: string | Function
   props: object
-  stateNode: HTMLElement | ComponentInstance
-  
-  // Tree structure (linked list)
-  child: FiberNode | null      // First child
-  sibling: FiberNode | null    // Next sibling
-  return: FiberNode | null     // Parent
-  
-  // Work tracking
-  alternate: FiberNode | null  // Points to other tree
-  effectTag: string            // What to do in commit
-  lanes: number                // Priority lanes
-}`}
-                                        </pre>
-                                        <p><strong>Tree Structure:</strong> Fiber uses a linked list structure instead of a tree, making it easier to traverse and interrupt.</p>
+  stateNode: unknown
+  child: FiberNode | null   // first child
+  sibling: FiberNode | null // next sibling
+  return: FiberNode | null  // parent
+  alternate: FiberNode | null
+  effectTag: string
+  lanes: number
+}`}</pre>
+                                        <p><strong>Tree Structure:</strong> Fiber uses a linked list instead of a tree, so traversal can pause between nodes.</p>
                                     </div>
 
-                                    <div style={{ marginBottom: '20px' }}>
+                                    <div className="lesson-prose" style={{ marginBottom: '20px' }}>
                                         <h4>🔄 Current vs WorkInProgress Tree</h4>
                                         <p>React maintains <strong>two trees</strong> during rendering:</p>
-                                        <ul>
-                                            <li><strong>Current Tree:</strong> The tree that's currently committed to the DOM (what users see)</li>
-                                            <li><strong>WorkInProgress Tree:</strong> The tree being built during render phase (not yet committed)</li>
-                                        </ul>
+                                        <div className="lesson-points">
+                                            <div className="lesson-points__item"><span><strong>Current Tree:</strong> committed to the DOM (what users see)</span></div>
+                                            <div className="lesson-points__item"><span><strong>WorkInProgress Tree:</strong> built during render (not committed yet)</span></div>
+                                        </div>
                                         <p><strong>How they work together:</strong></p>
-                                        <ol>
-                                            <li>Render phase builds the WorkInProgress tree</li>
-                                            <li>Each node in WorkInProgress has an <code>alternate</code> pointer to Current</li>
-                                            <li>Commit phase swaps the trees (WorkInProgress becomes Current)</li>
-                                            <li>Next render uses the old Current as the new WorkInProgress base</li>
-                                        </ol>
+                                        <div className="lesson-points">
+                                            <div className="lesson-points__item"><span>Render phase builds the WorkInProgress tree</span></div>
+                                            <div className="lesson-points__item"><span>Each WIP node has an <code>alternate</code> pointer to Current</span></div>
+                                            <div className="lesson-points__item"><span>Commit swaps trees (WIP becomes Current)</span></div>
+                                            <div className="lesson-points__item"><span>Next render reuses old Current as the new WIP base</span></div>
+                                        </div>
                                     </div>
 
-                                    <div style={{ marginBottom: '20px' }}>
+                                    <div className="lesson-prose" style={{ marginBottom: '20px' }}>
                                         <h4>⚙️ Unit of Work Model</h4>
                                         <p>Fiber breaks rendering into small, interruptible units:</p>
-                                        <ul>
-                                            <li><strong>One Fiber = One Unit of Work</strong></li>
-                                            <li>React processes one Fiber node at a time</li>
-                                            <li>After each unit, React checks: "Should I yield to the browser?"</li>
-                                            <li>If urgent work exists, React pauses and handles it</li>
-                                            <li>React resumes exactly where it left off</li>
-                                        </ul>
+                                        <div className="lesson-points">
+                                            <div className="lesson-points__item"><span><strong>One Fiber = One Unit of Work</strong></span></div>
+                                            <div className="lesson-points__item"><span>React processes one Fiber node at a time</span></div>
+                                            <div className="lesson-points__item"><span>After each unit: should I yield to the browser?</span></div>
+                                            <div className="lesson-points__item"><span>Urgent work → pause; otherwise continue</span></div>
+                                            <div className="lesson-points__item"><span>Resume exactly where it left off</span></div>
+                                        </div>
                                         <p><strong>Work Loop:</strong></p>
-                                        <pre style={{ background: 'var(--bg-section)', padding: '10px', borderRadius: '4px', overflow: 'auto', color: 'var(--text-primary)' }}>
+                                        <pre className="lesson-code">
                                             {`function workLoop() {
-  while (workInProgress !== null && !shouldYield()) {
-    workInProgress = performUnitOfWork(workInProgress)
+  while (fiber && !shouldYield()) {
+    fiber = performUnitOfWork(fiber)
   }
-  
-  if (workInProgress !== null) {
-    // More work, but yielding to browser
-    scheduleCallback(workLoop)
-  } else {
-    // All work complete, commit
-    commitRoot()
-  }
+  if (fiber) scheduleCallback(workLoop)
+  else commitRoot()
 }`}
                                         </pre>
                                     </div>
@@ -249,21 +242,21 @@ function Day03Fiber(): JSX.Element {
                                     <div>
                                         <h4>❓ Why was Fiber Introduced?</h4>
                                         <p><strong>Problems with the old Stack Reconciler:</strong></p>
-                                        <ul>
-                                            <li>❌ <strong>Synchronous:</strong> Had to render entire tree in one go</li>
-                                            <li>❌ <strong>Uninterruptible:</strong> Couldn't pause for urgent user input</li>
-                                            <li>❌ <strong>Blocking:</strong> Long renders blocked the browser</li>
-                                            <li>❌ <strong>No Priority:</strong> All updates treated equally</li>
-                                            <li>❌ <strong>Poor UX:</strong> UI felt laggy during heavy rendering</li>
-                                        </ul>
+                                        <div className="lesson-points">
+                                            <div className="lesson-points__item"><span>❌ <strong>Synchronous:</strong> Had to render entire tree in one go</span></div>
+                                            <div className="lesson-points__item"><span>❌ <strong>Uninterruptible:</strong> Couldn&apos;t pause for urgent user input</span></div>
+                                            <div className="lesson-points__item"><span>❌ <strong>Blocking:</strong> Long renders blocked the browser</span></div>
+                                            <div className="lesson-points__item"><span>❌ <strong>No Priority:</strong> All updates treated equally</span></div>
+                                            <div className="lesson-points__item"><span>❌ <strong>Poor UX:</strong> UI felt laggy during heavy rendering</span></div>
+                                        </div>
                                         <p><strong>Solutions Fiber Provides:</strong></p>
-                                        <ul>
-                                            <li>✅ <strong>Interruptible:</strong> Can pause and resume rendering</li>
-                                            <li>✅ <strong>Prioritized:</strong> Urgent updates (clicks, typing) processed first</li>
-                                            <li>✅ <strong>Time Slicing:</strong> Yields to browser every 5ms</li>
-                                            <li>✅ <strong>Concurrent:</strong> Multiple work trees can exist</li>
-                                            <li>✅ <strong>Better UX:</strong> UI stays responsive during heavy work</li>
-                                        </ul>
+                                        <div className="lesson-points">
+                                            <div className="lesson-points__item"><span>✅ <strong>Interruptible:</strong> Can pause and resume rendering</span></div>
+                                            <div className="lesson-points__item"><span>✅ <strong>Prioritized:</strong> Urgent updates (clicks, typing) processed first</span></div>
+                                            <div className="lesson-points__item"><span>✅ <strong>Time Slicing:</strong> Yields to browser every 5ms</span></div>
+                                            <div className="lesson-points__item"><span>✅ <strong>Concurrent:</strong> Multiple work trees can exist</span></div>
+                                            <div className="lesson-points__item"><span>✅ <strong>Better UX:</strong> UI stays responsive during heavy work</span></div>
+                                        </div>
                                     </div>
 
                                     <div style={{
@@ -322,57 +315,62 @@ function Day03Fiber(): JSX.Element {
                                         </div>
                                     </div>
 
-                                    <div style={{
+                                    <div
+                                      className="lesson-prose"
+                                      style={{
                                         marginTop: '20px',
-                                        background: 'var(--bg-card)',
-                                        border: '2px solid var(--border-primary)',
-                                        padding: '20px',
+                                        padding: 'clamp(12px, 3vw, 16px)',
                                         borderRadius: '8px',
-                                        fontFamily: 'monospace',
-                                        fontSize: '14px'
-                                    }}>
-                                        <h4>📊 What's Happening Behind the Scenes</h4>
-                                        <div style={{
-                                            background: 'var(--bg-section)',
-                                            padding: '15px',
-                                            borderRadius: '4px',
-                                            marginTop: '10px'
-                                        }}>
-                                            {currentFiber ? (
-                                                <div>
-                                                    <h5>Currently Processing: <strong style={{ color: 'var(--button-primary)' }}>{currentFiber}</strong></h5>
-                                                    <p>Fiber is processing this component:</p>
-                                                    <ul>
-                                                        <li>Creating/updating the Fiber node</li>
-                                                        <li>Calling the component function</li>
-                                                        <li>Building the WorkInProgress tree</li>
-                                                        <li>Marking effects for commit phase</li>
-                                                    </ul>
-                                                    <p><strong>Next:</strong> {fiberOrder[fiberOrder.indexOf(currentFiber) + 1] || 'Commit Phase'}</p>
+                                        border: '1px solid var(--border-primary)',
+                                        background: 'var(--bg-section)',
+                                        fontSize: '14px',
+                                        minWidth: 0,
+                                        boxSizing: 'border-box',
+                                      }}
+                                    >
+                                        <h4 style={{ marginTop: 0, fontSize: 'clamp(0.95rem, 3vw, 1.05rem)' }}>
+                                          📊 What&apos;s Happening Behind the Scenes
+                                        </h4>
+                                        {currentFiber ? (
+                                            <div>
+                                                <p style={{ marginBottom: 8 }}>
+                                                  Currently processing:{' '}
+                                                  <strong style={{ color: 'var(--button-primary)' }}>{currentFiber}</strong>
+                                                </p>
+                                                <div className="lesson-points">
+                                                    <div className="lesson-points__item"><span>Creating/updating the Fiber node</span></div>
+                                                    <div className="lesson-points__item"><span>Calling the component function</span></div>
+                                                    <div className="lesson-points__item"><span>Building the WorkInProgress tree</span></div>
+                                                    <div className="lesson-points__item"><span>Marking effects for commit phase</span></div>
                                                 </div>
-                                            ) : isProcessing ? (
-                                                <div>
-                                                    <h5>Processing Complete!</h5>
-                                                    <p>All Fiber nodes processed. Ready for commit phase.</p>
-                                                </div>
-                                            ) : (
-                                                <div>
-                                                    <h5>Fiber Work Loop:</h5>
-                                                    <pre style={{ background: 'var(--bg-tertiary)', padding: '10px', borderRadius: '4px', overflow: 'auto' }}>{`function workLoop() {
-  while (workInProgress !== null && !shouldYield()) {
-    // Process one Fiber node
-    workInProgress = performUnitOfWork(workInProgress)
-    
-    // After each unit, check:
-    // - Is there urgent work? → Pause
-    // - Time slice expired? → Yield
-    // - Otherwise → Continue
-  }
+                                                <p style={{ marginBottom: 0 }}>
+                                                  <strong>Next:</strong>{' '}
+                                                  {fiberOrder[fiberOrder.indexOf(currentFiber) + 1] || 'Commit Phase'}
+                                                </p>
+                                            </div>
+                                        ) : isProcessing ? (
+                                            <div>
+                                                <p style={{ marginBottom: 0 }}>
+                                                  All Fiber nodes processed. Ready for commit phase.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <p style={{ marginBottom: 8 }}><strong>Fiber Work Loop</strong></p>
+                                                <pre className="lesson-code">{`while (fiber && !shouldYield()) {
+  fiber = performUnitOfWork(fiber)
+  // pause if urgent work / timeslice
 }`}</pre>
-                                                    <p><strong>Click "Start Processing" above to see this in action!</strong></p>
+                                                <div className="lesson-points" style={{ marginTop: 10 }}>
+                                                  <div className="lesson-points__item"><span>Urgent work? → pause</span></div>
+                                                  <div className="lesson-points__item"><span>Time slice up? → yield</span></div>
+                                                  <div className="lesson-points__item"><span>Otherwise → continue</span></div>
                                                 </div>
-                                            )}
-                                        </div>
+                                                <p style={{ marginBottom: 0, fontSize: 13, color: 'var(--text-secondary)' }}>
+                                                  Use <strong>Start Processing</strong> above to watch this run.
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 </Card>
 
@@ -381,13 +379,13 @@ function Day03Fiber(): JSX.Element {
                                     icon="📚"
                                     style={{ marginBottom: '24px' }}
                                 >
-                                    <ul>
-                                        <li><strong>Fiber = Unit of Work:</strong> Each Fiber node is a small, interruptible piece of rendering</li>
-                                        <li><strong>Two Trees:</strong> Current (committed) and WorkInProgress (being built)</li>
-                                        <li><strong>Linked List Structure:</strong> Makes traversal and interruption easy</li>
-                                        <li><strong>Why Fiber:</strong> Enables concurrent rendering, priority updates, and responsive UI</li>
-                                        <li><strong>Interruptible:</strong> Can pause after each unit to handle urgent work</li>
-                                    </ul>
+                                    <div className="lesson-points">
+                                        <div className="lesson-points__item"><span><strong>Fiber = Unit of Work:</strong> Each Fiber node is a small, interruptible piece of rendering</span></div>
+                                        <div className="lesson-points__item"><span><strong>Two Trees:</strong> Current (committed) and WorkInProgress (being built)</span></div>
+                                        <div className="lesson-points__item"><span><strong>Linked List Structure:</strong> Makes traversal and interruption easy</span></div>
+                                        <div className="lesson-points__item"><span><strong>Why Fiber:</strong> Enables concurrent rendering, priority updates, and responsive UI</span></div>
+                                        <div className="lesson-points__item"><span><strong>Interruptible:</strong> Can pause after each unit to handle urgent work</span></div>
+                                    </div>
                                 </Card>
 
                                 <VisualDiagram
@@ -396,7 +394,11 @@ function Day03Fiber(): JSX.Element {
                                         {
                                             title: 'Component Tree',
                                             content: 'Your React components form a tree structure',
-                                            visual: `App\n├── Header\n│   └── Logo\n├── Content\n└── Footer`
+                                            visual: `App
+  Header
+    Logo
+  Content
+  Footer`
                                         },
                                         {
                                             title: 'Fiber Linked List',
@@ -411,7 +413,7 @@ function Day03Fiber(): JSX.Element {
                                         {
                                             title: 'Interruption Points',
                                             content: 'After each Fiber, React can pause',
-                                            visual: `App → [can interrupt] →\nHeader → [can interrupt] →\nLogo → [can interrupt] →\nContent → [can interrupt] →\nFooter\n\nEach → is an interruption point`
+                                            visual: `App → Header → Logo → Content → Footer\n\nEach → can interrupt`
                                         }
                                     ]}
                                 />
@@ -439,7 +441,7 @@ function Day03Fiber(): JSX.Element {
                                         <h2 style={{ marginBottom: '20px' }}>Practice Challenges</h2>
                                         <div style={{
                                             display: 'grid',
-                                            gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                                            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
                                             gap: '20px'
                                         }}>
                                             {day03Challenges.map((challenge) => (
@@ -487,7 +489,7 @@ function Day03Fiber(): JSX.Element {
                                         <h2 style={{ marginBottom: '20px' }}>Debugging Scenarios</h2>
                                         <div style={{
                                             display: 'grid',
-                                            gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                                            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
                                             gap: '20px'
                                         }}>
                                             {day03Debugging.map((scenario) => (

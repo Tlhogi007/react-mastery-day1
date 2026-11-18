@@ -44,7 +44,9 @@ function CodeSnippetsLibrary(): JSX.Element {
 
     const containerStyle: React.CSSProperties = {
         color: 'var(--text-primary)',
-        padding: '20px'
+        padding: 0,
+        width: '100%',
+        minWidth: 0,
     }
 
     const snippetCardStyle: React.CSSProperties = {
@@ -58,11 +60,11 @@ function CodeSnippetsLibrary(): JSX.Element {
     }
 
     return (
-        <div style={containerStyle}>
-            <div style={{ marginBottom: '30px' }}>
-                <h1 style={{ marginBottom: '10px' }}>📚 Code Snippets Library</h1>
-                <p style={{ color: 'var(--text-secondary)' }}>
-                    Searchable collection of React patterns. Copy-paste ready examples.
+        <div className="tool-panel" style={containerStyle}>
+            <div className="tool-panel__hero" style={{ marginBottom: '20px' }}>
+                <h1 className="tool-panel__title">Code Snippets</h1>
+                <p className="tool-panel__lead">
+                    Searchable React patterns — copy-paste ready.
                 </p>
             </div>
 
@@ -89,8 +91,8 @@ function CodeSnippetsLibrary(): JSX.Element {
                     />
                 </div>
 
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    <div style={{ flex: 1, minWidth: '200px' }}>
+                <div className="tool-filters">
+                    <div>
                         <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px' }}>Category</label>
                         <select
                             value={selectedCategory}
@@ -111,7 +113,7 @@ function CodeSnippetsLibrary(): JSX.Element {
                         </select>
                     </div>
 
-                    <div style={{ flex: 1, minWidth: '200px' }}>
+                    <div>
                         <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px' }}>Difficulty</label>
                         <select
                             value={selectedDifficulty}
@@ -138,7 +140,16 @@ function CodeSnippetsLibrary(): JSX.Element {
                 </div>
             </Card>
 
-            <div style={{ display: 'grid', gridTemplateColumns: selectedSnippet ? '1fr 1fr' : '1fr', gap: '20px' }}>
+            <div
+                className={selectedSnippet ? 'responsive-split' : undefined}
+                style={{
+                    display: 'grid',
+                    gridTemplateColumns: selectedSnippet
+                        ? 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))'
+                        : '1fr',
+                    gap: '20px',
+                }}
+            >
                 <div>
                     <h3 style={{ marginBottom: '16px' }}>Snippets</h3>
                     {snippets.length === 0 ? (
@@ -211,7 +222,7 @@ function CodeSnippetsLibrary(): JSX.Element {
                         <Card
                             title={selectedSnippet.title}
                             icon="💻"
-                            style={{ marginBottom: '24px', position: 'sticky', top: '20px' }}
+                            style={{ marginBottom: '24px' }}
                         >
                             <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
                                 {selectedSnippet.description}
@@ -237,7 +248,7 @@ function CodeSnippetsLibrary(): JSX.Element {
                             <CodePlayground
                                 initialCode={selectedSnippet.code}
                                 readOnly={true}
-                                height={600}
+                                height={360}
                             />
 
                             <div style={{ marginTop: '16px', fontSize: '12px', color: 'var(--text-secondary)' }}>

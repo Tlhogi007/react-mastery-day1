@@ -4,6 +4,7 @@
  */
 
 import { useState, type JSX } from 'react'
+import '../../../exerciseLayout.css'
 
 interface TodoItem {
   id: string
@@ -42,17 +43,6 @@ function TodoRow({
   const [draftNote, setDraftNote] = useState('')
   const [starred, setStarred] = useState(false)
 
-  const rowStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    padding: 12,
-    background: todo.completed ? 'var(--bg-success)' : 'var(--bg-section)',
-    border: `2px solid ${todo.completed ? 'var(--progress-success)' : 'var(--border-color)'}`,
-    borderRadius: 6,
-    marginBottom: 10,
-  }
-
   const btn = (disabled: boolean): React.CSSProperties => ({
     padding: '6px 12px',
     background: disabled ? 'var(--bg-tertiary)' : 'var(--button-primary)',
@@ -62,23 +52,29 @@ function TodoRow({
     cursor: disabled ? 'not-allowed' : 'pointer',
     fontSize: 14,
     opacity: disabled ? 0.5 : 1,
+    minHeight: 40,
   })
 
   return (
-    <div style={rowStyle}>
+    <div
+      className="todo-demo-row"
+      style={{
+        background: todo.completed ? 'var(--bg-success)' : 'var(--bg-section)',
+        border: `2px solid ${todo.completed ? 'var(--progress-success)' : 'var(--border-color)'}`,
+      }}
+    >
       <input
         type="checkbox"
         checked={todo.completed}
         onChange={() => onToggleTodo(todo.id)}
-        style={{ width: 20, height: 20, cursor: 'pointer' }}
+        style={{ width: 20, height: 20, cursor: 'pointer', flexShrink: 0 }}
         aria-label={`Complete ${todo.text}`}
       />
       <span
+        className="todo-demo-row__title"
         style={{
-          flex: 1,
           textDecoration: todo.completed ? 'line-through' : 'none',
           color: todo.completed ? 'var(--text-secondary)' : 'var(--text-primary)',
-          fontSize: 16,
         }}
       >
         {todo.text}
@@ -91,35 +87,32 @@ function TodoRow({
           background: starred ? 'var(--bg-warning)' : 'var(--bg-card)',
           color: 'var(--text-primary)',
           border: '1px solid var(--border-color)',
+          flexShrink: 0,
         }}
         title="Local row state (not in parent)"
       >
         {starred ? '★ starred' : '☆ star'}
       </button>
       <input
+        className="todo-demo-row__note"
         type="text"
         placeholder="Local note (row state)…"
         value={draftNote}
         onChange={(e) => setDraftNote(e.target.value)}
-        style={{
-          padding: 6,
-          border: '1px solid var(--border-color)',
-          borderRadius: 4,
-          background: 'var(--bg-card)',
-          color: 'var(--text-primary)',
-          fontSize: 14,
-          minWidth: 150,
-        }}
       />
-      <div style={{ fontSize: 12, color: 'var(--text-muted)', minWidth: 110 }}>
-        Key: <code>{keyLabel}</code>
+      <div className="todo-demo-row__meta">
+        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+          Key: <code>{keyLabel}</code>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button type="button" onClick={onMoveUp} disabled={!canUp} style={btn(!canUp)}>
+            ↑
+          </button>
+          <button type="button" onClick={onMoveDown} disabled={!canDown} style={btn(!canDown)}>
+            ↓
+          </button>
+        </div>
       </div>
-      <button type="button" onClick={onMoveUp} disabled={!canUp} style={btn(!canUp)}>
-        ↑
-      </button>
-      <button type="button" onClick={onMoveDown} disabled={!canDown} style={btn(!canDown)}>
-        ↓
-      </button>
     </div>
   )
 }
@@ -132,20 +125,20 @@ function ReconciliationTodoDemo({
   onMoveDown,
 }: ReconciliationTodoDemoProps): JSX.Element {
   return (
-    <div>
+    <div style={{ width: '100%', maxWidth: '100%', minWidth: 0 }}>
       <h3 style={{ marginTop: 0 }}>
         Todo list {useIndexKeys ? '(index keys — buggy)' : '(stable id keys — correct)'}
       </h3>
       <div
         style={{
           background: 'var(--bg-info)',
-          padding: 15,
+          padding: 'clamp(12px, 3vw, 15px)',
           borderRadius: 8,
           marginBottom: 20,
         }}
       >
         <h4 style={{ marginTop: 0 }}>Try this</h4>
-        <ol style={{ marginBottom: 0, paddingLeft: 20 }}>
+        <ol style={{ marginBottom: 0 }}>
           <li>Star a row and type a local note on “Learn React”.</li>
           <li>Move that row down with ↓.</li>
           <li>
@@ -175,7 +168,7 @@ function ReconciliationTodoDemo({
       <div
         style={{
           background: 'var(--bg-info)',
-          padding: 15,
+          padding: 'clamp(12px, 3vw, 15px)',
           borderRadius: 8,
           marginTop: 20,
         }}
