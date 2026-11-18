@@ -1,0 +1,168 @@
+/**
+ * Learning Path Recommendations Component
+ * AI-suggested next steps based on quiz performance
+ */
+
+import { useState, useEffect, type JSX } from 'react'
+import { learningPathService, type LearningRecommendation } from '../services/learningPathService'
+import Card from './Card'
+
+function LearningPathRecommendations(): JSX.Element {
+    const [recommendations, setRecommendations] = useState<LearningRecommendation[]>([])
+    const [path, setPath] = useState(learningPathService.getPersonalizedPath())
+
+    useEffect(() => {
+        loadRecommendations()
+    }, [])
+
+    const loadRecommendations = (): void => {
+        const recs = learningPathService.getRecommendations()
+        setRecommendations(recs)
+        setPath(learningPathService.getPersonalizedPath())
+    }
+
+    const getTypeIcon = (type: LearningRecommendation['type']): string => {
+        const icons: Record<LearningRecommendation['type'], string> = {
+            review: '📚',
+            practice: '💪',
+            advance: '➡️',
+            focus: '🎯'
+        }
+        return icons[type]
+    }
+
+    const getPriorityColor = (priority: LearningRecommendation['priority']): string => {
+        const colors: Record<LearningRecommendation['priority'], string> = {
+            high: 'var(--bg-error)',
+            medium: 'var(--bg-warning)',
+            low: 'var(--bg-success)'
+        }
+        return colors[priority]
+    }
+
+    const containerStyle: React.CSSProperties = {
+        color: 'var(--text-primary)'
+    }
+
+    return (
+        <div style={containerStyle}>
+            <Card
+                title="Learning Path Recommendations"
+                icon="🧭"
+                style={{ marginBottom: '24px' }}
+            >
+                <div style={{ marginBottom: '24px' }}>
+                    <h3 style={{ marginBottom: '12px' }}>Your Learning Path</h3>
+                    <div style={{
+                        padding: '16px',
+                        background: 'var(--bg-section)',
+                        borderRadius: '8px',
+                        marginBottom: '16px'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                    Current Progress
+                                </div>
+                                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
+                                    Day {path.currentDay} / 7
+                                </div>
+                            </div>
+                            {path.nextDay && (
+                                <div style={{ textAlign: 'right' }}>
+                                    <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                        Suggested Next
+                                    </div>
+                                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--button-primary)' }}>
+                                        Day {path.nextDay}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 style={{ marginBottom: '12px' }}>Recommendations</h3>
+                    {recommendations.length === 0 ? (
+                        <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic', textAlign: 'center', padding: '40px' }}>
+                            Complete some quizzes to get personalized recommendations!
+                        </p>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {recommendations.map(rec => (
+                                <div
+                                    key={rec.id}
+                                    style={{
+                                        padding: '16px',
+                                        background: 'var(--bg-section)',
+                                        borderRadius: '8px',
+                                        border: `2px solid ${getPriorityColor(rec.priority)}`,
+                                        borderLeftWidth: '4px'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span style={{ fontSize: '24px' }}>{getTypeIcon(rec.type)}</span>
+                                            <div>
+                                                <h4 style={{ margin: 0, fontSize: '16px' }}>{rec.title}</h4>
+                                                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                                    {rec.type.charAt(0).toUpperCase() + rec.type.slice(1)} • {rec.priority} priority
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span style={{
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                            background: getPriorityColor(rec.priority),
+                                            color: rec.priority === 'high' ? 'var(--text-on-error)' :
+                                                rec.priority === 'medium' ? 'var(--text-on-warning)' :
+                                                    'var(--text-on-success)',
+                                            fontSize: '11px',
+                                            fontWeight: 'bold'
+                                        }}>
+                                            {rec.priority}
+                                        </span>
+                                    </div>
+                                    <p style={{ margin: '0 0 8px 0', lineHeight: '1.6' }}>{rec.description}</p>
+                                    <div style={{
+                                        padding: '8px',
+                                        background: 'var(--bg-card)',
+                                        borderRadius: '4px',
+                                        fontSize: '12px',
+                                        color: 'var(--text-secondary)'
+                                    }}>
+                                        <strong>Why:</strong> {rec.reason}
+                                    </div>
+                                    {rec.day && (
+                                        <div style={{ marginTop: '12px' }}>
+                                            <button
+                                                onClick={() => {
+                                                    // Navigate to day - would need router integration
+                                                    console.log(`Navigate to Day ${rec.day}`)
+                                                }}
+                                                style={{
+                                                    padding: '8px 16px',
+                                                    borderRadius: '6px',
+                                                    border: 'none',
+                                                    background: 'var(--button-primary)',
+                                                    color: 'var(--button-text)',
+                                                    cursor: 'pointer',
+                                                    fontSize: '14px'
+                                                }}
+                                            >
+                                                Go to Day {rec.day}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </Card>
+        </div>
+    )
+}
+
+export default LearningPathRecommendations

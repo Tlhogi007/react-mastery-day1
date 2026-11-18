@@ -1,0 +1,542 @@
+/**
+ * Custom hook for quiz state management
+ * Follows Single Responsibility Principle - handles only quiz logic
+ */
+
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import type { QuizQuestion } from '../types/challenges'
+import { quizQuestionService } from '../services/quizQuestionService'
+import { getTopicForDay } from '../services/topicMapper'
+import { progressStorage } from '../services/progressStorage'
+import { questionHistory } from '../services/questionHistory'
+import { analytics } from '../services/analytics'
+import { QUIZ_THRESHOLDS } from '../constants'
+
+interface UseQuizOptions {
+  questions: QuizQuestion[]
+  day?: number
+}
+
+interface UseQuizReturn {
+  // State
+  allQuestions: QuizQuestion[]
+  currentQuestion: QuizQuestion | undefined
+  currentQuestionIndex: number
+  selectedAnswer: number | null
+  score: number
+  completed: boolean
+  localQuestionsCompleted: boolean
+  aiQuestionCount: number | null
+  generatingAI: boolean
+  aiEnabled: boolean
+  loadingAI: boolean
+  aiQuestionsLoaded: boolean
+  errorMessage: string | null
+  percentage: number
+  showQuestionPrompt: boolean
+  questionPromptType: 'local' | 'ai' | null
+  incorrectAnswers: QuizQuestion[]
+  incorrectAnswersWithSelection: Array<{ question: QuizQuestion; selectedIndex: number }>
+  quizStartTime: number | null
+  totalTimeSpent: number
+  skippedQuestions: Set<string>
+
+  // Actions
+  handleAnswerSelect: (index: number) => void
+  handleNext: () => void
+  handleSkip: () => void
+  handleAIGenerationRequest: (count: number) => Promise<void>
+  handleLoadMoreLocalQuestions: (count: number) => Promise<void>
+  handleFinishQuiz: () => void
+  reset: () => void
+  resetWithIncorrectOnly: () => void
+  toggleAI: () => void
+  handleSelectPromptType: (type: 'local' | 'ai' | null) => void
+  handleCancelPrompt: () => void
+}
+
+export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
+  const [allQuestions, setAllQuestions] = useState<QuizQuestion[]>(questions)
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0)
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
+  const [score, setScore] = useState<number>(0)
+  const [completed, setCompleted] = useState<boolean>(false)
+  const [localQuestionsCompleted, setLocalQuestionsCompleted] = useState<boolean>(false)
+  const [aiQuestionCount, setAiQuestionCount] = useState<number | null>(null)
+  const [generatingAI, setGeneratingAI] = useState<boolean>(false)
+  const [aiEnabled, setAiEnabled] = useState<boolean>(false)
+  const [loadingAI, setLoadingAI] = useState<boolean>(false)
+  const [aiQuestionsLoaded, setAiQuestionsLoaded] = useState<boolean>(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [showQuestionPrompt, setShowQuestionPrompt] = useState<boolean>(false)
+  const [questionPromptType, setQuestionPromptType] = useState<'local' | 'ai' | null>(null)
+  const [usedLocalQuestionIds, setUsedLocalQuestionIds] = useState<Set<string>>(new Set())
+  const [incorrectAnswers, setIncorrectAnswers] = useState<QuizQuestion[]>([])
+  const [incorrectAnswersWithSelection, setIncorrectAnswersWithSelection] = useState<Array<{ question: QuizQuestion; selectedIndex: number }>>([])
+  const [quizStartTime, setQuizStartTime] = useState<number | null>(null)
+  const [totalTimeSpent, setTotalTimeSpent] = useState<number>(0)
+  const [skippedQuestions, setSkippedQuestions] = useState<Set<string>>(new Set())
+  const questionStartTimeRef = useRef<number>(Date.now())
+  const timePerQuestionRef = useRef<Map<string, number>>(new Map())
+
+  const currentQuestion = allQuestions[currentQuestionIndex]
+  const localQuestionsCount = questions.length
+  const isAISection = currentQuestionIndex >= localQuestionsCount
+
+  // Initialize with randomized questions per session
+  useEffect(() => {
+    // Shuffle questions per session on initial load
+    const shuffled = [...questions].sort(() => Math.random() - 0.5)
+    setAllQuestions(shuffled)
+    // Don't mark questions as used initially - only mark them when answered
+    // Start with empty set, questions will be marked as used when answered
+    setUsedLocalQuestionIds(new Set())
+    setQuizStartTime(Date.now())
+    questionStartTimeRef.current = Date.now()
+    setIncorrectAnswers([])
+    setSkippedQuestions(new Set())
+    setTotalTimeSpent(0)
+  }, [questions])
+
+  // Track time per question
+  useEffect(() => {
+    if (currentQuestion) {
+      questionStartTimeRef.current = Date.now()
+    }
+  }, [currentQuestionIndex, currentQuestion])
+
+  // Show prompt after 3 questions - removed, now handled in handleNext
+
+  // Fetch AI questions when toggle is enabled (legacy support)
+  useEffect(() => {
+    if (aiEnabled && day && !aiQuestionsLoaded && !loadingAI && !localQuestionsCompleted) {
+      const fetchAIQuestions = async (): Promise<void> => {
+        setLoadingAI(true)
+        setErrorMessage(null)
+        try {
+          const topic = getTopicForDay(day)
+          const aiQuestions = await quizQuestionService.getQuestions(day, topic, 5)
+
+          if (aiQuestions.length > 0) {
+            // Combine local + AI questions, shuffle them
+            const combined = [...questions, ...aiQuestions]
+            const shuffled = combined.sort(() => Math.random() - 0.5)
+            setAllQuestions(shuffled)
+            setAiQuestionsLoaded(true)
+          } else {
+            setErrorMessage('No additional questions could be loaded. Using local questions only.')
+          }
+        } catch (error) {
+          console.error('Failed to load AI questions:', error)
+          setErrorMessage('Failed to load additional questions. Please check your connection and try again.')
+        } finally {
+          setLoadingAI(false)
+        }
+      }
+
+      fetchAIQuestions()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiEnabled, day, aiQuestionsLoaded, loadingAI, localQuestionsCompleted])
+
+  const handleAnswerSelect = useCallback((index: number): void => {
+    if (completed || !currentQuestion) return
+    setSelectedAnswer(index)
+    const isCorrect = index === currentQuestion.correctAnswer
+    if (isCorrect) {
+      setScore(prev => prev + 1)
+    } else {
+      // Track incorrect answer for review with selected index
+      setIncorrectAnswers(prev => {
+        if (!prev.find(q => q.id === currentQuestion.id)) {
+          return [...prev, currentQuestion]
+        }
+        return prev
+      })
+      setIncorrectAnswersWithSelection(prev => {
+        if (!prev.find(item => item.question.id === currentQuestion.id)) {
+          return [...prev, { question: currentQuestion, selectedIndex: index }]
+        }
+        return prev
+      })
+    }
+    
+    // Track time spent on this question
+    const timeSpent = Math.floor((Date.now() - questionStartTimeRef.current) / 1000)
+    timePerQuestionRef.current.set(currentQuestion.id, timeSpent)
+    setTotalTimeSpent(prev => prev + timeSpent)
+    
+    // Record in history with day and topic
+    const topic = day ? getTopicForDay(day) : undefined
+    questionHistory.recordAnswer(currentQuestion, isCorrect, timeSpent, day, topic)
+  }, [completed, currentQuestion])
+
+  const handleFinishQuiz = useCallback((): void => {
+    setCompleted(true)
+    // Save progress when quiz is completed
+    if (day) {
+      const percentage = Math.round((score / allQuestions.length) * 100)
+      const passed = percentage >= QUIZ_THRESHOLDS.PASSING_SCORE
+      const dayKey = `day${day.toString().padStart(2, '0')}`
+      progressStorage.markQuizCompleted(dayKey, percentage, passed)
+      
+      // Track analytics
+      const totalTime = quizStartTime ? Math.floor((Date.now() - quizStartTime) / 1000 / 60) : 0
+      analytics.trackQuizComplete(day, score, passed)
+      analytics.trackTimeSpent(day, totalTime)
+      analytics.track('quiz_completed', {
+        day,
+        score,
+        percentage,
+        passed,
+        totalQuestions: allQuestions.length,
+        incorrectCount: incorrectAnswers.length,
+        skippedCount: skippedQuestions.size,
+        totalTimeMinutes: totalTime
+      })
+    }
+  }, [day, score, allQuestions.length, quizStartTime, incorrectAnswers.length, skippedQuestions.size])
+
+  const handleNext = useCallback((): void => {
+    // Mark the current question as used when moving to next (only for local questions)
+    if (currentQuestion && !isAISection) {
+      setUsedLocalQuestionIds(prev => new Set([...prev, currentQuestion.id]))
+    }
+
+    // Show prompt after 3 questions (when moving from index 2 to 3)
+    if (currentQuestionIndex === 2 && !showQuestionPrompt && !localQuestionsCompleted && !completed && !isAISection) {
+      console.log('[Quiz] 🎯 Showing question prompt after 3 questions')
+      setShowQuestionPrompt(true)
+      setSelectedAnswer(null)
+      return
+    }
+
+    // Check if we're completing the last local question
+    if (currentQuestionIndex === localQuestionsCount - 1 && !isAISection) {
+      // Completing last local question - mark local section as complete
+      setLocalQuestionsCompleted(true)
+      setSelectedAnswer(null)
+      return
+    }
+
+    // Check if we're completing AI questions or all questions
+    if (currentQuestionIndex < allQuestions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1)
+      setSelectedAnswer(null)
+      questionStartTimeRef.current = Date.now()
+    } else {
+      // All questions done, finish quiz
+      handleFinishQuiz()
+    }
+  }, [currentQuestionIndex, allQuestions.length, localQuestionsCount, isAISection, handleFinishQuiz, showQuestionPrompt, localQuestionsCompleted, completed, currentQuestion])
+
+  const handleSkip = useCallback((): void => {
+    if (!currentQuestion || completed) return
+    
+    // Mark as skipped
+    setSkippedQuestions(prev => new Set([...prev, currentQuestion.id]))
+    
+    // Track time
+    const timeSpent = Math.floor((Date.now() - questionStartTimeRef.current) / 1000)
+    timePerQuestionRef.current.set(currentQuestion.id, timeSpent)
+    
+    // Record as incorrect in history
+    const topic = day ? getTopicForDay(day) : undefined
+    questionHistory.recordAnswer(currentQuestion, false, timeSpent, day, topic)
+    
+    // Move to next question
+    handleNext()
+  }, [currentQuestion, completed, handleNext])
+
+  const handleLoadMoreLocalQuestions = useCallback(async (count: number): Promise<void> => {
+    if (!day) {
+      setCompleted(true)
+      return
+    }
+
+    setGeneratingAI(true)
+    setErrorMessage(null)
+
+    try {
+      const topic = getTopicForDay(day)
+      console.log(`[Quiz] 📖 Requesting ${count} more local questions for topic: "${topic}"`)
+      console.log(`[Quiz] 🔍 Currently used question IDs:`, Array.from(usedLocalQuestionIds))
+      console.log(`[Quiz] 🔍 Current questions in quiz:`, allQuestions.map(q => ({ id: q.id, question: q.question.substring(0, 50) })))
+      
+      // Fetch all available local questions
+      const allLocalQuestions = await quizQuestionService.fetchLocalQuestions(topic, 100)
+      console.log(`[Quiz] 📚 Fetched ${allLocalQuestions.length} total local questions from challenge files`)
+      console.log(`[Quiz] 🔍 Fetched question IDs:`, allLocalQuestions.map(q => q.id))
+      
+      // Filter out questions we've already shown
+      const unusedQuestions = allLocalQuestions.filter(q => !usedLocalQuestionIds.has(q.id))
+      console.log(`[Quiz] ✅ Found ${unusedQuestions.length} unused questions after filtering`)
+      
+      let questionsToUse: QuizQuestion[] = []
+      
+      if (unusedQuestions.length === 0) {
+        // No unused questions - check if we have any questions at all
+        if (allLocalQuestions.length === 0) {
+          console.warn(`[Quiz] ⚠️ No local questions found for topic: ${topic}`)
+          setErrorMessage('No local questions available for this topic. Try AI-generated questions instead.')
+          setGeneratingAI(false)
+          return
+        }
+        
+        // All questions have been used, but user wants more - reuse them (shuffled)
+        console.log(`[Quiz] 🔄 All ${allLocalQuestions.length} questions have been used. Reusing them (shuffled).`)
+        questionsToUse = [...allLocalQuestions].sort(() => Math.random() - 0.5)
+      } else {
+        // Use unused questions
+        questionsToUse = unusedQuestions
+      }
+      
+      // Shuffle and take requested count (duplicate if needed)
+      const shuffled = [...questionsToUse].sort(() => Math.random() - 0.5)
+      const newQuestions: QuizQuestion[] = []
+      
+      // If we need more questions than available, duplicate them with unique IDs
+      for (let i = 0; i < count; i++) {
+        const sourceQuestion = shuffled[i % shuffled.length]
+        const timestamp = Date.now()
+        
+        // Create a copy with a unique ID to avoid conflicts
+        newQuestions.push({
+          ...sourceQuestion,
+          id: `${sourceQuestion.id}-duplicate-${timestamp}-${i}`
+        })
+      }
+      
+      if (newQuestions.length > 0) {
+        const actualCount = newQuestions.length
+        const availableCount = questionsToUse.length
+        if (actualCount < count && availableCount < count) {
+          console.log(`✅ [Quiz] Loaded ${actualCount} questions (${availableCount} unique, duplicated to meet request)`)
+        } else {
+          console.log(`✅ [Quiz] Successfully loaded ${actualCount} additional local questions!`)
+        }
+        
+        // Add new questions to the quiz (insert after current position)
+        const updated = [
+          ...allQuestions.slice(0, currentQuestionIndex + 1),
+          ...newQuestions,
+          ...allQuestions.slice(currentQuestionIndex + 1)
+        ]
+        setAllQuestions(updated)
+        
+        // Track these as used (use original IDs to avoid marking duplicates as used)
+        const originalIds = new Set(questionsToUse.map(q => q.id))
+        const newIds = new Set([...usedLocalQuestionIds, ...Array.from(originalIds)])
+        setUsedLocalQuestionIds(newIds)
+        
+        // Close prompt and continue to next question
+        setShowQuestionPrompt(false)
+        setQuestionPromptType(null)
+        setCurrentQuestionIndex(prev => prev + 1)
+        setSelectedAnswer(null)
+      } else {
+        setErrorMessage('No more local questions available. Try AI-generated questions instead.')
+      }
+    } catch (error) {
+      console.error('❌ [Quiz] Failed to load more local questions:', error)
+      setErrorMessage('Failed to load more local questions. Please try again.')
+    } finally {
+      setGeneratingAI(false)
+    }
+  }, [day, allQuestions, currentQuestionIndex, usedLocalQuestionIds])
+
+  const handleAIGenerationRequest = useCallback(async (count: number): Promise<void> => {
+    if (!day) {
+      // No day specified, just finish
+      setCompleted(true)
+      return
+    }
+
+    if (count === 0) {
+      // No AI questions requested, finish quiz with local questions only
+      setCompleted(true)
+      const percentage = Math.round((score / allQuestions.length) * 100)
+      const passed = percentage >= QUIZ_THRESHOLDS.PASSING_SCORE
+      const dayKey = `day${day.toString().padStart(2, '0')}`
+      progressStorage.markQuizCompleted(dayKey, percentage, passed)
+      return
+    }
+
+    setAiQuestionCount(count)
+    setGeneratingAI(true)
+    setErrorMessage(null)
+
+    try {
+      const topic = getTopicForDay(day)
+      console.log(`[Quiz] 🤖 Requesting ${count} AI-generated questions for topic: "${topic}"`)
+      // Skip local questions - we only want NEW AI-generated questions
+      const aiQuestions = await quizQuestionService.getQuestions(day, topic, count, true)
+      
+      if (aiQuestions.length > 0) {
+        console.log(`✅ [Quiz] Successfully loaded ${aiQuestions.length} AI-generated questions!`)
+        console.log(`[Quiz] 📊 Quiz now has: ${allQuestions.length} current + ${aiQuestions.length} AI = ${allQuestions.length + aiQuestions.length} total questions`)
+        
+        // Log sample questions to verify they're React-specific
+        aiQuestions.slice(0, 2).forEach((q, idx) => {
+          console.log(`[Quiz] 🤖 AI Question ${idx + 1}: "${q.question.substring(0, 70)}..."`)
+        })
+        
+        // Add AI questions after current position
+        const updated = [
+          ...allQuestions.slice(0, currentQuestionIndex + 1),
+          ...aiQuestions,
+          ...allQuestions.slice(currentQuestionIndex + 1)
+        ]
+        setAllQuestions(updated)
+        setAiQuestionsLoaded(true)
+        
+        // Close prompt and continue to next question
+        setShowQuestionPrompt(false)
+        setQuestionPromptType(null)
+        setCurrentQuestionIndex(prev => prev + 1)
+        setSelectedAnswer(null)
+        
+        console.log(`[Quiz] ✨ AI questions added. Continuing from question ${currentQuestionIndex + 2}`)
+      } else {
+        console.warn(`⚠️ [Quiz] No AI questions were generated. APIs may be unavailable or parsing failed.`)
+        setErrorMessage('No additional questions could be loaded. Please try again or continue with remaining questions.')
+      }
+    } catch (error) {
+      console.error('❌ [Quiz] Failed to load AI questions:', error)
+      if (error instanceof Error) {
+        console.error('❌ [Quiz] Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        })
+      }
+      setErrorMessage(`Failed to load additional questions: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`)
+    } finally {
+      setGeneratingAI(false)
+    }
+  }, [day, allQuestions, currentQuestionIndex, score])
+
+  const handleSelectPromptType = useCallback((type: 'local' | 'ai' | null): void => {
+    setQuestionPromptType(type)
+  }, [])
+
+  const handleCancelPrompt = useCallback((): void => {
+    setShowQuestionPrompt(false)
+    setQuestionPromptType(null)
+    // Continue with remaining questions
+  }, [])
+
+  const reset = useCallback((): void => {
+    setCurrentQuestionIndex(0)
+    setSelectedAnswer(null)
+    setScore(0)
+    setCompleted(false)
+    setLocalQuestionsCompleted(false)
+    setAiQuestionCount(null)
+    setGeneratingAI(false)
+    const shuffled = [...questions].sort(() => Math.random() - 0.5)
+    setAllQuestions(shuffled)
+    setAiEnabled(false)
+    setAiQuestionsLoaded(false)
+    setErrorMessage(null)
+    setShowQuestionPrompt(false)
+    setQuestionPromptType(null)
+    setIncorrectAnswers([])
+    setIncorrectAnswersWithSelection([])
+    setSkippedQuestions(new Set())
+    setTotalTimeSpent(0)
+    setQuizStartTime(Date.now())
+    questionStartTimeRef.current = Date.now()
+    timePerQuestionRef.current.clear()
+    const initialIds = new Set(shuffled.map(q => q.id))
+    setUsedLocalQuestionIds(initialIds)
+  }, [questions])
+
+  const resetWithIncorrectOnly = useCallback((): void => {
+    if (incorrectAnswers.length === 0) return
+    
+    // Create a quiz with only incorrect questions
+    const incorrectIds = new Set(incorrectAnswers.map(q => q.id))
+    const incorrectOnly = allQuestions.filter(q => incorrectIds.has(q.id))
+    const shuffled = [...incorrectOnly].sort(() => Math.random() - 0.5)
+    
+    setAllQuestions(shuffled)
+    setCurrentQuestionIndex(0)
+    setSelectedAnswer(null)
+    setScore(0)
+    setCompleted(false)
+    setLocalQuestionsCompleted(false)
+    setAiQuestionCount(null)
+    setGeneratingAI(false)
+    setAiEnabled(false)
+    setAiQuestionsLoaded(false)
+    setErrorMessage(null)
+    setShowQuestionPrompt(false)
+    setQuestionPromptType(null)
+    setIncorrectAnswers([])
+    setIncorrectAnswersWithSelection([])
+    setSkippedQuestions(new Set())
+    setTotalTimeSpent(0)
+    setQuizStartTime(Date.now())
+    questionStartTimeRef.current = Date.now()
+    timePerQuestionRef.current.clear()
+    setUsedLocalQuestionIds(new Set())
+  }, [incorrectAnswers, allQuestions])
+
+  const toggleAI = useCallback((): void => {
+    if (!day || localQuestionsCompleted) return // Don't allow toggle after local questions are done
+    setAiEnabled(!aiEnabled)
+    setErrorMessage(null)
+    if (!aiEnabled) {
+      // Will trigger useEffect to fetch
+    } else {
+      // Disable: revert to local questions
+      setAllQuestions(questions)
+      setAiQuestionsLoaded(false)
+      setCurrentQuestionIndex(0)
+      setSelectedAnswer(null)
+    }
+  }, [day, aiEnabled, questions, localQuestionsCompleted])
+
+  const percentage = useMemo(() => {
+    if (completed && allQuestions.length > 0) {
+      return Math.round((score / allQuestions.length) * 100)
+    }
+    return 0
+  }, [completed, score, allQuestions.length])
+
+  return {
+    allQuestions,
+    currentQuestion,
+    currentQuestionIndex,
+    selectedAnswer,
+    score,
+    completed,
+    localQuestionsCompleted,
+    aiQuestionCount,
+    generatingAI,
+    aiEnabled,
+    loadingAI,
+    aiQuestionsLoaded,
+    errorMessage,
+    percentage,
+    showQuestionPrompt,
+    questionPromptType,
+  incorrectAnswers,
+  incorrectAnswersWithSelection,
+  quizStartTime,
+  totalTimeSpent,
+  skippedQuestions,
+    handleAnswerSelect,
+    handleNext,
+    handleSkip,
+    handleAIGenerationRequest,
+    handleLoadMoreLocalQuestions,
+    handleFinishQuiz,
+    reset,
+    resetWithIncorrectOnly,
+    toggleAI,
+    handleSelectPromptType,
+    handleCancelPrompt
+  }
+}

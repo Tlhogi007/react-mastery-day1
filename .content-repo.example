@@ -1,0 +1,6 @@
+# Copy to .content-repo and set your content repository.
+# Local sibling (default if this file is missing and folder exists):
+../react-mastery-content
+
+# Or a GitHub URL after you publish the content repo:
+# https://github.com/Tlhogi007/react-mastery-content.git
