@@ -44,6 +44,7 @@ Details: https://github.com/Tlhogi007/react-mastery-content/blob/main/AUTO_REDEP
 - Quiz UI shows remaining free AI generations (`N/5 free AI left`)
 - Greeting uses Clerk first name / username when signed in
 - GA `userId` set after signed-in sync (when Analytics configured)
+- Clerk webhook `/api/clerk-webhook` purges Upstash cloud + AI quota keys on `user.deleted` / `user.merged`
 - No RBAC roles yet — add `plan: free|pro` later if monetizing
 
 ## After that

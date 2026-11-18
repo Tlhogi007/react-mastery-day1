@@ -11,6 +11,10 @@
     "api/user-data.ts": {
       "includeFiles": "api/_lib/**",
       "maxDuration": 15
+    },
+    "api/clerk-webhook.ts": {
+      "includeFiles": "api/_lib/**",
+      "maxDuration": 15
     }
   }
 }

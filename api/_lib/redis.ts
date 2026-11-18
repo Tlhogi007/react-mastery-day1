@@ -57,3 +57,18 @@ export async function redisIncr(key: string, expireSeconds = 172800): Promise<nu
   }
   return count
 }
+
+export async function redisDel(...keys: string[]): Promise<number> {
+  const unique = [...new Set(keys.filter(Boolean))]
+  if (unique.length === 0) return 0
+  const result = await redisCommand(['DEL', ...unique])
+  const n = Number(result)
+  return Number.isFinite(n) ? n : 0
+}
+
+/** KEYS pattern match (Upstash). Prefer narrow prefixes — not for huge namespaces. */
+export async function redisKeys(pattern: string): Promise<string[]> {
+  const result = await redisCommand(['KEYS', pattern])
+  if (!Array.isArray(result)) return []
+  return result.filter((k): k is string => typeof k === 'string')
+}
