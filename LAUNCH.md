@@ -38,7 +38,7 @@ Details: https://github.com/Tlhogi007/react-mastery-content/blob/main/AUTO_REDEP
 - JWT `authorizedParties` via `APP_ORIGIN` / `CLERK_AUTHORIZED_PARTIES` (+ current `VERCEL_URL`)
 - Request body validated before quota counters increment
 - Per-IP caps + Upstash global daily budget
-- Vercel Bot Protection (challenge) on the project firewall
+- Vercel Bot Protection (challenge) on the project firewall; custom bypass for `POST /api/clerk-webhook`
 - Learners can paste BYO keys in Settings (browser-only; skips hosted quota)
 - Signed-in cloud sync (`/api/user-data`): progress, notes, reflections, flashcards, snippets, last lab location (runs on landing + lab)
 - Quiz UI shows remaining free AI generations (`N/5 free AI left`)
@@ -46,6 +46,7 @@ Details: https://github.com/Tlhogi007/react-mastery-content/blob/main/AUTO_REDEP
 - GA `userId` set after signed-in sync (when Analytics configured)
 - Clerk webhook `/api/clerk-webhook` purges Upstash cloud + AI quota keys on `user.deleted` / `user.merged`
 - Admin AI panel: list Redis free-tier usage + ban via `privateMetadata.aiBanned` (`ADMIN_USER_IDS` or `role: admin`)
+- `aiBanned` blocks hosted AI only — cloud sync uses `requireCloudUser` (unaffected by ban)
 - Community signed attributions: GitHub avatar/byline + contribute frontmatter from signed-in GitHub
 - No paid plans yet — add `plan: free|pro` later if monetizing
 

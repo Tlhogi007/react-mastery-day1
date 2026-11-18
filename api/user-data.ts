@@ -5,7 +5,7 @@
  */
 /// <reference types="node" />
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { requireAiUser } from './_lib/auth.js'
+import { requireCloudUser } from './_lib/auth.js'
 import { getUserFreeQuotaStatus } from './_lib/aiQuizGuard.js'
 import { redisConfigured, redisGet, redisSet } from './_lib/redis.js'
 import {
@@ -26,16 +26,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return
   }
 
-  const auth = await requireAiUser(req)
+  const auth = await requireCloudUser(req)
   if (!auth.ok) {
     res.status(auth.status).json({ error: auth.error, code: auth.code })
-    return
-  }
-  if (auth.user.userId === 'anonymous') {
-    res.status(401).json({
-      error: 'Sign in to sync progress across devices.',
-      code: 'auth_required',
-    })
     return
   }
 

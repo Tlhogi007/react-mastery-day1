@@ -1,8 +1,8 @@
 /**
- * Clerk JWT verification for hosted AI routes.
- * Requires a signed-in user with a verified email (or Google/GitHub OAuth).
- * Honors private/publicMetadata.aiBanned and admin role checks.
- * If CLERK_SECRET_KEY is unset, hosted AI stays on IP caps only (legacy).
+ * Clerk JWT verification for API routes.
+ * - requireAiUser: hosted AI (verified email/OAuth + not aiBanned; anonymous if Clerk unset)
+ * - requireCloudUser: learner sync (verified email/OAuth; bans do NOT apply)
+ * - requireAdminUser: ADMIN_USER_IDS or metadata.role=admin
  */
 
 import { createClerkClient, verifyToken } from '@clerk/backend'
@@ -158,6 +158,53 @@ export async function requireAiUser(req: VercelRequest): Promise<
       code: 'email_verification_required',
       error:
         'Verify your email to use free hosted AI, or add your own API key in Settings.',
+    }
+  }
+
+  return { ok: true, user: { userId: verified.user.id } }
+}
+
+/**
+ * Cloud sync / account data — signed-in verified users only.
+ * Intentionally ignores aiBanned so an AI ban cannot lock progress sync.
+ */
+export async function requireCloudUser(req: VercelRequest): Promise<
+  | { ok: true; user: AuthUser }
+  | {
+      ok: false
+      status: 401 | 403
+      error: string
+      code: 'auth_required' | 'email_verification_required'
+    }
+> {
+  if (!clerkConfigured()) {
+    return {
+      ok: false,
+      status: 401,
+      code: 'auth_required',
+      error: 'Sign in to sync progress across devices.',
+    }
+  }
+
+  const verified = await verifyBearerUser(req)
+  if (!verified.ok) {
+    return {
+      ok: false,
+      status: verified.status === 401 ? 401 : 403,
+      code: verified.status === 401 ? 'auth_required' : 'email_verification_required',
+      error:
+        verified.code === 'auth_required'
+          ? 'Sign in to sync progress across devices.'
+          : verified.error,
+    }
+  }
+
+  if (!userMayUseHostedAi(verified.user)) {
+    return {
+      ok: false,
+      status: 403,
+      code: 'email_verification_required',
+      error: 'Verify your email to sync progress, or use Google/GitHub sign-in.',
     }
   }
 
