@@ -1,3 +1,10 @@
+## [1.5.13](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.12...v1.5.13) (2026-11-18)
+
+
+### Bug Fixes
+
+* **auth:** only proxy Clerk FAPI for pk_live_ keys ([7eca0da](https://github.com/Tlhogi007/react-mastery-day1/commit/7eca0da9077c271ff7f18304a607bf6427bcf784))
+
 ## [1.5.12](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.11...v1.5.12) (2026-11-18)
 
 
