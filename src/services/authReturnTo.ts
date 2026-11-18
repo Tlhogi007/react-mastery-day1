@@ -5,6 +5,8 @@
 
 export const ACTIVE_TAB_KEY = 'rm-active-tab'
 export const LAB_SESSION_KEY = 'rm-lab-session'
+/** Set before Clerk sign-out so a remount still opens landing, not the lab. */
+export const FORCE_LANDING_KEY = 'rm-force-landing'
 
 export type AuthReturnView = 'exercises' | 'community' | 'settings'
 
@@ -55,6 +57,7 @@ function safeRemove(key: string): void {
 export function clearLabNavigationState(): void {
   safeRemove(LAB_SESSION_KEY)
   safeRemove(ACTIVE_TAB_KEY)
+  safeRemove(FORCE_LANDING_KEY)
   if (typeof window === 'undefined') return
   try {
     const path = `${window.location.pathname}${window.location.search}`
@@ -62,6 +65,33 @@ export function clearLabNavigationState(): void {
   } catch {
     /* ignore */
   }
+}
+
+/**
+ * Call synchronously when the Clerk session ends (or right before signOut).
+ * Survives a full remount via session flag + `#rm=landing`.
+ */
+export function prepareLandingAfterSignOut(): void {
+  safeSet(FORCE_LANDING_KEY, '1')
+  safeRemove(LAB_SESSION_KEY)
+  safeRemove(ACTIVE_TAB_KEY)
+  if (typeof window === 'undefined') return
+  try {
+    const path = `${window.location.pathname}${window.location.search}`
+    window.history.replaceState(null, '', `${path}#rm=landing`)
+  } catch {
+    /* ignore */
+  }
+}
+
+export function landingAfterSignOutUrl(): string {
+  if (typeof window === 'undefined') return '/#rm=landing'
+  return `${window.location.origin}/#rm=landing`
+}
+
+/** Drop remount flag after SPA already showed landing (keeps `#rm=landing` for Clerk redirect). */
+export function clearForceLandingFlag(): void {
+  safeRemove(FORCE_LANDING_KEY)
 }
 
 export function getActiveTab(): string | null {
@@ -169,7 +199,23 @@ export function prepareAuthReturnUrl(overrides?: Partial<AuthReturnTo>): string 
 export function readAuthReturnTo(
   validExercises: Record<string, unknown>,
 ): AuthReturnTo | null {
+  const forceLanding = safeGet(FORCE_LANDING_KEY) === '1'
   const fromHash = parseHash()
+
+  // Sign-out remount: never restore the lab from a stale session key.
+  if (forceLanding || fromHash?.inLab === false) {
+    safeRemove(FORCE_LANDING_KEY)
+    safeRemove(LAB_SESSION_KEY)
+    safeRemove(ACTIVE_TAB_KEY)
+    return {
+      inLab: false,
+      exercise: 'day01-rendering-pipeline',
+      view: 'exercises',
+      tools: false,
+      tab: 'learn',
+    }
+  }
+
   if (fromHash) {
     const exercise =
       fromHash.exercise && fromHash.exercise in validExercises

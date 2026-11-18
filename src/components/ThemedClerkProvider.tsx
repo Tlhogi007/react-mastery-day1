@@ -45,6 +45,7 @@ export function ThemedClerkProvider({
       publishableKey={publishableKey}
       signInFallbackRedirectUrl="/"
       signUpFallbackRedirectUrl="/"
+      afterSignOutUrl="/#rm=landing"
       localization={{
         signIn: {
           start: {

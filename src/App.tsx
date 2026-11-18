@@ -13,7 +13,8 @@ import { AiQuotaModal } from './components/AiQuotaModal'
 import { SignedInGreeting } from './components/SignedInGreeting'
 import { UserCloudSync } from './components/UserCloudSync'
 import {
-  clearLabNavigationState,
+  clearForceLandingFlag,
+  prepareLandingAfterSignOut,
   getActiveTab,
   readAuthReturnTo,
   setActiveTab,
@@ -135,7 +136,8 @@ function App(): JSX.Element {
   const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY)
 
   const handleSignedOut = useCallback(() => {
-    clearLabNavigationState()
+    prepareLandingAfterSignOut()
+    clearForceLandingFlag()
     clearQuizProgress()
     setAiGate(null)
     setShowTools(false)

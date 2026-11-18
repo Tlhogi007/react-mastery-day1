@@ -1,5 +1,6 @@
-import { useEffect, useRef, type JSX } from 'react'
+import { useCallback, useEffect, useRef, type JSX } from 'react'
 import { useAuth, useClerk } from '@clerk/react'
+import { prepareLandingAfterSignOut } from '../services/authReturnTo'
 
 interface SignOutLandingRedirectProps {
   onSignedOut: () => void
@@ -16,6 +17,15 @@ export function SignOutLandingRedirect({ onSignedOut }: SignOutLandingRedirectPr
   const wasSignedIn = useRef(false)
   const handled = useRef(false)
 
+  const goLanding = useCallback(() => {
+    if (handled.current) return
+    handled.current = true
+    wasSignedIn.current = false
+    // Persist before any Clerk remount so App init opens landing.
+    prepareLandingAfterSignOut()
+    onSignedOut()
+  }, [onSignedOut])
+
   useEffect(() => {
     if (!isLoaded) return
     if (isSignedIn) {
@@ -23,12 +33,8 @@ export function SignOutLandingRedirect({ onSignedOut }: SignOutLandingRedirectPr
       handled.current = false
       return
     }
-    if (wasSignedIn.current && !handled.current) {
-      handled.current = true
-      wasSignedIn.current = false
-      onSignedOut()
-    }
-  }, [isLoaded, isSignedIn, onSignedOut])
+    if (wasSignedIn.current) goLanding()
+  }, [isLoaded, isSignedIn, goLanding])
 
   // Earlier than React auth state: clear as soon as Clerk drops the session.
   useEffect(() => {
@@ -38,13 +44,9 @@ export function SignOutLandingRedirect({ onSignedOut }: SignOutLandingRedirectPr
         handled.current = false
         return
       }
-      if (wasSignedIn.current && !handled.current) {
-        handled.current = true
-        wasSignedIn.current = false
-        onSignedOut()
-      }
+      if (wasSignedIn.current) goLanding()
     })
-  }, [addListener, onSignedOut])
+  }, [addListener, goLanding])
 
   return <></>
 }
