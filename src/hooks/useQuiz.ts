@@ -12,6 +12,15 @@ import { questionHistory } from '../services/questionHistory'
 import { analytics } from '../services/analytics'
 import { captureWarning, setAppContext } from '../lib/sentry'
 import { QUIZ_THRESHOLDS } from '../constants'
+import { getAiAuthToken } from '../services/aiAuthBridge'
+import {
+  clearQuizProgress,
+  consumeAiResumePending,
+  loadQuizProgress,
+  markAiResumePending,
+  peekAiResumePending,
+  saveQuizProgress,
+} from '../services/quizResume'
 
 interface UseQuizOptions {
   questions: QuizQuestion[]
@@ -57,25 +66,44 @@ interface UseQuizReturn {
 }
 
 export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
-  const [allQuestions, setAllQuestions] = useState<QuizQuestion[]>(questions)
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0)
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
-  const [score, setScore] = useState<number>(0)
-  const [completed, setCompleted] = useState<boolean>(false)
-  const [localQuestionsCompleted, setLocalQuestionsCompleted] = useState<boolean>(false)
+  const [boot] = useState(() => (day != null ? loadQuizProgress(day) : null))
+
+  const [allQuestions, setAllQuestions] = useState<QuizQuestion[]>(
+    () => boot?.allQuestions ?? questions,
+  )
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(
+    () => boot?.currentQuestionIndex ?? 0,
+  )
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(
+    () => boot?.selectedAnswer ?? null,
+  )
+  const [score, setScore] = useState<number>(() => boot?.score ?? 0)
+  const [completed, setCompleted] = useState<boolean>(() => boot?.completed ?? false)
+  const [localQuestionsCompleted, setLocalQuestionsCompleted] = useState<boolean>(
+    () => boot?.localQuestionsCompleted ?? false,
+  )
   const [aiQuestionCount, setAiQuestionCount] = useState<number | null>(null)
   const [generatingAI, setGeneratingAI] = useState<boolean>(false)
-  const [aiEnabled, setAiEnabled] = useState<boolean>(false)
+  const [aiEnabled, setAiEnabled] = useState<boolean>(() => boot?.aiEnabled ?? false)
   const [loadingAI, setLoadingAI] = useState<boolean>(false)
-  const [aiQuestionsLoaded, setAiQuestionsLoaded] = useState<boolean>(false)
+  const [aiQuestionsLoaded, setAiQuestionsLoaded] = useState<boolean>(
+    () => boot?.aiQuestionsLoaded ?? false,
+  )
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showQuestionPrompt, setShowQuestionPrompt] = useState<boolean>(false)
   const [questionPromptType, setQuestionPromptType] = useState<'local' | 'ai' | null>(null)
-  const [usedLocalQuestionIds, setUsedLocalQuestionIds] = useState<Set<string>>(new Set())
-  const [incorrectAnswers, setIncorrectAnswers] = useState<QuizQuestion[]>([])
-  const [incorrectAnswersWithSelection, setIncorrectAnswersWithSelection] = useState<Array<{ question: QuizQuestion; selectedIndex: number }>>([])
-  const [quizStartTime, setQuizStartTime] = useState<number | null>(null)
-  const [totalTimeSpent, setTotalTimeSpent] = useState<number>(0)
+  const [usedLocalQuestionIds, setUsedLocalQuestionIds] = useState<Set<string>>(
+    () => new Set(boot?.usedLocalQuestionIds ?? []),
+  )
+  const [incorrectAnswers, setIncorrectAnswers] = useState<QuizQuestion[]>(() => {
+    if (!boot?.incorrectAnswerIds?.length) return []
+    return (boot.allQuestions || []).filter((q) => boot.incorrectAnswerIds.includes(q.id))
+  })
+  const [incorrectAnswersWithSelection, setIncorrectAnswersWithSelection] = useState<
+    Array<{ question: QuizQuestion; selectedIndex: number }>
+  >([])
+  const [quizStartTime, setQuizStartTime] = useState<number | null>(() => Date.now())
+  const [totalTimeSpent, setTotalTimeSpent] = useState<number>(() => boot?.totalTimeSpent ?? 0)
   const [skippedQuestions, setSkippedQuestions] = useState<Set<string>>(new Set())
   const questionStartTimeRef = useRef<number>(Date.now())
   const timePerQuestionRef = useRef<Map<string, number>>(new Map())
@@ -90,20 +118,115 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
     }
   }, [day])
 
-  // Initialize with randomized questions per session
+  // Initialize with randomized questions per session (skip if OAuth restore already applied)
   useEffect(() => {
-    // Shuffle questions per session on initial load
+    if (boot) return
     const shuffled = [...questions].sort(() => Math.random() - 0.5)
     setAllQuestions(shuffled)
-    // Don't mark questions as used initially - only mark them when answered
-    // Start with empty set, questions will be marked as used when answered
     setUsedLocalQuestionIds(new Set())
     setQuizStartTime(Date.now())
     questionStartTimeRef.current = Date.now()
     setIncorrectAnswers([])
     setSkippedQuestions(new Set())
     setTotalTimeSpent(0)
-  }, [questions])
+  }, [questions, boot])
+
+  // Persist progress so OAuth remount can continue mid-quiz
+  useEffect(() => {
+    if (day == null || completed) return
+    saveQuizProgress({
+      day,
+      currentQuestionIndex,
+      selectedAnswer,
+      score,
+      completed,
+      localQuestionsCompleted,
+      aiEnabled,
+      aiQuestionsLoaded,
+      allQuestions,
+      usedLocalQuestionIds: [...usedLocalQuestionIds],
+      incorrectAnswerIds: incorrectAnswers.map((q) => q.id),
+      totalTimeSpent,
+      at: Date.now(),
+    })
+  }, [
+    day,
+    currentQuestionIndex,
+    selectedAnswer,
+    score,
+    completed,
+    localQuestionsCompleted,
+    aiEnabled,
+    aiQuestionsLoaded,
+    allQuestions,
+    usedLocalQuestionIds,
+    incorrectAnswers,
+    totalTimeSpent,
+  ])
+
+  useEffect(() => {
+    if (completed && day != null) clearQuizProgress()
+  }, [completed, day])
+
+  // After sign-in, resume AI opt-in / generation that was interrupted by auth
+  useEffect(() => {
+    if (day == null) return
+    const pending = peekAiResumePending()
+    if (!pending || pending.day !== day) return
+
+    let cancelled = false
+    ;(async () => {
+      for (let i = 0; i < 30; i++) {
+        if (cancelled) return
+        const token = await getAiAuthToken()
+        if (token) {
+          const resume = consumeAiResumePending(day)
+          if (!resume || cancelled) return
+          if (resume.mode === 'generate' && resume.count) {
+            setAiQuestionCount(resume.count)
+            setGeneratingAI(true)
+            setErrorMessage(null)
+            try {
+              const topic = getTopicForDay(day)
+              const aiQuestions = await quizQuestionService.getQuestions(
+                day,
+                topic,
+                resume.count,
+                true,
+              )
+              if (cancelled) return
+              if (aiQuestions.length > 0) {
+                setAllQuestions((prev) => [
+                  ...prev.slice(0, currentQuestionIndex + 1),
+                  ...aiQuestions,
+                  ...prev.slice(currentQuestionIndex + 1),
+                ])
+                setAiQuestionsLoaded(true)
+                setShowQuestionPrompt(false)
+                setQuestionPromptType(null)
+                setCurrentQuestionIndex((prev) => prev + 1)
+                setSelectedAnswer(null)
+              }
+            } finally {
+              if (!cancelled) setGeneratingAI(false)
+            }
+          } else {
+            setAiEnabled(true)
+            setAiQuestionsLoaded(false)
+            setErrorMessage(null)
+          }
+          return
+        }
+        await new Promise((r) => setTimeout(r, 100))
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+    // Only on mount / day change — resume once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [day])
 
   // Track time per question
   useEffect(() => {
@@ -120,11 +243,13 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
       const fetchAIQuestions = async (): Promise<void> => {
         setLoadingAI(true)
         setErrorMessage(null)
+        markAiResumePending({ day, mode: 'toggle' })
         try {
           const topic = getTopicForDay(day)
           const aiQuestions = await quizQuestionService.getQuestions(day, topic, 5)
 
           if (aiQuestions.length > 0) {
+            consumeAiResumePending(day)
             // Combine local + AI questions, shuffle them
             const combined = [...questions, ...aiQuestions]
             const shuffled = combined.sort(() => Math.random() - 0.5)
@@ -361,6 +486,7 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
     setAiQuestionCount(count)
     setGeneratingAI(true)
     setErrorMessage(null)
+    markAiResumePending({ day, mode: 'generate', count })
 
     try {
       const topic = getTopicForDay(day)
@@ -368,6 +494,7 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
       const aiQuestions = await quizQuestionService.getQuestions(day, topic, count, true)
       
       if (aiQuestions.length > 0) {
+        consumeAiResumePending(day)
         // Add AI questions after current position
         const updated = [
           ...allQuestions.slice(0, currentQuestionIndex + 1),

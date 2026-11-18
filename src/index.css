@@ -316,6 +316,7 @@ button:focus-visible {
   font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.02em;
+  line-height: 1.35;
   color: var(--text-muted);
   opacity: 0.85;
 }
@@ -394,4 +395,44 @@ button:focus-visible {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Clerk portals: keep hover/focus washes on the app theme (appearance alone often loses). */
+.cl-userButtonPopoverActionButton:hover,
+.cl-userButtonPopoverActionButton:focus-visible,
+.cl-navbarButton:hover,
+.cl-navbarButton:focus-visible,
+.cl-menuButton:hover,
+.cl-menuButton:focus-visible,
+.cl-profileSectionPrimaryButton:hover,
+.cl-profileSectionPrimaryButton:focus-visible,
+.cl-socialButtonsBlockButton:hover,
+.cl-socialButtonsBlockButton:focus-visible {
+  background-color: var(--bg-section) !important;
+}
+
+.cl-userButtonPopoverActionButton__signOut:hover,
+.cl-userButtonPopoverActionButton__signOut:focus-visible,
+.cl-menuButton__danger:hover,
+.cl-menuButton__danger:focus-visible {
+  background-color: var(--bg-warning) !important;
+  color: var(--text-on-warning) !important;
+}
+
+/* Badges: Primary / This device / Last used — default Clerk contrast fails on our dark card */
+.cl-badge,
+.cl-badge__primary,
+.cl-lastAuthenticationStrategyBadge,
+.cl-activeDeviceListItem .cl-badge,
+.cl-activeDevice .cl-badge {
+  background-color: var(--bg-section) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  opacity: 1 !important;
+}
+
+.cl-badge__primary {
+  background-color: var(--bg-warning) !important;
+  color: var(--text-on-warning) !important;
+  border-color: color-mix(in srgb, var(--accent-a) 35%, transparent) !important;
 }

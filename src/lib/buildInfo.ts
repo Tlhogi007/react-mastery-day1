@@ -4,6 +4,11 @@ export const buildInfo = {
   author: typeof __APP_AUTHOR__ !== 'undefined' ? __APP_AUTHOR__ : 'Letlhogonolo Sekwati',
 }
 
+/** Keep first + last name on one line when the stamp wraps. */
+export function authorStamp(): string {
+  return buildInfo.author.replace(/ /g, '\u00A0')
+}
+
 export function formatBuildStamp(): string {
-  return `v${buildInfo.version} · built by ${buildInfo.author}`
+  return `v${buildInfo.version} · built by ${authorStamp()}`
 }

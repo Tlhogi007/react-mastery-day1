@@ -7,6 +7,7 @@ interface ImportMetaEnv {
   readonly VITE_CONTENT_REPO_URL?: string
   readonly VITE_GA_TRACKING_ID?: string
   readonly VITE_SENTRY_DSN?: string
+  readonly VITE_CLERK_PUBLISHABLE_KEY?: string
 }
 
 interface ImportMeta {

@@ -32,15 +32,15 @@ function SettingsModal({ isOpen, onClose, onReplayTour }: SettingsModalProps): J
         setByo(byoAiKeys.get())
         setByoStatus(
             byoAiKeys.hasAny()
-                ? 'Saved — AI quizzes will use your keys (hosted quota skipped).'
-                : 'Cleared — AI quizzes will use the shared free providers when available.',
+                ? 'Saved on this device only — AI will use your key (not React Mastery servers or shared quota).'
+                : 'No keys saved — signed-in users can still use the shared free AI allowance.',
         )
     }
 
     const handleClearByo = (): void => {
         byoAiKeys.clear()
         setByo({})
-        setByoStatus('Your API keys were removed from this browser.')
+        setByoStatus('Keys removed from this browser. They were never stored on our servers.')
     }
 
     const buttonBaseStyle: React.CSSProperties = {
@@ -351,9 +351,47 @@ function SettingsModal({ isOpen, onClose, onReplayTour }: SettingsModalProps): J
                 <div style={sectionStyle}>
                     <h3 style={{ margin: '0 0 12px', fontSize: '18px', fontWeight: '600' }}>AI quiz keys (optional)</h3>
                     <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                        Quizzes use local questions by default. AI is opt-in. Paste your own free keys to avoid the shared
-                        host quota — keys stay in this browser only and are never uploaded to our server.
+                        Quizzes use local questions by default. AI is opt-in. Signed-in users get a small shared free
+                        allowance; paste your own key only if you want unlimited AI on your provider account.
                     </p>
+                    <div
+                        style={{
+                            marginBottom: 14,
+                            padding: '12px 14px',
+                            borderRadius: 8,
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-section)',
+                            fontSize: 13,
+                            lineHeight: 1.5,
+                            color: 'var(--text-secondary)',
+                        }}
+                    >
+                        <strong style={{ color: 'var(--text-primary)' }}>Your keys stay on this device.</strong>
+                        {' '}
+                        Stored only in this browser. Never sent to React Mastery servers. Calls go straight to
+                        Groq, Gemini, or Together. Same whether you are signed in or not. Clear anytime below.
+                    </div>
+                    {byoAiKeys.hasAny() && (
+                        <p
+                            style={{
+                                margin: '0 0 12px',
+                                padding: '8px 12px',
+                                borderRadius: 8,
+                                background: 'var(--bg-info)',
+                                color: 'var(--text-primary)',
+                                fontSize: 13,
+                                fontWeight: 600,
+                            }}
+                        >
+                            Using your key · not using shared quota
+                            {byoAiKeys.activeProviders().length > 0 && (
+                                <span style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>
+                                    {' '}
+                                    ({byoAiKeys.activeProviders().join(', ')})
+                                </span>
+                            )}
+                        </p>
+                    )}
                     {(
                         [
                             ['groq', 'Groq API key', 'https://console.groq.com'],
@@ -366,7 +404,8 @@ function SettingsModal({ isOpen, onClose, onReplayTour }: SettingsModalProps): J
                             <input
                                 type="password"
                                 autoComplete="off"
-                                placeholder="sk-… (optional)"
+                                spellCheck={false}
+                                placeholder="Paste key — stays in this browser only"
                                 value={byo[field] || ''}
                                 onChange={(e) => setByo((prev) => ({ ...prev, [field]: e.target.value }))}
                                 style={{
@@ -396,7 +435,7 @@ function SettingsModal({ isOpen, onClose, onReplayTour }: SettingsModalProps): J
                         Save AI keys
                     </button>
                     <button type="button" onClick={handleClearByo} style={{ ...buttonBaseStyle, marginBottom: 0 }}>
-                        Clear AI keys
+                        Clear AI keys from this browser
                     </button>
                     {byoStatus && (
                         <p style={{ margin: '12px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>
@@ -468,7 +507,7 @@ function SettingsModal({ isOpen, onClose, onReplayTour }: SettingsModalProps): J
                             This course covers React fundamentals, performance optimization, architecture patterns, and interview preparation.
                         </p>
                         <p style={{ margin: 0, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
-                            <strong style={{ color: 'var(--text-primary)' }}>Privacy.</strong> Learner progress, notes, reflections, tool data, and optional BYO AI keys stay in your browser (local storage) unless you export a backup. Usage analytics may be sent to Google Analytics when configured. Crash/error reports may be sent to Sentry when configured — no account signup required.
+                            <strong style={{ color: 'var(--text-primary)' }}>Privacy.</strong> Learner progress, notes, reflections, tool data, and optional BYO AI keys stay in this browser only (not tied to your sign-in account). BYO keys are never uploaded to React Mastery. Usage analytics may go to Google Analytics when configured; crash reports to Sentry when configured.
                         </p>
                     </div>
                 </div>

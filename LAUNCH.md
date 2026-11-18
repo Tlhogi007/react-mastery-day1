@@ -31,9 +31,16 @@ Details: https://github.com/Tlhogi007/react-mastery-content/blob/main/AUTO_REDEP
 
 - Local questions by default; AI is opt-in in the quiz UI
 - Hosted waterfall: Groq → Gemini → Together (server keys only)
-- Per-IP caps + optional global daily budget (`AI_QUIZ_GLOBAL_MAX_PER_DAY`, Upstash optional)
+- Clerk sign-in required for hosted AI when `CLERK_SECRET_KEY` is set
+- Verified email (or Google/GitHub OAuth) required for free hosted AI
+- Per-user free tier (`AI_QUIZ_FREE_PER_USER_DAY`, default 5) then BYO nudge
+- Per-user free tier requires Upstash (fail closed if Redis missing/down)
+- JWT `authorizedParties` via `APP_ORIGIN` / `CLERK_AUTHORIZED_PARTIES` (+ current `VERCEL_URL`)
+- Request body validated before quota counters increment
+- Per-IP caps + Upstash global daily budget
+- Vercel Bot Protection (challenge) on the project firewall
 - Learners can paste BYO keys in Settings (browser-only; skips hosted quota)
-- Future: auth-gate AI if abuse appears
+- No RBAC roles yet — add `plan: free|pro` later if monetizing
 
 ## After that
 

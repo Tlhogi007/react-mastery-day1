@@ -1,7 +1,7 @@
 import { type JSX } from 'react'
 import type { ExerciseKey, Exercise, ExercisesRegistry } from '../types/exercises'
 import FadeIn from './animations/FadeIn'
-import { formatBuildStamp } from '../lib/buildInfo'
+import { authorStamp, buildInfo, formatBuildStamp } from '../lib/buildInfo'
 
 interface SidebarProps {
   exercises: ExercisesRegistry
@@ -71,15 +71,37 @@ function Sidebar({
           {!isCollapsed && (
             <div style={{ flex: 1, minWidth: 0 }}>
               <div
+                aria-label="React Mastery"
                 style={{
                   fontFamily: 'var(--font-display)',
                   fontSize: 16,
                   fontWeight: 600,
                   marginBottom: 2,
                   letterSpacing: '-0.02em',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  lineHeight: 1.15,
+                  color: 'var(--text-primary)',
                 }}
               >
-                React Mastery
+                <svg
+                  aria-hidden="true"
+                  viewBox="8.5 7.5 14.7 17"
+                  width="0.78em"
+                  height="0.9em"
+                  style={{
+                    display: 'block',
+                    flexShrink: 0,
+                    marginRight: '0.04em',
+                    translate: '0 0.02em',
+                  }}
+                >
+                  <path
+                    d="M8.5 7.5h7.6c3.55 0 5.9 1.95 5.9 5 0 2.15-1.15 3.75-3.1 4.4L23.2 24.5h-3.75l-3.55-6H12V24.5H8.5V7.5Zm3.5 2.7v4.85h3.9c1.95 0 3.1-.95 3.1-2.45s-1.15-2.4-3.1-2.4H12Z"
+                    fill="#e23d2b"
+                  />
+                </svg>
+                <span>eact Mastery</span>
               </div>
               <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4 }}>
                 Internals lab · Week 1
@@ -272,7 +294,8 @@ function Sidebar({
             </div>
           )}
           <div className="build-stamp" title={formatBuildStamp()}>
-            {formatBuildStamp()}
+            <div>v{buildInfo.version}</div>
+            <div>built by {authorStamp()}</div>
           </div>
         </div>
       )}

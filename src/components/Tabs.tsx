@@ -1,4 +1,5 @@
-import { useState, type JSX, type ReactNode } from 'react'
+import { useEffect, useState, type JSX, type ReactNode } from 'react'
+import { getActiveTab, setActiveTab as persistActiveTab } from '../services/authReturnTo'
 
 interface Tab {
   id: string
@@ -12,8 +13,25 @@ interface TabsProps {
   defaultTab?: string
 }
 
+function readStoredTab(validIds: string[], fallback: string): string {
+  const stored = getActiveTab()
+  if (stored && validIds.includes(stored)) return stored
+  return fallback
+}
+
 function Tabs({ tabs, defaultTab }: TabsProps): JSX.Element {
-  const [activeTab, setActiveTab] = useState<string>(defaultTab || tabs[0]?.id || '')
+  const validIds = tabs.map((t) => t.id)
+  const fallback = defaultTab && validIds.includes(defaultTab) ? defaultTab : validIds[0] || ''
+  const [activeTab, setActiveTab] = useState<string>(() => readStoredTab(validIds, fallback))
+
+  useEffect(() => {
+    persistActiveTab(activeTab)
+  }, [activeTab])
+
+  const selectTab = (id: string) => {
+    setActiveTab(id)
+    persistActiveTab(id)
+  }
 
   return (
     <div
@@ -45,7 +63,7 @@ function Tabs({ tabs, defaultTab }: TabsProps): JSX.Element {
               aria-selected={isActive}
               aria-controls={`tabpanel-${tab.id}`}
               id={`tab-${tab.id}`}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => selectTab(tab.id)}
               style={{
                 flex: '0 0 auto',
                 padding: '12px 14px',
@@ -64,10 +82,10 @@ function Tabs({ tabs, defaultTab }: TabsProps): JSX.Element {
                 const currentIndex = tabs.findIndex((t) => t.id === tab.id)
                 if (e.key === 'ArrowRight' && currentIndex < tabs.length - 1) {
                   e.preventDefault()
-                  setActiveTab(tabs[currentIndex + 1].id)
+                  selectTab(tabs[currentIndex + 1].id)
                 } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
                   e.preventDefault()
-                  setActiveTab(tabs[currentIndex - 1].id)
+                  selectTab(tabs[currentIndex - 1].id)
                 }
               }}
             >

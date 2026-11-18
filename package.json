@@ -25,6 +25,8 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@clerk/backend": "^3.30.0",
+    "@clerk/react": "^6.18.9",
     "@sentry/react": "^10.78.0",
     "canvas-confetti": "^1.9.4",
     "framer-motion": "^11.18.2",

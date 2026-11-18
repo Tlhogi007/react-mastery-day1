@@ -3,7 +3,8 @@
  * Single Responsibility: Display quiz header with title, AI toggle, and progress
  */
 
-import { type JSX } from 'react'
+import { useEffect, useState, type JSX } from 'react'
+import { BYO_KEYS_CHANGED_EVENT, byoAiKeys } from '../../services/byoAiKeys'
 
 interface QuizHeaderProps {
     title: string
@@ -30,6 +31,19 @@ function QuizHeader({
     aiQuestionsLoaded,
     onToggleAI
 }: QuizHeaderProps): JSX.Element {
+    const [usingByo, setUsingByo] = useState(() => byoAiKeys.hasAny())
+
+    useEffect(() => {
+        const sync = () => setUsingByo(byoAiKeys.hasAny())
+        sync()
+        window.addEventListener(BYO_KEYS_CHANGED_EVENT, sync)
+        window.addEventListener('storage', sync)
+        return () => {
+            window.removeEventListener(BYO_KEYS_CHANGED_EVENT, sync)
+            window.removeEventListener('storage', sync)
+        }
+    }, [])
+
     return (
         <div style={{
             display: 'flex',
@@ -41,6 +55,21 @@ function QuizHeader({
         }}>
             <h3 style={{ margin: 0 }}>{title}</h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                {usingByo && (
+                    <span
+                        style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            padding: '4px 8px',
+                            borderRadius: 6,
+                            background: 'var(--bg-info)',
+                            color: 'var(--text-primary)',
+                        }}
+                        title="Your API key stays in this browser and is never sent to React Mastery servers"
+                    >
+                        Using your key · not shared quota
+                    </span>
+                )}
                 {enableAI && day && (
                     <label style={{
                         display: 'flex',
@@ -64,7 +93,9 @@ function QuizHeader({
                         <span>
                             {loadingAI
                                 ? 'Loading AI questions…'
-                                : 'Add AI questions (opt-in · shared free quota)'}
+                                : usingByo
+                                  ? 'Add AI questions (uses your key)'
+                                  : 'Add AI questions (opt-in · shared free quota)'}
                         </span>
                     </label>
                 )}

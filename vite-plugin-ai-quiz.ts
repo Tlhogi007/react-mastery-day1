@@ -1,6 +1,5 @@
 /**
  * Local-dev middleware mirroring /api/ai-quiz so Vite can run without `vercel dev`.
- * Reads GROQ_API_KEY / GEMINI_API_KEY / TOGETHER_API_KEY from env (never VITE_*).
  */
 import type { Plugin, Connect } from 'vite'
 import { loadEnv } from 'vite'
@@ -9,7 +8,15 @@ import {
   providerAvailability,
   type Provider,
 } from './api/_lib/generateQuiz'
-import { allowAiQuizRequest, clampQuestionCount } from './api/_lib/aiQuizGuard'
+import {
+  allowAiQuizRequest,
+  allowUserFreeQuota,
+  clampQuestionCount,
+} from './api/_lib/aiQuizGuard'
+import { createClerkClient, verifyToken } from '@clerk/backend'
+import { clerkAuthorizedParties } from './api/_lib/auth'
+
+const OAUTH_PROVIDERS = new Set(['oauth_google', 'oauth_github', 'google', 'github'])
 
 function readBody(req: Connect.IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -18,6 +25,68 @@ function readBody(req: Connect.IncomingMessage): Promise<string> {
     req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
     req.on('error', reject)
   })
+}
+
+async function userMayUseHostedAi(userId: string, secretKey: string): Promise<boolean> {
+  const user = await createClerkClient({ secretKey }).users.getUser(userId)
+  if (user.emailAddresses.some((e) => e.verification?.status === 'verified')) return true
+  return user.externalAccounts.some((a) => OAUTH_PROVIDERS.has(a.provider))
+}
+
+async function resolveUserId(
+  req: Connect.IncomingMessage,
+  secretKey: string | undefined,
+): Promise<
+  | { ok: true; userId: string }
+  | { ok: false; status: 401 | 403; error: string; code: string }
+> {
+  if (!secretKey) return { ok: true, userId: 'anonymous' }
+  const header = req.headers.authorization
+  const token =
+    typeof header === 'string' && header.startsWith('Bearer ')
+      ? header.slice('Bearer '.length).trim()
+      : ''
+  if (!token) {
+    return {
+      ok: false,
+      status: 401,
+      code: 'auth_required',
+      error: 'Sign in to use hosted AI quiz generation.',
+    }
+  }
+  try {
+    const authorizedParties = clerkAuthorizedParties()
+    const payload = await verifyToken(token, {
+      secretKey,
+      ...(authorizedParties.length > 0 ? { authorizedParties } : {}),
+    })
+    if (!payload.sub) {
+      return {
+        ok: false,
+        status: 401,
+        code: 'auth_required',
+        error: 'Sign in to use hosted AI quiz generation.',
+      }
+    }
+    const allowed = await userMayUseHostedAi(payload.sub, secretKey)
+    if (!allowed) {
+      return {
+        ok: false,
+        status: 403,
+        code: 'email_verification_required',
+        error:
+          'Verify your email to use free hosted AI, or add your own API key in Settings.',
+      }
+    }
+    return { ok: true, userId: payload.sub }
+  } catch {
+    return {
+      ok: false,
+      status: 401,
+      code: 'auth_required',
+      error: 'Session expired. Sign in again to use hosted AI.',
+    }
+  }
 }
 
 export function aiQuizDevPlugin(): Plugin {
@@ -29,6 +98,12 @@ export function aiQuizDevPlugin(): Plugin {
         groq: env.GROQ_API_KEY || process.env.GROQ_API_KEY,
         gemini: env.GEMINI_API_KEY || process.env.GEMINI_API_KEY,
         together: env.TOGETHER_API_KEY || process.env.TOGETHER_API_KEY,
+      }
+      const clerkSecret = env.CLERK_SECRET_KEY || process.env.CLERK_SECRET_KEY
+
+      // Mirror Vite-loaded env into process.env for shared api/_lib helpers.
+      for (const [k, v] of Object.entries(env)) {
+        if (v && !process.env[k]) process.env[k] = v
       }
 
       server.middlewares.use(async (req, res, next) => {
@@ -43,7 +118,13 @@ export function aiQuizDevPlugin(): Plugin {
 
         if (req.method === 'GET') {
           res.statusCode = 200
-          res.end(JSON.stringify(providerAvailability(keys)))
+          res.end(
+            JSON.stringify({
+              ...providerAvailability(keys),
+              authRequired: Boolean(clerkSecret),
+              freePerUserDay: Number(env.AI_QUIZ_FREE_PER_USER_DAY || process.env.AI_QUIZ_FREE_PER_USER_DAY) || 5,
+            }),
+          )
           return
         }
 
@@ -53,24 +134,28 @@ export function aiQuizDevPlugin(): Plugin {
           return
         }
 
-        const ip = req.socket.remoteAddress || 'local'
-        const guard = await allowAiQuizRequest(ip)
-        if (!guard.ok) {
-          if (guard.retryAfterSec) {
-            res.setHeader('Retry-After', String(guard.retryAfterSec))
-          }
-          res.statusCode = guard.status
-          res.end(JSON.stringify({ error: guard.error }))
+        const auth = await resolveUserId(req, clerkSecret)
+        if (!auth.ok) {
+          res.statusCode = auth.status
+          res.end(JSON.stringify({ error: auth.error, code: auth.code }))
           return
         }
 
         try {
           const raw = await readBody(req)
-          const body = JSON.parse(raw || '{}') as {
+          let body: {
             provider?: Provider
             topic?: string
             count?: number
           }
+          try {
+            body = JSON.parse(raw || '{}') as typeof body
+          } catch {
+            res.statusCode = 400
+            res.end(JSON.stringify({ error: 'Invalid JSON' }))
+            return
+          }
+
           const provider: Provider =
             body.provider === 'groq' ||
             body.provider === 'gemini' ||
@@ -84,6 +169,29 @@ export function aiQuizDevPlugin(): Plugin {
           if (!topic.trim()) {
             res.statusCode = 400
             res.end(JSON.stringify({ error: 'Missing topic' }))
+            return
+          }
+
+          const userQuota = await allowUserFreeQuota(auth.userId)
+          if (!userQuota.ok) {
+            res.statusCode = userQuota.status
+            res.end(
+              JSON.stringify({
+                error: userQuota.error,
+                code: userQuota.code || 'quota_exceeded',
+              }),
+            )
+            return
+          }
+
+          const ip = req.socket.remoteAddress || 'local'
+          const guard = await allowAiQuizRequest(ip)
+          if (!guard.ok) {
+            if (guard.retryAfterSec) {
+              res.setHeader('Retry-After', String(guard.retryAfterSec))
+            }
+            res.statusCode = guard.status
+            res.end(JSON.stringify({ error: guard.error, code: guard.code }))
             return
           }
 

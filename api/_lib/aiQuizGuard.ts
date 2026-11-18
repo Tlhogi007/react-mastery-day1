@@ -8,7 +8,10 @@
  *   AI_QUIZ_MAX_PER_DAY (default 40)
  *   AI_QUIZ_MAX_COUNT (default 5)
  *   AI_QUIZ_GLOBAL_MAX_PER_DAY (default 200)
- *   UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (optional)
+ *   AI_QUIZ_FREE_PER_USER_DAY (default 5) — hosted free tier per signed-in user
+ *   UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN
+ *     Required for signed-in per-user free tier (fail closed if missing/unavailable).
+ *     Still optional for anonymous / IP+global memory fallbacks.
  */
 
 const WINDOW_MS = 60_000
@@ -43,7 +46,96 @@ function utcDay(): string {
 
 export type GuardResult =
   | { ok: true }
-  | { ok: false; status: 429; error: string; retryAfterSec?: number }
+  | {
+      ok: false
+      status: 429 | 402 | 503
+      error: string
+      code?: string
+      retryAfterSec?: number
+    }
+
+function redisConfigured(): boolean {
+  return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+}
+
+async function redisIncr(key: string): Promise<number | null> {
+  const url = process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  if (!url || !token) return null
+  try {
+    const base = url.replace(/\/$/, '')
+    const res = await fetch(base, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(['INCR', key]),
+      signal: AbortSignal.timeout(3000),
+    })
+    if (!res.ok) return null
+    const data = (await res.json()) as { result?: number }
+    const count = Number(data.result) || 0
+    if (count === 1) {
+      void fetch(base, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(['EXPIRE', key, 172800]),
+      }).catch(() => undefined)
+    }
+    return count
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Free hosted AI generations per signed-in user per UTC day.
+ * Uses Upstash only — fail closed if Redis is unset or unreachable so
+ * per-isolate memory maps cannot bypass the free tier.
+ * When exceeded → 402 so the client can nudge BYO keys.
+ */
+export async function allowUserFreeQuota(userId: string): Promise<GuardResult> {
+  if (!userId || userId === 'anonymous') return { ok: true }
+
+  const maxFree = envInt('AI_QUIZ_FREE_PER_USER_DAY', 5)
+  const day = utcDay()
+  const key = `ai-quiz:user:${userId}:${day}`
+
+  if (!redisConfigured()) {
+    return {
+      ok: false,
+      status: 503,
+      code: 'quota_unavailable',
+      error:
+        'Hosted free AI is temporarily unavailable (quota store not configured). Add your own API key in Settings, or try again later.',
+    }
+  }
+
+  const redisCount = await redisIncr(key)
+  if (redisCount == null) {
+    return {
+      ok: false,
+      status: 503,
+      code: 'quota_unavailable',
+      error:
+        'Hosted free AI is temporarily unavailable (quota store unreachable). Add your own API key in Settings, or try again later.',
+    }
+  }
+
+  if (redisCount > maxFree) {
+    return {
+      ok: false,
+      status: 402,
+      code: 'quota_exceeded',
+      error: `Free hosted AI limit (${maxFree}/day) reached. Add your own API key in Settings to continue.`,
+    }
+  }
+  return { ok: true }
+}
 
 async function allowGlobalBudget(): Promise<GuardResult> {
   const maxGlobal = envInt('AI_QUIZ_GLOBAL_MAX_PER_DAY', 200)

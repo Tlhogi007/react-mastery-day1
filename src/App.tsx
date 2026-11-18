@@ -7,6 +7,17 @@ import { initGA, trackPageView, tracking } from './lib/googleAnalytics'
 import { setAppContext } from './lib/sentry'
 import { MemoizedSidebar, MemoizedProgressDashboard, MemoizedBreadcrumbs } from './components/memoized/MemoizedComponents'
 import SettingsModal from './components/SettingsModal'
+import { AuthButton } from './components/AuthButton'
+import { AiAuthBridge } from './components/AiAuthBridge'
+import { AiQuotaModal } from './components/AiQuotaModal'
+import {
+  clearLabNavigationState,
+  readAuthReturnTo,
+  setActiveTab,
+  writeLabSession,
+} from './services/authReturnTo'
+import { clearQuizProgress } from './services/quizResume'
+import { SignOutLandingRedirect } from './components/SignOutLandingRedirect'
 import AnalyticsPanel from './components/AnalyticsPanel'
 import KeyboardShortcutsHelp from './components/KeyboardShortcutsHelp'
 import ThemeToggle from './components/ThemeToggle'
@@ -93,9 +104,14 @@ interface SearchResult {
 }
 
 function App(): JSX.Element {
-  const [showLanding, setShowLanding] = useState<boolean>(true)
-  const [currentView, setCurrentView] = useState<'exercises' | 'community'>('exercises')
-  const [currentExercise, setCurrentExercise] = useState<ExerciseKey>('day01-rendering-pipeline')
+  const [savedReturn] = useState(() => readAuthReturnTo(exercises))
+  const [showLanding, setShowLanding] = useState<boolean>(() => !savedReturn?.inLab)
+  const [currentView, setCurrentView] = useState<'exercises' | 'community'>(
+    () => savedReturn?.view ?? 'exercises',
+  )
+  const [currentExercise, setCurrentExercise] = useState<ExerciseKey>(
+    () => (savedReturn?.exercise as ExerciseKey) ?? 'day01-rendering-pipeline',
+  )
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showSidebar, setShowSidebar] = useState<boolean>(true)
   const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < BREAKPOINTS.MOBILE)
@@ -104,9 +120,37 @@ function App(): JSX.Element {
   const [showShortcutsHelp, setShowShortcutsHelp] = useState<boolean>(false)
   const [studyMode, setStudyMode] = useState<boolean>(false)
   const [showConfetti, setShowConfetti] = useState<boolean>(false)
-  const [showTools, setShowTools] = useState<boolean>(false)
+  const [showTools, setShowTools] = useState<boolean>(() => savedReturn?.tools ?? false)
   const [showTutorial, setShowTutorial] = useState<boolean>(false)
   const [dayCompleteTick, setDayCompleteTick] = useState(0)
+  const [aiGate, setAiGate] = useState<{ mode: 'auth' | 'quota'; message: string } | null>(null)
+  const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY)
+
+  const handleSignedOut = useCallback(() => {
+    clearLabNavigationState()
+    clearQuizProgress()
+    setAiGate(null)
+    setShowTools(false)
+    setShowSettings(false)
+    setShowAnalytics(false)
+    setShowLanding(true)
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [])
+
+  // Keep lab location across OAuth remounts
+  useEffect(() => {
+    if (showLanding) return
+    writeLabSession({
+      exercise: currentExercise,
+      view: currentView,
+      tools: showTools,
+    })
+  }, [showLanding, currentExercise, currentView, showTools])
+
+  // Ensure restored tab is available before day Tabs mount
+  useEffect(() => {
+    if (savedReturn?.tab) setActiveTab(savedReturn.tab)
+  }, [savedReturn])
 
   // Initialize Google Analytics
   useEffect(() => {
@@ -409,6 +453,7 @@ function App(): JSX.Element {
 
   return (
     <>
+      {clerkEnabled && <SignOutLandingRedirect onSignedOut={handleSignedOut} />}
       {showLanding ? (
         <Landing
           onGetStarted={() => {
@@ -513,7 +558,10 @@ function App(): JSX.Element {
                   {showSidebar ? '◀' : '▶'} Menu
                 </button>
 
-                <div style={{ minWidth: 0, flex: '1 1 160px' }}>
+                <div style={{
+                  minWidth: 0,
+                  flex: '1 1 160px',
+                }}>
                   <h1 style={{
                     margin: 0,
                     fontFamily: 'var(--font-display)',
@@ -587,6 +635,12 @@ function App(): JSX.Element {
                 >
                   {studyMode ? 'Exit focus' : 'Focus'}
                 </button>
+
+                {clerkEnabled && (
+                  <div style={{ flexShrink: 0, marginLeft: 'auto' }}>
+                    <AuthButton />
+                  </div>
+                )}
               </header>
 
               <MemoizedProgressDashboard
@@ -633,6 +687,23 @@ function App(): JSX.Element {
               </Suspense>
             </main>
           </div>
+
+          {clerkEnabled && (
+            <AiAuthBridge
+              onGate={(event) => setAiGate(event)}
+            />
+          )}
+
+          <AiQuotaModal
+            open={Boolean(aiGate)}
+            mode={aiGate?.mode || 'quota'}
+            message={aiGate?.message || ''}
+            onClose={() => setAiGate(null)}
+            onOpenSettings={() => {
+              setAiGate(null)
+              setShowSettings(true)
+            }}
+          />
 
           {/* Settings Modal */}
           <SettingsModal

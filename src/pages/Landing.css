@@ -51,7 +51,7 @@
   color: var(--text-primary);
 }
 
-.brand-mark span {
+.brand-mark-lab {
   display: block;
   color: var(--accent-a);
 }

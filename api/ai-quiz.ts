@@ -1,10 +1,6 @@
 /**
  * Server-side AI quiz proxy — Groq → Gemini → Together waterfall.
- * Imports use `.js` extensions for Node 24 ESM on Vercel.
- *
- * Env (server only): GROQ_API_KEY, GEMINI_API_KEY, TOGETHER_API_KEY
- * Caps: AI_QUIZ_MAX_*, AI_QUIZ_GLOBAL_MAX_PER_DAY
- * Optional durable global budget: UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
+ * Hosted path: Clerk auth (when configured) + per-user free quota + IP/global caps.
  */
 /// <reference types="node" />
 import type { VercelRequest, VercelResponse } from '@vercel/node'
@@ -13,7 +9,12 @@ import {
   providerAvailability,
   type Provider,
 } from './_lib/generateQuiz.js'
-import { allowAiQuizRequest, clampQuestionCount } from './_lib/aiQuizGuard.js'
+import {
+  allowAiQuizRequest,
+  allowUserFreeQuota,
+  clampQuestionCount,
+} from './_lib/aiQuizGuard.js'
+import { requireAiUser } from './_lib/auth.js'
 
 function clientIp(req: VercelRequest): string {
   const xf = req.headers['x-forwarded-for']
@@ -33,7 +34,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   res.setHeader('Cache-Control', 'no-store')
 
   if (req.method === 'GET') {
-    res.status(200).json(providerAvailability(envKeys()))
+    res.status(200).json({
+      ...providerAvailability(envKeys()),
+      authRequired: Boolean(process.env.CLERK_SECRET_KEY),
+      freePerUserDay: Number(process.env.AI_QUIZ_FREE_PER_USER_DAY) || 5,
+    })
     return
   }
 
@@ -42,15 +47,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return
   }
 
-  const guard = await allowAiQuizRequest(clientIp(req))
-  if (!guard.ok) {
-    if (guard.retryAfterSec) {
-      res.setHeader('Retry-After', String(guard.retryAfterSec))
-    }
-    res.status(guard.status).json({ error: guard.error })
+  const auth = await requireAiUser(req)
+  if (!auth.ok) {
+    res.status(auth.status).json({ error: auth.error, code: auth.code })
     return
   }
 
+  // Validate body before burning per-user / IP / global counters.
   let body: Record<string, unknown> = {}
   try {
     body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {}
@@ -73,6 +76,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   if (!topic.trim()) {
     res.status(400).json({ error: 'Missing topic' })
+    return
+  }
+
+  const userQuota = await allowUserFreeQuota(auth.user.userId)
+  if (!userQuota.ok) {
+    res.status(userQuota.status).json({
+      error: userQuota.error,
+      code: userQuota.code || 'quota_exceeded',
+    })
+    return
+  }
+
+  const guard = await allowAiQuizRequest(clientIp(req))
+  if (!guard.ok) {
+    if (guard.retryAfterSec) {
+      res.setHeader('Retry-After', String(guard.retryAfterSec))
+    }
+    res.status(guard.status).json({ error: guard.error, code: guard.code })
     return
   }
 

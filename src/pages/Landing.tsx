@@ -51,7 +51,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
           >
             <h1 className="brand-mark">
               React Mastery
-              <span>Lab</span>
+              <span className="brand-mark-lab">Lab</span>
             </h1>
 
             <div className="terminal-window">
@@ -289,7 +289,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
             viewport={{ once: true }}
           >
             <h2>Ready to go deep?</h2>
-            <p>No signup. No email. Start your 30-day mastery journey now.</p>
+            <p>Lab is free — no signup to learn. Optional sign-in only if you want AI quizzes.</p>
             <button className="cta-unique large" onClick={() => {
               tracking.ctaClicked('final')
               onGetStarted()
@@ -301,7 +301,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
         </section>
 
         <footer className="footer-unique">
-          <p>React internals practice lab · no signup required</p>
+          <p>React internals practice lab · free to learn · optional sign-in for AI</p>
           <p className="build-stamp" style={{ marginTop: 8 }}>
             {formatBuildStamp()}
           </p>

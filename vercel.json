@@ -5,7 +5,8 @@
   "installCommand": "npm install",
   "functions": {
     "api/ai-quiz.ts": {
-      "includeFiles": "api/_lib/**"
+      "includeFiles": "api/_lib/**",
+      "maxDuration": 30
     }
   }
 }
