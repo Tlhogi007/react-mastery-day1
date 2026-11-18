@@ -1,3 +1,10 @@
+## [1.5.11](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.10...v1.5.11) (2026-11-18)
+
+
+### Bug Fixes
+
+* **auth:** harden Clerk FAPI proxy error handling ([2843b71](https://github.com/Tlhogi007/react-mastery-day1/commit/2843b71d1f0a549d69e172580e80997f61f48686))
+
 ## [1.5.10](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.9...v1.5.10) (2026-11-18)
 
 
