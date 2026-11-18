@@ -1,3 +1,10 @@
+## [1.5.6](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.5...v1.5.6) (2026-11-18)
+
+
+### Bug Fixes
+
+* **auth:** redirect to landing after sign-out remount ([33fd3b7](https://github.com/Tlhogi007/react-mastery-day1/commit/33fd3b7f672eadd73aeed251339aec32867b5f84))
+
 ## [1.5.5](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.4...v1.5.5) (2026-11-18)
 
 
