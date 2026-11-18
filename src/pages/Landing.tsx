@@ -97,7 +97,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
             </h2>
 
             <p className="hero-subtitle-unique">
-              From setState to Fiber — deliberate practice for engineers who want to understand React, not just use it.
+              From setState to Fiber — free labs you can run today. Sign in only if you want AI quizzes or cloud sync.
             </p>
 
             <button className="cta-unique" onClick={() => {
@@ -108,6 +108,53 @@ export default function Landing({ onGetStarted }: LandingProps) {
               <span className="cta-arrow">→</span>
             </button>
           </motion.div>
+        </section>
+
+        <section className="how-section" aria-labelledby="how-heading">
+          <h2 id="how-heading" className="section-title-unique">How to use the lab</h2>
+          <p className="how-lead">
+            One day at a time. Break the demos on purpose, then fix them.
+          </p>
+          <ol className="how-steps">
+            {[
+              {
+                title: 'Open Day 1',
+                body: 'No account needed. Each day is a live React exercise with a short README.',
+              },
+              {
+                title: 'Run the demos',
+                body: 'Trigger the bugs, watch re-renders, read why it happened. Quizzes lock in the mental model.',
+              },
+              {
+                title: 'Optional: sign in',
+                body: 'Unlock hosted AI quizzes, sync progress across devices, and keep notes in the cloud.',
+              },
+              {
+                title: 'Settings when you need them',
+                body: 'Paste your own AI keys, manage cloud sync, or (admins) ban abusive AI usage.',
+              },
+            ].map((step, i) => (
+              <li key={step.title} className="how-step">
+                <span className="how-step-num" aria-hidden="true">
+                  {i + 1}
+                </span>
+                <div className="how-step-copy">
+                  <h3>{step.title}</h3>
+                  <p>{step.body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <button
+            type="button"
+            className="how-inline-cta"
+            onClick={() => {
+              tracking.ctaClicked('how')
+              onGetStarted()
+            }}
+          >
+            Jump into Week 1 →
+          </button>
         </section>
 
         <section className="concepts-section">
@@ -298,7 +345,9 @@ export default function Landing({ onGetStarted }: LandingProps) {
             viewport={{ once: true }}
           >
             <h2>Ready to go deep?</h2>
-            <p>Lab is free — no signup to learn. Optional sign-in only if you want AI quizzes.</p>
+            <p>
+              Week 1 is live. Free to learn with no signup — sign in only for AI quizzes and cloud sync.
+            </p>
             <button className="cta-unique large" onClick={() => {
               tracking.ctaClicked('final')
               onGetStarted()
@@ -310,7 +359,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
         </section>
 
         <footer className="footer-unique">
-          <p>React internals practice lab · free to learn · optional sign-in for AI</p>
+          <p>React Mastery Lab · free Week 1 internals · optional sign-in for AI + sync</p>
           <p className="build-stamp" style={{ marginTop: 8 }}>
             {formatBuildStamp()}
           </p>
