@@ -32,6 +32,23 @@ export const communityContributions: CommunityContent[] = [
     ],
     "estimatedTime": "8 min read",
     "content": "# Understanding Stale Closures in useEffect\n\n## Introduction\n\nOne of the most common bugs in React is the \"stale closure\" problem. This happens when your effect captures an old value and doesn't update when that value changes.\n\n## The Problem\n\n```typescript\nfunction Counter() {\n  const [count, setCount] = useState(0)\n  \n  useEffect(() => {\n    const interval = setInterval(() => {\n      console.log(count) // ❌ Always logs 0!\n    }, 1000)\n    \n    return () => clearInterval(interval)\n  }, []) // Empty dependency array\n  \n  return (\n    <button onClick={() => setCount(c => c + 1)}>\n      Count: {count}\n    </button>\n  )\n}\n```\n\n**Why it happens:**\n- The effect runs once (empty deps)\n- The interval captures `count` from that first render\n- `count` is always 0 inside the interval\n- Even though the component re-renders with new count values\n\n## The Solution\n\n### Option 1: Add to Dependencies\n\n```typescript\nuseEffect(() => {\n  const interval = setInterval(() => {\n    console.log(count) // ✅ Now logs current count!\n  }, 1000)\n  \n  return () => clearInterval(interval)\n}, [count]) // Include count\n```\n\n**Trade-off:** Effect re-runs every time count changes (creates new interval)\n\n### Option 2: Functional Updates\n\n```typescript\nuseEffect(() => {\n  const interval = setInterval(() => {\n    setCount(c => {\n      console.log(c) // ✅ Current count!\n      return c\n    })\n  }, 1000)\n  \n  return () => clearInterval(interval)\n}, []) // Empty deps OK now\n```\n\n**Why it works:** Functional updates always get the latest state\n\n### Option 3: useRef\n\n```typescript\nfunction Counter() {\n  const [count, setCount] = useState(0)\n  const countRef = useRef(count)\n  \n  // Keep ref in sync\n  useEffect(() => {\n    countRef.current = count\n  }, [count])\n  \n  useEffect(() => {\n    const interval = setInterval(() => {\n      console.log(countRef.current) // ✅ Always current!\n    }, 1000)\n    \n    return () => clearInterval(interval)\n  }, [])\n  \n  return (\n    <button onClick={() => setCount(c => c + 1)}>\n      Count: {count}\n    </button>\n  )\n}\n```\n\n**Why it works:** Refs are mutable and don't trigger re-renders\n\n## Key Takeaways\n\n- Closures capture values at the time they're created\n- Empty dependency arrays freeze those values\n- Always include dependencies or use functional updates\n- useRef can hold mutable values that don't cause re-renders\n\n## When to Use Each Solution\n\n| Solution | Use When |\n|----------|----------|\n| Dependencies | Re-running effect is acceptable |\n| Functional Updates | Only need state, not props |\n| useRef | Need latest value without re-renders |\n\n## Further Reading\n\n- [React Docs: useEffect](https://react.dev/reference/react/useEffect)\n- [Dan Abramov: A Complete Guide to useEffect](https://overreacted.io/a-complete-guide-to-useeffect/)"
+  },
+  {
+    "slug": "index-keys-and-identity",
+    "title": "Index Keys Break Identity (Not Just Style)",
+    "author": "Letlhogonolo Sekwati",
+    "github": "tlhogi007",
+    "topic": "Reconciliation",
+    "difficulty": "intermediate",
+    "date": "2026-11-18",
+    "tags": [
+      "keys",
+      "reconciliation",
+      "identity",
+      "lists"
+    ],
+    "estimatedTime": "6 min read",
+    "content": "# Index Keys Break Identity (Not Just Style)\n\n## The trap\n\nUsing `key={index}` looks fine until you **reorder, filter, or insert** items. React matches children by key. If the key is the array position, React thinks “row 0 is still row 0” even when the *data* at that position changed.\n\n## What actually breaks\n\nControlled props (`value`, `checked`) often update from parent state, so the bug looks subtle. What sticks to the wrong row is **component identity**: local state, focus, DOM state, and anything stored inside the child.\n\n```tsx\n// ❌ Position identity\n{todos.map((todo, index) => (\n  <TodoRow key={index} todo={todo} />\n))}\n\n// ✅ Stable identity\n{todos.map((todo) => (\n  <TodoRow key={todo.id} todo={todo} />\n))}\n```\n\n## How to prove it in 30 seconds\n\n1. Star item A (local state inside the row).\n2. Move A down with index keys.\n3. The star stays on the *position*, not on A.\n\nThat is reconciliation identity, not a CSS issue.\n\n## Takeaway\n\nKeys answer: “Is this the same component instance as last render?” Use a stable id from your data. Index keys are only safe for static lists that never reorder, filter, or grow in the middle."
   }
 ]
 

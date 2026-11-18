@@ -32,15 +32,22 @@
 }
 
 .community-filters select {
-  padding: 0.5rem 0.75rem;
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0.5rem 2.15rem 0.5rem 0.75rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
-  background: var(--bg-card);
   color: var(--text-primary);
   font-size: 0.875rem;
+  line-height: 1.25;
   font-family: inherit;
   cursor: pointer;
   box-shadow: none;
+  background-color: var(--bg-card);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.25L6 7.75L9.5 4.25' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 0.75rem;
 }
 
 .community-grid {
@@ -96,10 +103,13 @@
 }
 
 .difficulty {
+  display: inline-flex;
+  align-items: center;
   padding: 0.15rem 0.45rem;
   border-radius: 3px;
   font-size: 0.7rem;
   font-weight: 600;
+  line-height: 1.2;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   background: var(--bg-section);
@@ -207,11 +217,18 @@
 
 .article-meta {
   display: flex;
+  align-items: center;
   gap: var(--space-3);
   flex-wrap: wrap;
   margin-bottom: var(--space-2);
   font-size: 0.85rem;
   color: var(--text-secondary);
+}
+
+.article-meta .author {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5em;
 }
 
 .article-content {

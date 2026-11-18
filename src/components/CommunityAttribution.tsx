@@ -67,10 +67,13 @@ export function CommunityAttribution({
       {github && (
         <span
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
             fontSize: 11,
             fontWeight: 700,
-            padding: '2px 6px',
-            borderRadius: 4,
+            lineHeight: 1.2,
+            padding: '0.15rem 0.45rem',
+            borderRadius: 3,
             background: signed ? 'var(--bg-success)' : 'var(--bg-section)',
             color: signed ? 'var(--text-on-success)' : 'var(--text-muted)',
             border: '1px solid var(--border-color)',
