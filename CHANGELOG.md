@@ -1,3 +1,10 @@
+## [1.5.14](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.13...v1.5.14) (2026-11-18)
+
+
+### Bug Fixes
+
+* **auth:** keep Sign in visible after sign-out ([1d4ad85](https://github.com/Tlhogi007/react-mastery-day1/commit/1d4ad8517eaff110e00c49d42319c8653c17babb))
+
 ## [1.5.13](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.12...v1.5.13) (2026-11-18)
 
 
