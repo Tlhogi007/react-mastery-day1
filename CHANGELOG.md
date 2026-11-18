@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.0...v1.5.1) (2026-11-18)
+
+
+### Bug Fixes
+
+* **sentry:** stop local HMR noise and harden cloud sync fetches ([a5c8e06](https://github.com/Tlhogi007/react-mastery-day1/commit/a5c8e067ea5ac2fd7fb6e68d725311679bb6d684))
+
 # [1.5.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.4.0...v1.5.0) (2026-11-18)
 
 
