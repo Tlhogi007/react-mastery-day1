@@ -1,3 +1,10 @@
+## [1.5.12](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.11...v1.5.12) (2026-11-18)
+
+
+### Bug Fixes
+
+* **auth:** forward raw bodies through Clerk FAPI proxy ([c19f685](https://github.com/Tlhogi007/react-mastery-day1/commit/c19f685c307b5f1258296c1a5569978fe15c2e31))
+
 ## [1.5.11](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.10...v1.5.11) (2026-11-18)
 
 
