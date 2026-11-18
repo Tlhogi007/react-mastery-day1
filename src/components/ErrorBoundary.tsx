@@ -1,6 +1,34 @@
 import { Component, type ReactNode, type ErrorInfo } from 'react'
 import { captureException } from '../lib/sentry'
 
+const CHUNK_RELOAD_KEY = 'rm-chunk-reload'
+
+function isChunkLoadError(error: Error | null): boolean {
+    if (!error) return false
+    const msg = `${error.name}: ${error.message}`
+    return (
+        error.name === 'ChunkLoadError' ||
+        /Failed to fetch dynamically imported module/i.test(msg) ||
+        /Loading chunk [\d]+ failed/i.test(msg) ||
+        /Importing a module script failed/i.test(msg)
+    )
+}
+
+/** One automatic reload after a deploy invalidated hashed chunks. */
+function reloadOnceForStaleChunks(): boolean {
+    try {
+        if (sessionStorage.getItem(CHUNK_RELOAD_KEY) === '1') {
+            sessionStorage.removeItem(CHUNK_RELOAD_KEY)
+            return false
+        }
+        sessionStorage.setItem(CHUNK_RELOAD_KEY, '1')
+    } catch {
+        /* ignore quota / private mode */
+    }
+    window.location.reload()
+    return true
+}
+
 interface ErrorBoundaryProps {
     children: ReactNode
     fallback?: ReactNode
@@ -11,6 +39,7 @@ interface ErrorBoundaryState {
     hasError: boolean
     error: Error | null
     errorInfo: ErrorInfo | null
+    chunkLoad: boolean
 }
 
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -19,26 +48,33 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
         this.state = {
             hasError: false,
             error: null,
-            errorInfo: null
+            errorInfo: null,
+            chunkLoad: false,
         }
     }
 
     static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
-        return { hasError: true, error }
+        return { hasError: true, error, chunkLoad: isChunkLoadError(error) }
     }
 
     componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
         this.setState({
             error,
-            errorInfo
+            errorInfo,
+            chunkLoad: isChunkLoadError(error),
         })
 
         // Call optional error handler
         this.props.onError?.(error, errorInfo)
 
-        captureException(error, {
-            componentStack: errorInfo.componentStack,
-        })
+        if (isChunkLoadError(error)) {
+            // Stale Vite assets after deploy — hard reload once; don't spam Sentry.
+            if (reloadOnceForStaleChunks()) return
+        } else {
+            captureException(error, {
+                componentStack: errorInfo.componentStack,
+            })
+        }
 
         // Log to console in development
         if (import.meta.env.DEV) {
@@ -47,10 +83,20 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     }
 
     handleReset = (): void => {
+        if (this.state.chunkLoad || isChunkLoadError(this.state.error)) {
+            try {
+                sessionStorage.removeItem(CHUNK_RELOAD_KEY)
+            } catch {
+                /* ignore */
+            }
+            window.location.reload()
+            return
+        }
         this.setState({
             hasError: false,
             error: null,
-            errorInfo: null
+            errorInfo: null,
+            chunkLoad: false,
         })
     }
 
@@ -98,7 +144,9 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
                                 lineHeight: '1.6',
                             }}
                         >
-                            An error occurred while rendering this component. This has been logged and we&apos;ll look into it.
+                            {this.state.chunkLoad
+                                ? 'This tab is running an older build. Reload to pick up the latest assets.'
+                                : 'An error occurred while rendering this component. This has been logged and we\u2019ll look into it.'}
                         </p>
 
                         {import.meta.env.DEV && this.state.error && (
@@ -169,7 +217,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
                                 e.currentTarget.style.background = 'var(--button-primary)'
                             }}
                         >
-                            Try Again
+                            {this.state.chunkLoad ? 'Reload' : 'Try Again'}
                         </button>
                     </div>
                 </div>
