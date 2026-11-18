@@ -1,3 +1,10 @@
+## [1.5.17](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.16...v1.5.17) (2026-11-18)
+
+
+### Bug Fixes
+
+* **ui:** polish Week 1 Day 4–7 docs and Context blast-radius demo ([89dd96b](https://github.com/Tlhogi007/react-mastery-day1/commit/89dd96b98221ec92b0d76fba7dbeaedf779454cd))
+
 ## [1.5.16](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.15...v1.5.16) (2026-11-18)
 
 
