@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.3.0...v1.4.0) (2026-11-18)
+
+
+### Features
+
+* **auth:** purge Upstash data on Clerk account delete ([747d088](https://github.com/Tlhogi007/react-mastery-day1/commit/747d0885bcfd28c4cee6639fcbfd9bcbd9ee1cc3))
+
 # [1.3.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.2.0...v1.3.0) (2026-11-18)
 
 
