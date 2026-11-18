@@ -41,15 +41,11 @@ export function ThemedClerkProvider({
 
   const appearance = useMemo(() => getClerkAppearance(mode), [mode])
 
-  // Production on *.vercel.app cannot CNAME clerk.* — route FAPI via /__clerk proxy.
-  const useProxy =
-    publishableKey.startsWith('pk_live_') ||
-    Boolean(import.meta.env.VITE_CLERK_PROXY_URL) ||
-    (typeof window !== 'undefined' && window.location.hostname.endsWith('.vercel.app'))
-
+  // Only production (pk_live_) needs /__clerk — vercel.app cannot CNAME clerk.*.
+  // Development keys use accounts.dev and must not go through the FAPI proxy.
   const proxyUrl =
     (import.meta.env.VITE_CLERK_PROXY_URL as string | undefined)?.trim() ||
-    (useProxy ? '/__clerk' : undefined)
+    (publishableKey.startsWith('pk_live_') ? '/__clerk' : undefined)
 
   return (
     <ClerkProvider
