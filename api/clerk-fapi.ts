@@ -3,11 +3,21 @@
  * Required on vercel.app production — you cannot CNAME clerk.*.vercel.app.
  *
  * Browser → /__clerk/*  (rewrite) → /api/clerk-fapi?clerkPath=* → frontend-api.clerk.dev
+ *
+ * Bodies must stay raw (Clerk uses form-urlencoded for sign_ins). Re-JSON-stringifying
+ * parsed bodies causes 422 Unprocessable Content.
  */
 /// <reference types="node" />
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import type { IncomingMessage } from 'http'
 
 const FAPI_ORIGIN = 'https://frontend-api.clerk.dev'
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+}
 
 function clientIp(req: VercelRequest): string {
   const vercel = req.headers['x-vercel-forwarded-for']
@@ -27,6 +37,26 @@ function clerkPath(req: VercelRequest): string {
   if (Array.isArray(q) && q[0]) return decodeURIComponent(String(q[0])).replace(/^\/+/, '')
   return ''
 }
+
+function readRawBody(req: IncomingMessage): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = []
+    req.on('data', (chunk: Buffer | string) => {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+    })
+    req.on('end', () => resolve(Buffer.concat(chunks)))
+    req.on('error', reject)
+  })
+}
+
+const SKIP_REQ_HEADERS = new Set([
+  'host',
+  'connection',
+  'content-length',
+  'transfer-encoding',
+  'keep-alive',
+  'expect',
+])
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   try {
@@ -59,24 +89,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     }
     const target = `${FAPI_ORIGIN}/${suffix}${search}`
 
-    const headers: Record<string, string> = {
-      'Clerk-Proxy-Url': proxyUrl,
-      'Clerk-Secret-Key': secret,
-      'X-Forwarded-For': clientIp(req),
+    const headers = new Headers()
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (value == null) continue
+      const lower = key.toLowerCase()
+      if (SKIP_REQ_HEADERS.has(lower)) continue
+      if (lower.startsWith('x-vercel-') || lower.startsWith('x-forwarded-')) continue
+      if (Array.isArray(value)) {
+        for (const v of value) headers.append(key, v)
+      } else {
+        headers.set(key, value)
+      }
     }
-    const accept = req.headers.accept
-    if (typeof accept === 'string') headers.Accept = accept
-    const contentType = req.headers['content-type']
-    if (typeof contentType === 'string') headers['Content-Type'] = contentType
-    const cookie = req.headers.cookie
-    if (typeof cookie === 'string') headers.Cookie = cookie
-    const authorization = req.headers.authorization
-    if (typeof authorization === 'string') headers.Authorization = authorization
+    headers.set('Clerk-Proxy-Url', proxyUrl)
+    headers.set('Clerk-Secret-Key', secret)
+    headers.set('X-Forwarded-For', clientIp(req))
 
-    let body: string | undefined
-    if (req.method !== 'GET' && req.method !== 'HEAD' && req.body != null) {
-      body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body)
-      if (!headers['Content-Type']) headers['Content-Type'] = 'application/json'
+    let body: Buffer | undefined
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      body = await readRawBody(req)
     }
 
     const upstream = await fetch(target, {
@@ -87,14 +118,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     })
 
     res.status(upstream.status)
-    const passHeaders = ['content-type', 'cache-control', 'location', 'set-cookie']
-    for (const key of passHeaders) {
-      const value = upstream.headers.get(key)
-      if (value) res.setHeader(key, value)
-    }
 
-    const buf = Buffer.from(await upstream.arrayBuffer())
-    res.end(buf)
+    const setCookies: string[] = []
+    upstream.headers.forEach((value, key) => {
+      const lower = key.toLowerCase()
+      if (lower === 'transfer-encoding' || lower === 'connection' || lower === 'content-length') {
+        return
+      }
+      if (lower === 'set-cookie') {
+        setCookies.push(value)
+        return
+      }
+      res.setHeader(key, value)
+    })
+    if (setCookies.length === 1) res.setHeader('set-cookie', setCookies[0]!)
+    else if (setCookies.length > 1) res.setHeader('set-cookie', setCookies)
+
+    res.end(Buffer.from(await upstream.arrayBuffer()))
   } catch (err) {
     console.error('[clerk-fapi proxy]', err)
     res.status(502).json({
