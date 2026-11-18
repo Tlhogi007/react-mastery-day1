@@ -1,3 +1,10 @@
+## [1.5.4](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.3...v1.5.4) (2026-11-18)
+
+
+### Bug Fixes
+
+* **ui:** center select chevrons app-wide ([73cefb6](https://github.com/Tlhogi007/react-mastery-day1/commit/73cefb67ae73c9887af27968dec50a51e70f215b))
+
 ## [1.5.3](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.2...v1.5.3) (2026-11-18)
 
 
