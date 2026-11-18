@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.6.0...v1.6.1) (2026-11-18)
+
+
+### Bug Fixes
+
+* **auth:** land on home after sign-out instead of restoring lab ([d692daa](https://github.com/Tlhogi007/react-mastery-day1/commit/d692daa727c802c8575f0744bfcae360096f9e2c))
+
 # [1.6.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.17...v1.6.0) (2026-11-18)
 
 
