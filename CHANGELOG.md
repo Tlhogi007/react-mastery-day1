@@ -1,3 +1,10 @@
+## [1.5.16](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.15...v1.5.16) (2026-11-18)
+
+
+### Bug Fixes
+
+* **security:** fail-closed AI auth and lock down Clerk FAPI proxy ([0142ae8](https://github.com/Tlhogi007/react-mastery-day1/commit/0142ae8964b25d38b512fb5afb31be00d08892c2))
+
 ## [1.5.15](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.14...v1.5.15) (2026-11-18)
 
 
