@@ -19,6 +19,8 @@
     "type-check": "tsc --noEmit",
     "security": "node scripts/security-check.mjs",
     "security:audit": "SECURITY_AUDIT=1 node scripts/security-check.mjs",
+    "sentry:autofix": "node scripts/setup-sentry-autofix.mjs --open",
+    "sentry:autofix:check": "node scripts/setup-sentry-autofix.mjs",
     "release": "semantic-release",
     "stress": "node scripts/stress-test.mjs",
     "stress:http": "node scripts/stress-http.mjs",
