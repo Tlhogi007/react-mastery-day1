@@ -1,3 +1,10 @@
+## [1.5.15](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.14...v1.5.15) (2026-11-18)
+
+
+### Bug Fixes
+
+* **auth:** stop handing #rm=landing to Clerk redirects ([8194a74](https://github.com/Tlhogi007/react-mastery-day1/commit/8194a7456c1e168bdb86703f3c69e62e0170b101))
+
 ## [1.5.14](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.13...v1.5.14) (2026-11-18)
 
 
