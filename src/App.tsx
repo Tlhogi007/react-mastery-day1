@@ -13,7 +13,6 @@ import { AiQuotaModal } from './components/AiQuotaModal'
 import { SignedInGreeting } from './components/SignedInGreeting'
 import { UserCloudSync } from './components/UserCloudSync'
 import {
-  clearForceLandingFlag,
   prepareLandingAfterSignOut,
   getActiveTab,
   readAuthReturnTo,
@@ -136,8 +135,9 @@ function App(): JSX.Element {
   const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY)
 
   const handleSignedOut = useCallback(() => {
+    // Keep FORCE_LANDING / ?rm=landing until remount reads them — clearing early
+    // raced Clerk's afterSignOutUrl and restored the lab from sessionStorage.
     prepareLandingAfterSignOut()
-    clearForceLandingFlag()
     clearQuizProgress()
     setAiGate(null)
     setShowTools(false)

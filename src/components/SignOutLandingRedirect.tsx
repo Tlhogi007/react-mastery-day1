@@ -6,6 +6,19 @@ interface SignOutLandingRedirectProps {
   onSignedOut: () => void
 }
 
+function isClerkSignOutTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false
+  return Boolean(
+    target.closest(
+      [
+        '.cl-userButtonPopoverActionButton__signOut',
+        '[data-localization-key="userButton.action__signOut"]',
+        'button[data-clerk-element="userButtonPopoverActionButton__signOut"]',
+      ].join(','),
+    ),
+  )
+}
+
 /**
  * When Clerk session ends (UserButton Sign out, or account deletion),
  * clear lab restore state and show the landing page — without relying on
@@ -25,6 +38,20 @@ export function SignOutLandingRedirect({ onSignedOut }: SignOutLandingRedirectPr
     prepareLandingAfterSignOut()
     onSignedOut()
   }, [onSignedOut])
+
+  // Synchronous: clear lab session BEFORE Clerk's afterSignOutUrl remount.
+  useEffect(() => {
+    const markLanding = (event: Event) => {
+      if (!isClerkSignOutTarget(event.target)) return
+      prepareLandingAfterSignOut()
+    }
+    document.addEventListener('pointerdown', markLanding, true)
+    document.addEventListener('click', markLanding, true)
+    return () => {
+      document.removeEventListener('pointerdown', markLanding, true)
+      document.removeEventListener('click', markLanding, true)
+    }
+  }, [])
 
   useEffect(() => {
     if (!isLoaded) return

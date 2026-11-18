@@ -222,10 +222,13 @@ if (!fapi.includes('MAX_BODY_BYTES') && !fapi.includes('Payload too large')) {
 // ── 5. Clerk provider / redirect hygiene ───────────────────────────────────
 console.log('\n[5] Clerk provider redirects')
 const provider = read('src/components/ThemedClerkProvider.tsx')
-if (!provider.includes('afterSignOutUrl="/"')) {
-  fail('afterSignOutUrl must be hash-free "/"')
+if (
+  !provider.includes('afterSignOutUrl="/?rm=landing"') &&
+  !provider.includes("afterSignOutUrl='/?rm=landing'")
+) {
+  fail('afterSignOutUrl must be hash-free "/?rm=landing"')
 } else {
-  ok('afterSignOutUrl is "/"')
+  ok('afterSignOutUrl is "/?rm=landing"')
 }
 if (!/startsWith\('\/'\)/.test(provider) || !/startsWith\('\/\/'\)/.test(provider)) {
   fail('VITE_CLERK_PROXY_URL must be validated as a relative same-origin path')

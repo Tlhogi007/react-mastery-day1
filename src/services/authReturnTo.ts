@@ -53,23 +53,35 @@ function safeRemove(key: string): void {
   }
 }
 
-/** Clear lab/OAuth return state (e.g. after sign-out → landing). */
-export function clearLabNavigationState(): void {
-  safeRemove(LAB_SESSION_KEY)
-  safeRemove(ACTIVE_TAB_KEY)
-  safeRemove(FORCE_LANDING_KEY)
+/** Strip SPA restore markers from the URL (query + hash) without a navigation. */
+function stripReturnMarkersFromUrl(): void {
   if (typeof window === 'undefined') return
   try {
-    const path = `${window.location.pathname}${window.location.search}`
-    window.history.replaceState(null, '', path)
+    const url = new URL(window.location.href)
+    url.searchParams.delete('rm')
+    url.searchParams.delete('ex')
+    url.searchParams.delete('tab')
+    url.searchParams.delete('view')
+    url.searchParams.delete('tools')
+    url.hash = ''
+    const next = `${url.pathname}${url.search}`
+    window.history.replaceState(null, '', next || '/')
   } catch {
     /* ignore */
   }
 }
 
+/** Clear lab/OAuth return state (e.g. after sign-out → landing). */
+export function clearLabNavigationState(): void {
+  safeRemove(LAB_SESSION_KEY)
+  safeRemove(ACTIVE_TAB_KEY)
+  safeRemove(FORCE_LANDING_KEY)
+  stripReturnMarkersFromUrl()
+}
+
 /**
  * Call synchronously when the Clerk session ends (or right before signOut).
- * Survives a full remount via session flag + `#rm=landing`.
+ * Survives a full remount via session flag + `?rm=landing` (hash-free for Clerk).
  */
 export function prepareLandingAfterSignOut(): void {
   safeSet(FORCE_LANDING_KEY, '1')
@@ -77,16 +89,18 @@ export function prepareLandingAfterSignOut(): void {
   safeRemove(ACTIVE_TAB_KEY)
   if (typeof window === 'undefined') return
   try {
-    const path = `${window.location.pathname}${window.location.search}`
-    window.history.replaceState(null, '', `${path}#rm=landing`)
+    const url = new URL(window.location.href)
+    url.searchParams.set('rm', 'landing')
+    url.hash = ''
+    window.history.replaceState(null, '', `${url.pathname}?${url.searchParams.toString()}`)
   } catch {
     /* ignore */
   }
 }
 
 export function landingAfterSignOutUrl(): string {
-  if (typeof window === 'undefined') return '/#rm=landing'
-  return `${window.location.origin}/#rm=landing`
+  if (typeof window === 'undefined') return '/?rm=landing'
+  return `${window.location.origin}/?rm=landing`
 }
 
 /** Drop remount flag after SPA already showed landing (keeps `#rm=landing` for Clerk redirect). */
@@ -164,11 +178,7 @@ function encodeHash(state: AuthReturnTo): string {
   return `#${params.toString()}`
 }
 
-function parseHash(): Partial<AuthReturnTo> | null {
-  if (typeof window === 'undefined') return null
-  const raw = window.location.hash.replace(/^#/, '')
-  if (!raw || !raw.includes('rm=')) return null
-  const params = new URLSearchParams(raw)
+function parseReturnParams(params: URLSearchParams): Partial<AuthReturnTo> | null {
   const rm = params.get('rm')
   if (rm !== 'lab' && rm !== 'landing') return null
   return {
@@ -178,6 +188,16 @@ function parseHash(): Partial<AuthReturnTo> | null {
     view: normalizeLabView(params.get('view')),
     tools: params.get('tools') === '1',
   }
+}
+
+/** Query first (Clerk afterSignOutUrl), then hash (local SPA restore). */
+function parseReturnMarker(): Partial<AuthReturnTo> | null {
+  if (typeof window === 'undefined') return null
+  const fromQuery = parseReturnParams(new URLSearchParams(window.location.search))
+  if (fromQuery) return fromQuery
+  const raw = window.location.hash.replace(/^#/, '')
+  if (!raw || !raw.includes('rm=')) return null
+  return parseReturnParams(new URLSearchParams(raw))
 }
 
 /**
@@ -201,18 +221,19 @@ export function prepareAuthReturnUrl(overrides?: Partial<AuthReturnTo>): string 
   return `${window.location.origin}${pathSearch}`
 }
 
-/** Prefer URL hash (OAuth return), else sessionStorage. */
+/** Prefer URL marker (query/hash), else sessionStorage. */
 export function readAuthReturnTo(
   validExercises: Record<string, unknown>,
 ): AuthReturnTo | null {
   const forceLanding = safeGet(FORCE_LANDING_KEY) === '1'
-  const fromHash = parseHash()
+  const fromMarker = parseReturnMarker()
 
   // Sign-out remount: never restore the lab from a stale session key.
-  if (forceLanding || fromHash?.inLab === false) {
+  if (forceLanding || fromMarker?.inLab === false) {
     safeRemove(FORCE_LANDING_KEY)
     safeRemove(LAB_SESSION_KEY)
     safeRemove(ACTIVE_TAB_KEY)
+    stripReturnMarkersFromUrl()
     return {
       inLab: false,
       exercise: 'day01-rendering-pipeline',
@@ -222,18 +243,18 @@ export function readAuthReturnTo(
     }
   }
 
-  if (fromHash) {
+  if (fromMarker) {
     const exercise =
-      fromHash.exercise && fromHash.exercise in validExercises
-        ? fromHash.exercise
+      fromMarker.exercise && fromMarker.exercise in validExercises
+        ? fromMarker.exercise
         : readLabSession(validExercises)?.exercise
-    if (fromHash.inLab && !exercise) return null
+    if (fromMarker.inLab && !exercise) return null
     const state: AuthReturnTo = {
-      inLab: Boolean(fromHash.inLab),
+      inLab: Boolean(fromMarker.inLab),
       exercise: exercise || 'day01-rendering-pipeline',
-      view: normalizeLabView(fromHash.view),
-      tools: Boolean(fromHash.tools),
-      tab: fromHash.tab || getActiveTab() || 'learn',
+      view: normalizeLabView(fromMarker.view),
+      tools: Boolean(fromMarker.tools),
+      tab: fromMarker.tab || getActiveTab() || 'learn',
     }
     persistSnapshot(state)
     return state
