@@ -3,10 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import './Landing.css'
 import { tracking } from '../lib/googleAnalytics'
 import { formatBuildStamp } from '../lib/buildInfo'
+import { AuthButton } from '../components/AuthButton'
 
 interface LandingProps {
   onGetStarted: () => void
 }
+
+const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY)
 
 const codeSnippets = [
   { bad: 'useEffect(() => {\n  fetchData()\n}, [])', issue: 'Missing dependency' },
@@ -39,6 +42,12 @@ export default function Landing({ onGetStarted }: LandingProps) {
       <div className="grid-background" style={{
         transform: `translate(${mousePos.x * 0.02}px, ${mousePos.y * 0.02}px)`
       }} />
+
+      {clerkEnabled && (
+        <div className="landing-auth-bar">
+          <AuthButton />
+        </div>
+      )}
 
       <div className="landing-container">
         
