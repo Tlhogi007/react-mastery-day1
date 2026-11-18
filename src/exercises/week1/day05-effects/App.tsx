@@ -33,7 +33,6 @@ function Day05Effects(): JSX.Element {
                 day={5}
                 title="Effects & Closures"
                 description="Master useEffect timing, cleanup, stale closures, and dependency array traps."
-                progress={65}
             />
 
             <Tabs

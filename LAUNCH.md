@@ -22,10 +22,18 @@
 - [x] Env vars `VITE_CONTENT_REPO_URL` + `CONTENT_REPO_URL` set
 - [x] Content repo Action redeploys via `VERCEL_TOKEN` (verified green)
 - [x] Watching content repo for PR notifications
-
-Optional later: connect GitHub under Vercel → Settings → Git for push-to-deploy on the app repo.
+- [x] GitHub connected under Vercel → Settings → Git (`Tlhogi007/react-mastery-day1`, production branch `main`) — Done
+- [x] Sentry client + source maps (`VITE_SENTRY_DSN`, `SENTRY_AUTH_TOKEN` / org / project on Vercel)
 
 Details: https://github.com/Tlhogi007/react-mastery-content/blob/main/AUTO_REDEPLOY.md
+
+## AI quiz cost strategy
+
+- Local questions by default; AI is opt-in in the quiz UI
+- Hosted waterfall: Groq → Gemini → Together (server keys only)
+- Per-IP caps + optional global daily budget (`AI_QUIZ_GLOBAL_MAX_PER_DAY`, Upstash optional)
+- Learners can paste BYO keys in Settings (browser-only; skips hosted quota)
+- Future: auth-gate AI if abuse appears
 
 ## After that
 

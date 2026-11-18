@@ -62,7 +62,9 @@ function QuizHeader({
                             }}
                         />
                         <span>
-                            {loadingAI ? '🔄 Loading AI questions...' : '✨ Enable AI Questions'}
+                            {loadingAI
+                                ? 'Loading AI questions…'
+                                : 'Add AI questions (opt-in · shared free quota)'}
                         </span>
                     </label>
                 )}

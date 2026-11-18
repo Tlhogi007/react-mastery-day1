@@ -145,3 +145,28 @@ Simpler but less detailed.
 3. Add to `.env`
 4. Deploy
 5. Watch users come in! 📊
+
+---
+
+## Sentry (errors) — free Developer plan
+
+1. Sign up at https://sentry.io (Developer / free)
+2. Create a **React** / browser project named `react-mastery-day1`
+3. Copy the **DSN**
+4. Add locally and on Vercel (Production + Preview):
+
+```bash
+VITE_SENTRY_DSN=https://xxxx@oXXXX.ingest.sentry.io/XXXX
+```
+
+5. Redeploy (Vite bakes `VITE_*` at build time)
+
+Wired in `src/lib/sentry.ts` — ErrorBoundary + AI proxy 5xx report when DSN is set. No DSN = no-op.
+
+### Source maps (production)
+
+`@sentry/vite-plugin` uploads hidden source maps on `vite build` when `SENTRY_AUTH_TOKEN` is set (also `SENTRY_ORG`, `SENTRY_PROJECT`). Maps are deleted from `dist/` after upload. Local optional file: `.env.sentry-build-plugin` (gitignored).
+
+### Tags on errors (for email alerts)
+
+Events include tags like `app.view`, `app.day`, `app.exercise`, `app.week`, and for AI failures `ai.provider` / `http.status`. Setup-verification noise is filtered; resolve old test issues in the Sentry UI if they still alert.

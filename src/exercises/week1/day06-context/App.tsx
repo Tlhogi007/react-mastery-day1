@@ -37,7 +37,6 @@ function Day06Context(): JSX.Element {
         day={6}
         title="Context & Re-render Propagation"
         description="Understand why all consumers re-render, splitting contexts, and memoizing provider values."
-        progress={70}
       />
 
       <Tabs

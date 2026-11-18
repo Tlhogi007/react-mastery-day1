@@ -183,9 +183,7 @@ function CodeReviewLibrary(): JSX.Element {
                     </button>
                     <CodeReviewExerciseComponent
                         exercise={selectedExerciseData}
-                        onComplete={(foundBugs) => {
-                            console.log('Found bugs:', foundBugs)
-                        }}
+                        onComplete={() => {}}
                     />
                 </div>
             )}

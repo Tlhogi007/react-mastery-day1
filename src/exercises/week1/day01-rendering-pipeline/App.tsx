@@ -96,7 +96,6 @@ function Day01RenderingPipeline(): JSX.Element {
                 day={1}
                 title="Rendering Pipeline"
                 description="Understand Render Phase vs Commit Phase, Virtual DOM, and Diffing basics."
-                progress={45}
             />
 
             <Tabs

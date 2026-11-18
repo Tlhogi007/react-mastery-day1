@@ -15,9 +15,10 @@ import type { QuizQuestion } from '../types/challenges'
 
 interface ToolsProps {
     onBack?: () => void
+    onNavigateToDay?: (day: number) => void
 }
 
-function Tools({ onBack }: ToolsProps): JSX.Element {
+function Tools({ onBack, onNavigateToDay }: ToolsProps): JSX.Element {
     const [allQuizQuestions, setAllQuizQuestions] = useState<QuizQuestion[]>([])
 
     useEffect(() => {
@@ -118,7 +119,7 @@ function Tools({ onBack }: ToolsProps): JSX.Element {
                         id: 'learning-path',
                         label: 'Learning Path',
                         icon: '🧭',
-                        content: <LearningPathRecommendations />
+                        content: <LearningPathRecommendations onNavigateToDay={onNavigateToDay} />
                     },
                     {
                         id: 'interview',

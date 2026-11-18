@@ -5,24 +5,24 @@ const TRACKING_ID = import.meta.env.VITE_GA_TRACKING_ID || ''
 
 // Initialize Google Analytics
 export function initGA() {
-  if (TRACKING_ID) {
-    ReactGA.initialize(TRACKING_ID, {
-      gaOptions: {
-        debug_mode: true
-      }
-    })
-    console.log('📊 Google Analytics initialized with ID:', TRACKING_ID)
-  } else {
-    console.warn('⚠️ Google Analytics tracking ID not found')
-    console.log('Environment check:', import.meta.env.VITE_GA_TRACKING_ID)
+  if (!TRACKING_ID) {
+    if (import.meta.env.DEV) {
+      console.warn('Google Analytics tracking ID not found')
+    }
+    return
   }
+
+  ReactGA.initialize(TRACKING_ID, {
+    gaOptions: {
+      debug_mode: import.meta.env.DEV,
+    },
+  })
 }
 
 // Track page views
 export function trackPageView(path: string, title?: string) {
   if (!TRACKING_ID) return
-  
-  console.log('📊 Tracking page view:', path)
+
   ReactGA.send({
     hitType: 'pageview',
     page: path,

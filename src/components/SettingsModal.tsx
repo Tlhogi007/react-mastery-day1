@@ -1,5 +1,13 @@
-import { useState, useEffect, useRef, type JSX } from 'react'
+import { useState, useEffect, useRef, type JSX, type ChangeEvent } from 'react'
 import { settingsStorage } from '../services/settingsStorage'
+import { byoAiKeys, type ByoAiKeys } from '../services/byoAiKeys'
+import {
+    downloadLearnerDataBackup,
+    importLearnerData,
+    readBackupFile,
+    resetLearnerData,
+    summarizeImport,
+} from '../services/learnerData'
 import { Z_INDEX } from '../constants'
 
 interface SettingsModalProps {
@@ -10,10 +18,82 @@ interface SettingsModalProps {
 
 function SettingsModal({ isOpen, onClose, onReplayTour }: SettingsModalProps): JSX.Element {
     const modalRef = useRef<HTMLDivElement>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const [dataStatus, setDataStatus] = useState<string | null>(null)
+    const [byoStatus, setByoStatus] = useState<string | null>(null)
+    const [byo, setByo] = useState<ByoAiKeys>(() => byoAiKeys.get())
     const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>(() => {
         // Load theme from localStorage on mount
         return settingsStorage.getTheme()
     })
+
+    const handleSaveByo = (): void => {
+        byoAiKeys.set(byo)
+        setByo(byoAiKeys.get())
+        setByoStatus(
+            byoAiKeys.hasAny()
+                ? 'Saved — AI quizzes will use your keys (hosted quota skipped).'
+                : 'Cleared — AI quizzes will use the shared free providers when available.',
+        )
+    }
+
+    const handleClearByo = (): void => {
+        byoAiKeys.clear()
+        setByo({})
+        setByoStatus('Your API keys were removed from this browser.')
+    }
+
+    const buttonBaseStyle: React.CSSProperties = {
+        width: '100%',
+        padding: '12px 14px',
+        background: 'var(--bg-section)',
+        color: 'var(--text-primary)',
+        border: '1px solid var(--border-color)',
+        borderRadius: 8,
+        fontSize: 14,
+        fontWeight: 600,
+        cursor: 'pointer',
+        textAlign: 'left',
+        marginBottom: 8,
+    }
+
+    const handleExportData = (): void => {
+        downloadLearnerDataBackup()
+        setDataStatus('Backup downloaded')
+    }
+
+    const handleImportClick = (): void => {
+        fileInputRef.current?.click()
+    }
+
+    const handleImportFile = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
+        const file = e.target.files?.[0]
+        e.target.value = ''
+        if (!file) return
+
+        try {
+            const backup = await readBackupFile(file)
+            const result = importLearnerData(backup)
+            const summary = summarizeImport(result)
+            const shouldReload = result.restoredKeys.length > 0
+            setDataStatus(shouldReload ? `${summary}. Reloading…` : summary)
+            if (shouldReload) {
+                window.setTimeout(() => window.location.reload(), 1200)
+            }
+        } catch (err) {
+            setDataStatus(err instanceof Error ? err.message : 'Import failed')
+        }
+    }
+
+    const handleResetData = (): void => {
+        const ok = window.confirm(
+            'Reset all learner data on this device?\n\nThis clears progress, notes, reflections, flashcards, snippets, and local analytics. This cannot be undone unless you exported a backup first.'
+        )
+        if (!ok) return
+        resetLearnerData()
+        setDataStatus('All data cleared — reloading…')
+        window.setTimeout(() => window.location.reload(), 600)
+    }
 
     useEffect(() => {
         if (!isOpen) return
@@ -258,18 +338,7 @@ function SettingsModal({ isOpen, onClose, onReplayTour }: SettingsModalProps): J
                                 onReplayTour()
                                 onClose()
                             }}
-                            style={{
-                                width: '100%',
-                                padding: '12px 14px',
-                                background: 'var(--bg-section)',
-                                color: 'var(--text-primary)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: 8,
-                                fontSize: 14,
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                textAlign: 'left',
-                            }}
+                            style={buttonBaseStyle}
                         >
                             Replay tour
                             <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-muted)', marginTop: 4 }}>
@@ -278,6 +347,109 @@ function SettingsModal({ isOpen, onClose, onReplayTour }: SettingsModalProps): J
                         </button>
                     </div>
                 )}
+
+                <div style={sectionStyle}>
+                    <h3 style={{ margin: '0 0 12px', fontSize: '18px', fontWeight: '600' }}>AI quiz keys (optional)</h3>
+                    <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                        Quizzes use local questions by default. AI is opt-in. Paste your own free keys to avoid the shared
+                        host quota — keys stay in this browser only and are never uploaded to our server.
+                    </p>
+                    {(
+                        [
+                            ['groq', 'Groq API key', 'https://console.groq.com'],
+                            ['gemini', 'Gemini API key', 'https://aistudio.google.com/apikey'],
+                            ['together', 'Together API key', 'https://api.together.xyz'],
+                        ] as const
+                    ).map(([field, label, href]) => (
+                        <label key={field} style={{ display: 'block', marginBottom: 10 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{label}</span>
+                            <input
+                                type="password"
+                                autoComplete="off"
+                                placeholder="sk-… (optional)"
+                                value={byo[field] || ''}
+                                onChange={(e) => setByo((prev) => ({ ...prev, [field]: e.target.value }))}
+                                style={{
+                                    display: 'block',
+                                    width: '100%',
+                                    marginTop: 6,
+                                    padding: '10px 12px',
+                                    borderRadius: 8,
+                                    border: '1px solid var(--border-color)',
+                                    background: 'var(--bg-section)',
+                                    color: 'var(--text-primary)',
+                                    fontSize: 13,
+                                    boxSizing: 'border-box',
+                                }}
+                            />
+                            <a
+                                href={href}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{ fontSize: 12, color: 'var(--text-muted)' }}
+                            >
+                                Get a free key
+                            </a>
+                        </label>
+                    ))}
+                    <button type="button" onClick={handleSaveByo} style={buttonBaseStyle}>
+                        Save AI keys
+                    </button>
+                    <button type="button" onClick={handleClearByo} style={{ ...buttonBaseStyle, marginBottom: 0 }}>
+                        Clear AI keys
+                    </button>
+                    {byoStatus && (
+                        <p style={{ margin: '12px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>
+                            {byoStatus}
+                        </p>
+                    )}
+                </div>
+
+                <div style={sectionStyle}>
+                    <h3 style={{ margin: '0 0 12px', fontSize: '18px', fontWeight: '600' }}>Your data</h3>
+                    <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                        Progress, notes, and tools data stay in this browser. Export a backup before switching devices or clearing site data.
+                    </p>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="application/json,.json"
+                        style={{ display: 'none' }}
+                        onChange={handleImportFile}
+                    />
+                    <button type="button" onClick={handleExportData} style={buttonBaseStyle}>
+                        Export backup
+                        <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-muted)', marginTop: 4 }}>
+                            Download all learner data as JSON
+                        </div>
+                    </button>
+                    <button type="button" onClick={handleImportClick} style={buttonBaseStyle}>
+                        Import backup
+                        <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-muted)', marginTop: 4 }}>
+                            Restore from a previous export (reloads the app)
+                        </div>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleResetData}
+                        style={{
+                            ...buttonBaseStyle,
+                            marginBottom: 0,
+                            borderColor: 'var(--bg-error)',
+                            color: 'var(--text-primary)',
+                        }}
+                    >
+                        Reset all data
+                        <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-muted)', marginTop: 4 }}>
+                            Clears progress, notes, reflections, and local analytics on this device
+                        </div>
+                    </button>
+                    {dataStatus && (
+                        <p style={{ margin: '12px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>
+                            {dataStatus}
+                        </p>
+                    )}
+                </div>
 
                 <div style={sectionStyle}>
                     <h3 style={{ margin: '0 0 12px', fontSize: '18px', fontWeight: '600' }}>About</h3>
@@ -292,8 +464,11 @@ function SettingsModal({ isOpen, onClose, onReplayTour }: SettingsModalProps): J
                         <p style={{ margin: '0 0 8px' }}>
                             <strong>30-Day Senior React Mastery</strong> is a comprehensive learning platform designed to help you master React internals like a systems engineer.
                         </p>
-                        <p style={{ margin: 0 }}>
+                        <p style={{ margin: '0 0 12px' }}>
                             This course covers React fundamentals, performance optimization, architecture patterns, and interview preparation.
+                        </p>
+                        <p style={{ margin: 0, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
+                            <strong style={{ color: 'var(--text-primary)' }}>Privacy.</strong> Learner progress, notes, reflections, tool data, and optional BYO AI keys stay in your browser (local storage) unless you export a backup. Usage analytics may be sent to Google Analytics when configured. Crash/error reports may be sent to Sentry when configured — no account signup required.
                         </p>
                     </div>
                 </div>

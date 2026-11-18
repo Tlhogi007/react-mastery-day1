@@ -101,7 +101,6 @@ function Day03Fiber(): JSX.Element {
                 day={3}
                 title="Fiber Architecture"
                 description="Understand Fiber Node Structure, Current vs WorkInProgress tree, and Unit of Work model."
-                progress={55}
             />
 
             <Tabs

@@ -7,7 +7,11 @@ import { useState, useEffect, type JSX } from 'react'
 import { learningPathService, type LearningRecommendation } from '../services/learningPathService'
 import Card from './Card'
 
-function LearningPathRecommendations(): JSX.Element {
+interface LearningPathRecommendationsProps {
+    onNavigateToDay?: (day: number) => void
+}
+
+function LearningPathRecommendations({ onNavigateToDay }: LearningPathRecommendationsProps): JSX.Element {
     const [recommendations, setRecommendations] = useState<LearningRecommendation[]>([])
     const [path, setPath] = useState(learningPathService.getPersonalizedPath())
 
@@ -38,6 +42,10 @@ function LearningPathRecommendations(): JSX.Element {
             low: 'var(--bg-success)'
         }
         return colors[priority]
+    }
+
+    const goToDay = (day: number): void => {
+        onNavigateToDay?.(day)
     }
 
     const containerStyle: React.CSSProperties = {
@@ -73,9 +81,27 @@ function LearningPathRecommendations(): JSX.Element {
                                     <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
                                         Suggested Next
                                     </div>
-                                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--button-primary)' }}>
-                                        Day {path.nextDay}
-                                    </div>
+                                    {onNavigateToDay ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => goToDay(path.nextDay!)}
+                                            style={{
+                                                fontSize: '24px',
+                                                fontWeight: 'bold',
+                                                color: 'var(--button-primary)',
+                                                background: 'transparent',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                padding: 0,
+                                            }}
+                                        >
+                                            Day {path.nextDay}
+                                        </button>
+                                    ) : (
+                                        <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--button-primary)' }}>
+                                            Day {path.nextDay}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -134,13 +160,11 @@ function LearningPathRecommendations(): JSX.Element {
                                     }}>
                                         <strong>Why:</strong> {rec.reason}
                                     </div>
-                                    {rec.day && (
+                                    {rec.day && onNavigateToDay && (
                                         <div style={{ marginTop: '12px' }}>
                                             <button
-                                                onClick={() => {
-                                                    // Navigate to day - would need router integration
-                                                    console.log(`Navigate to Day ${rec.day}`)
-                                                }}
+                                                type="button"
+                                                onClick={() => goToDay(rec.day!)}
                                                 style={{
                                                     padding: '8px 16px',
                                                     borderRadius: '6px',

@@ -28,11 +28,9 @@ export const huggingFaceProvider: APIProvider = {
           signal: AbortSignal.timeout(TIMEOUT.API_AVAILABILITY_CHECK)
         })
         if (response.status === 410) {
-          console.log(`[HF] Model ${model} is gone (410) - deprecated/unavailable`)
           continue
         }
         if (response.ok || response.status === 405) {
-          console.log(`[HF] Found available model: ${model}`)
           return true
         }
       } catch {
@@ -98,7 +96,6 @@ Make questions technical and specific to React's internal mechanisms, not genera
 
         if (!response.ok) {
           if (response.status === 503) {
-            console.log(`[HF] ${model} is loading (503), trying next model...`)
             continue
           }
           if (response.status === 410) {
@@ -111,12 +108,9 @@ Make questions technical and specific to React's internal mechanisms, not genera
 
         const data = await response.json()
         if (!data?.[0]?.generated_text) {
-          console.log(`[HF] ${model} returned invalid response format, trying next model...`)
           continue
         }
 
-        console.log(`[HF] ${model} generated text for React internals topic: ${topic}`)
-        console.log(`[HF] Raw generated text length: ${data[0].generated_text.length} characters`)
         
         // Parse the generated text into QuizQuestion format
         const parsedQuestions = parseAIQuestions(
@@ -126,11 +120,9 @@ Make questions technical and specific to React's internal mechanisms, not genera
         )
         
         if (parsedQuestions.length > 0) {
-          console.log(`✅ [HF] Successfully parsed ${parsedQuestions.length} questions from ${model}`)
           return parsedQuestions
         }
 
-        console.log(`[HF] Could not parse questions from ${model}, trying next model...`)
         continue
       } catch (error) {
         console.warn(`[HF] ${model} fetch failed:`, error)
@@ -138,7 +130,6 @@ Make questions technical and specific to React's internal mechanisms, not genera
       }
     }
     
-    console.log('[HF] All models failed to generate questions.')
     return []
   }
 }

@@ -73,7 +73,6 @@ function Day02Reconciliation(): JSX.Element {
         day={2}
         title="Reconciliation Deep Dive"
         description="Master Type Comparison Rule, Keys and Identity, and List Diffing Complexity."
-        progress={50}
       />
 
       <Tabs

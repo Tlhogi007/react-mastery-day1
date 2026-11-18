@@ -123,40 +123,29 @@ class QuizQuestionService {
     count: number,
     skipTemplates: boolean = false
   ): Promise<QuizQuestion[]> {
-    if (skipTemplates) {
-      console.log(`[QuizService] 🤖 Generating ${count} AI-only questions for topic: ${topic} (skipping templates)`)
-    } else {
-      console.log(`[QuizService] Generating ${count} React-specific questions for topic: ${topic}`)
-    }
-    
     // If skipTemplates is true, go straight to AI APIs
     if (skipTemplates) {
       try {
-        console.log(`[QuizService] 🔄 Attempting to fetch ${count} AI-generated questions from APIs...`)
         const aiQuestions = await fetchFromProviders(topic, count)
-        
+
         if (aiQuestions.length > 0) {
           // Validate that questions are React-specific (especially important for AI-only mode)
           // Use strict matching: require "react" keyword OR multiple React-specific terms
           const primaryKeywords = ['react', 'reactjs', 'react.js'] // Must have one of these
           const secondaryKeywords = ['component', 'render', 'fiber', 'virtual dom', 'reconciliation', 'jsx', 'hook', 'usestate', 'useeffect', 'props', 'context', 'memo', 'suspense', 'rendering pipeline', 'commit phase']
-          
+
           const reactSpecificQuestions = aiQuestions.filter(q => {
             const questionLower = q.question.toLowerCase()
             const explanationLower = q.explanation?.toLowerCase() || ''
-            
-            // Check question text first (more reliable indicator)
-            // Must have "react" keyword in question OR have at least 2 secondary React keywords in question
-            const hasPrimaryKeywordInQuestion = primaryKeywords.some(keyword => 
+
+            const hasPrimaryKeywordInQuestion = primaryKeywords.some(keyword =>
               questionLower.includes(keyword)
             )
-            
-            const matchedSecondaryKeywordsInQuestion = secondaryKeywords.filter(keyword => 
+
+            const matchedSecondaryKeywordsInQuestion = secondaryKeywords.filter(keyword =>
               questionLower.includes(keyword)
             )
-            
-            // Also check explanation, but exclude negative contexts
-            // Negative patterns: "not react", "non-react", "for react-specific", "react-specific content" (when saying it's NOT)
+
             const negativePatterns = [
               'not react',
               'non-react',
@@ -168,135 +157,68 @@ class QuizQuestionService {
               'not a react',
               'not react-specific'
             ]
-            const hasNegativeContext = negativePatterns.some(pattern => 
+            const hasNegativeContext = negativePatterns.some(pattern =>
               explanationLower.includes(pattern)
             )
-            
-            // Only check explanation if it doesn't have negative context
-            const hasPrimaryKeywordInExplanation = !hasNegativeContext && primaryKeywords.some(keyword => 
+
+            const hasPrimaryKeywordInExplanation = !hasNegativeContext && primaryKeywords.some(keyword =>
               explanationLower.includes(keyword)
             )
-            
-            const matchedSecondaryKeywordsInExplanation = !hasNegativeContext ? secondaryKeywords.filter(keyword => 
-              explanationLower.includes(keyword)
-            ) : []
-            
-            // Combine counts from question and explanation
+
+            const matchedSecondaryKeywordsInExplanation = !hasNegativeContext
+              ? secondaryKeywords.filter(keyword => explanationLower.includes(keyword))
+              : []
+
             const totalSecondaryKeywords = new Set([
               ...matchedSecondaryKeywordsInQuestion,
               ...matchedSecondaryKeywordsInExplanation
             ]).size
-            
+
             const hasPrimaryKeyword = hasPrimaryKeywordInQuestion || hasPrimaryKeywordInExplanation
-            
-            // Debug logging for validation (always log to see what's happening)
-            const isReactSpecific = hasPrimaryKeyword || totalSecondaryKeywords >= 2
-            if (!isReactSpecific) {
-              console.log(`[QuizService] 🔍 Validation check for: "${q.question.substring(0, 60)}..."`)
-              console.log(`[QuizService]   - Has "react" in question: ${hasPrimaryKeywordInQuestion}`)
-              console.log(`[QuizService]   - Has "react" in explanation: ${hasPrimaryKeywordInExplanation} (negative context: ${hasNegativeContext})`)
-              console.log(`[QuizService]   - Secondary keywords in question: ${matchedSecondaryKeywordsInQuestion.join(', ') || 'none'}`)
-              console.log(`[QuizService]   - Secondary keywords in explanation: ${matchedSecondaryKeywordsInExplanation.join(', ') || 'none'}`)
-              console.log(`[QuizService]   - Total unique secondary keywords: ${totalSecondaryKeywords} (need 2+)`)
-              console.log(`[QuizService]   - Result: REJECTED (not React-specific)`)
-            } else {
-              console.log(`[QuizService] ✅ Validation passed for: "${q.question.substring(0, 60)}..."`)
-              if (hasPrimaryKeyword) {
-                console.log(`[QuizService]   - Reason: Contains "react" keyword`)
-              } else {
-                console.log(`[QuizService]   - Reason: Has ${totalSecondaryKeywords} React-specific keywords`)
-              }
-            }
-            
-            // Require "react" in question/explanation OR at least 2 React-specific terms
-            return isReactSpecific
+            return hasPrimaryKeyword || totalSecondaryKeywords >= 2
           })
-          
-          if (reactSpecificQuestions.length === 0 && skipTemplates) {
-            console.warn(`⚠️ [QuizService] No React-specific questions found in AI-generated questions!`)
-            console.warn(`[QuizService] All ${aiQuestions.length} questions appear to be generic programming questions, not React-specific.`)
-            console.warn(`[QuizService] Rejecting non-React questions in AI-only mode.`)
-            
-            // Log sample to show what we got
-            aiQuestions.slice(0, 2).forEach((q, idx) => {
-              console.warn(`[QuizService] ❌ Non-React Question ${idx + 1}: "${q.question.substring(0, 80)}..."`)
-            })
-            
-            return [] // Reject non-React questions in AI-only mode
+
+          if (reactSpecificQuestions.length === 0) {
+            console.warn(`[QuizService] No React-specific questions found in AI results; rejecting in AI-only mode.`)
+            return []
           }
-          
+
           if (reactSpecificQuestions.length < aiQuestions.length) {
             const nonReactCount = aiQuestions.length - reactSpecificQuestions.length
-            console.warn(`⚠️ [QuizService] Filtered out ${nonReactCount} non-React-specific questions`)
-            console.log(`✅ [QuizService] Keeping ${reactSpecificQuestions.length} React-specific AI questions`)
-          } else {
-            console.log(`✅ [QuizService] All ${aiQuestions.length} questions passed React-specific validation`)
+            console.warn(`[QuizService] Filtered out ${nonReactCount} non-React-specific questions`)
           }
-          
-          // Log sample of React-specific questions for verification
-          if (reactSpecificQuestions.length > 0) {
-            reactSpecificQuestions.slice(0, 2).forEach((q, idx) => {
-              console.log(`[QuizService] 🤖 React AI Question ${idx + 1}: "${q.question.substring(0, 60)}..."`)
-            })
-            console.log(`[QuizService] ✨ Returning ${reactSpecificQuestions.length} React-specific AI-generated questions`)
-          } else {
-            console.warn(`[QuizService] ⚠️ No React-specific questions after validation!`)
-          }
-          
+
           return reactSpecificQuestions
-        } else {
-          console.warn(`⚠️ [QuizService] No AI questions were generated. APIs may be unavailable or parsing failed.`)
-          // When AI-only is requested and fails, return empty (don't fall back to templates)
-          return []
         }
+
+        console.warn(`[QuizService] No AI questions were generated. APIs may be unavailable or parsing failed.`)
+        return []
       } catch (error) {
-        console.warn('[QuizService] ❌ AI generation failed:', error)
-        // When AI-only is requested and fails, return empty (don't fall back to templates)
+        console.warn('[QuizService] AI generation failed:', error)
         return []
       }
     }
-    
+
     // Normal flow: Try React-specific local templates first
     const reactTemplates = this.generateLocalQuestions(topic, count)
-    
-    // If we have enough React-specific templates, use them
+
     if (reactTemplates.length >= count) {
-      console.log(`[QuizService] 📚 Using ${reactTemplates.length} React-specific template questions (no AI needed)`)
       return reactTemplates.slice(0, count)
     }
-    
-    // If we have some templates but need more, try AI with very specific prompts
+
     const needed = count - reactTemplates.length
-    console.log(`[QuizService] Have ${reactTemplates.length} React templates, trying AI for ${needed} more`)
-    
-    // Try AI APIs with React-specific prompts
+
     try {
-      console.log(`[QuizService] 🔄 Attempting to fetch ${needed} AI-generated questions...`)
       const aiQuestions = await fetchFromProviders(topic, needed)
-      
+
       if (aiQuestions.length > 0) {
-        console.log(`✅ [QuizService] Successfully generated ${aiQuestions.length} AI questions from APIs`)
-        console.log(`[QuizService] 📊 Question breakdown: ${reactTemplates.length} templates + ${aiQuestions.length} AI = ${reactTemplates.length + aiQuestions.length} total`)
-        
-        // Log sample of AI questions for verification
-        aiQuestions.slice(0, 2).forEach((q, idx) => {
-          console.log(`[QuizService] 🤖 AI Question ${idx + 1}: "${q.question.substring(0, 60)}..."`)
-        })
-        
-        // Combine React templates + AI questions
         const combined = [...reactTemplates, ...aiQuestions]
-        const shuffled = this.shuffleArray(combined).slice(0, count)
-        console.log(`[QuizService] ✨ Returning ${shuffled.length} questions (mix of templates and AI)`)
-        return shuffled
-      } else {
-        console.log(`⚠️ [QuizService] No AI questions were generated. APIs may be unavailable or parsing failed.`)
+        return this.shuffleArray(combined).slice(0, count)
       }
     } catch (error) {
-      console.warn('[QuizService] ❌ AI generation failed:', error)
+      console.warn('[QuizService] AI generation failed:', error)
     }
-    
-    // Fallback: Use templates (even if we need to duplicate/vary)
-    console.log(`[QuizService] 📚 Using template fallback for ${count} questions (AI generation unavailable)`)
+
     return this.generateLocalQuestions(topic, count)
   }
 

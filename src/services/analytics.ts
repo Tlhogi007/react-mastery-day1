@@ -41,11 +41,6 @@ class AnalyticsService {
 
     this.events.push(analyticsEvent)
     this.saveEvents()
-
-    // Log in development
-    if (import.meta.env.DEV) {
-      console.log('📊 Analytics:', analyticsEvent)
-    }
   }
 
   /**

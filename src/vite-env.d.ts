@@ -6,6 +6,7 @@ declare const __APP_AUTHOR__: string
 interface ImportMetaEnv {
   readonly VITE_CONTENT_REPO_URL?: string
   readonly VITE_GA_TRACKING_ID?: string
+  readonly VITE_SENTRY_DSN?: string
 }
 
 interface ImportMeta {

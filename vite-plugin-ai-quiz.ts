@@ -1,6 +1,6 @@
 /**
  * Local-dev middleware mirroring /api/ai-quiz so Vite can run without `vercel dev`.
- * Reads GROQ_API_KEY / TOGETHER_API_KEY from env (never VITE_*).
+ * Reads GROQ_API_KEY / GEMINI_API_KEY / TOGETHER_API_KEY from env (never VITE_*).
  */
 import type { Plugin, Connect } from 'vite'
 import { loadEnv } from 'vite'
@@ -9,22 +9,7 @@ import {
   providerAvailability,
   type Provider,
 } from './api/_lib/generateQuiz'
-
-const WINDOW_MS = 60_000
-const MAX_PER_WINDOW = 40
-const hits = new Map<string, { count: number; resetAt: number }>()
-
-function rateLimit(ip: string): boolean {
-  const now = Date.now()
-  const entry = hits.get(ip)
-  if (!entry || now > entry.resetAt) {
-    hits.set(ip, { count: 1, resetAt: now + WINDOW_MS })
-    return true
-  }
-  if (entry.count >= MAX_PER_WINDOW) return false
-  entry.count += 1
-  return true
-}
+import { allowAiQuizRequest, clampQuestionCount } from './api/_lib/aiQuizGuard'
 
 function readBody(req: Connect.IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -42,6 +27,7 @@ export function aiQuizDevPlugin(): Plugin {
       const env = loadEnv(server.config.mode, server.config.root, '')
       const keys = {
         groq: env.GROQ_API_KEY || process.env.GROQ_API_KEY,
+        gemini: env.GEMINI_API_KEY || process.env.GEMINI_API_KEY,
         together: env.TOGETHER_API_KEY || process.env.TOGETHER_API_KEY,
       }
 
@@ -68,9 +54,13 @@ export function aiQuizDevPlugin(): Plugin {
         }
 
         const ip = req.socket.remoteAddress || 'local'
-        if (!rateLimit(ip)) {
-          res.statusCode = 429
-          res.end(JSON.stringify({ error: 'Too many requests' }))
+        const guard = await allowAiQuizRequest(ip)
+        if (!guard.ok) {
+          if (guard.retryAfterSec) {
+            res.setHeader('Retry-After', String(guard.retryAfterSec))
+          }
+          res.statusCode = guard.status
+          res.end(JSON.stringify({ error: guard.error }))
           return
         }
 
@@ -81,15 +71,16 @@ export function aiQuizDevPlugin(): Plugin {
             topic?: string
             count?: number
           }
-          const provider = body.provider
+          const provider: Provider =
+            body.provider === 'groq' ||
+            body.provider === 'gemini' ||
+            body.provider === 'together' ||
+            body.provider === 'auto'
+              ? body.provider
+              : 'auto'
           const topic = body.topic || ''
-          const count = Number(body.count) || 3
+          const count = clampQuestionCount(body.count)
 
-          if (provider !== 'groq' && provider !== 'together') {
-            res.statusCode = 400
-            res.end(JSON.stringify({ error: 'Invalid provider' }))
-            return
-          }
           if (!topic.trim()) {
             res.statusCode = 400
             res.end(JSON.stringify({ error: 'Missing topic' }))
@@ -103,7 +94,7 @@ export function aiQuizDevPlugin(): Plugin {
             return
           }
           res.statusCode = 200
-          res.end(JSON.stringify({ content: result.content }))
+          res.end(JSON.stringify({ content: result.content, provider: result.used || provider }))
         } catch {
           res.statusCode = 500
           res.end(JSON.stringify({ error: 'Proxy error' }))

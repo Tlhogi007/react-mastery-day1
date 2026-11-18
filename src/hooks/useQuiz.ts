@@ -10,6 +10,7 @@ import { getTopicForDay } from '../services/topicMapper'
 import { progressStorage } from '../services/progressStorage'
 import { questionHistory } from '../services/questionHistory'
 import { analytics } from '../services/analytics'
+import { captureWarning, setAppContext } from '../lib/sentry'
 import { QUIZ_THRESHOLDS } from '../constants'
 
 interface UseQuizOptions {
@@ -83,6 +84,12 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
   const localQuestionsCount = questions.length
   const isAISection = currentQuestionIndex >= localQuestionsCount
 
+  useEffect(() => {
+    if (day != null) {
+      setAppContext({ day })
+    }
+  }, [day])
+
   // Initialize with randomized questions per session
   useEffect(() => {
     // Shuffle questions per session on initial load
@@ -128,6 +135,11 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
           }
         } catch (error) {
           console.error('Failed to load AI questions:', error)
+          captureWarning(error, { day, topic: getTopicForDay(day) }, {
+            feature: 'quiz',
+            'quiz.action': 'prefetch_ai',
+            'app.day': String(day),
+          })
           setErrorMessage('Failed to load additional questions. Please check your connection and try again.')
         } finally {
           setLoadingAI(false)
@@ -205,7 +217,6 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
 
     // Show prompt after 3 questions (when moving from index 2 to 3)
     if (currentQuestionIndex === 2 && !showQuestionPrompt && !localQuestionsCompleted && !completed && !isAISection) {
-      console.log('[Quiz] 🎯 Showing question prompt after 3 questions')
       setShowQuestionPrompt(true)
       setSelectedAnswer(null)
       return
@@ -259,18 +270,12 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
 
     try {
       const topic = getTopicForDay(day)
-      console.log(`[Quiz] 📖 Requesting ${count} more local questions for topic: "${topic}"`)
-      console.log(`[Quiz] 🔍 Currently used question IDs:`, Array.from(usedLocalQuestionIds))
-      console.log(`[Quiz] 🔍 Current questions in quiz:`, allQuestions.map(q => ({ id: q.id, question: q.question.substring(0, 50) })))
       
       // Fetch all available local questions
       const allLocalQuestions = await quizQuestionService.fetchLocalQuestions(topic, 100)
-      console.log(`[Quiz] 📚 Fetched ${allLocalQuestions.length} total local questions from challenge files`)
-      console.log(`[Quiz] 🔍 Fetched question IDs:`, allLocalQuestions.map(q => q.id))
       
       // Filter out questions we've already shown
       const unusedQuestions = allLocalQuestions.filter(q => !usedLocalQuestionIds.has(q.id))
-      console.log(`[Quiz] ✅ Found ${unusedQuestions.length} unused questions after filtering`)
       
       let questionsToUse: QuizQuestion[] = []
       
@@ -284,7 +289,6 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
         }
         
         // All questions have been used, but user wants more - reuse them (shuffled)
-        console.log(`[Quiz] 🔄 All ${allLocalQuestions.length} questions have been used. Reusing them (shuffled).`)
         questionsToUse = [...allLocalQuestions].sort(() => Math.random() - 0.5)
       } else {
         // Use unused questions
@@ -308,14 +312,6 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
       }
       
       if (newQuestions.length > 0) {
-        const actualCount = newQuestions.length
-        const availableCount = questionsToUse.length
-        if (actualCount < count && availableCount < count) {
-          console.log(`✅ [Quiz] Loaded ${actualCount} questions (${availableCount} unique, duplicated to meet request)`)
-        } else {
-          console.log(`✅ [Quiz] Successfully loaded ${actualCount} additional local questions!`)
-        }
-        
         // Add new questions to the quiz (insert after current position)
         const updated = [
           ...allQuestions.slice(0, currentQuestionIndex + 1),
@@ -368,19 +364,10 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
 
     try {
       const topic = getTopicForDay(day)
-      console.log(`[Quiz] 🤖 Requesting ${count} AI-generated questions for topic: "${topic}"`)
       // Skip local questions - we only want NEW AI-generated questions
       const aiQuestions = await quizQuestionService.getQuestions(day, topic, count, true)
       
       if (aiQuestions.length > 0) {
-        console.log(`✅ [Quiz] Successfully loaded ${aiQuestions.length} AI-generated questions!`)
-        console.log(`[Quiz] 📊 Quiz now has: ${allQuestions.length} current + ${aiQuestions.length} AI = ${allQuestions.length + aiQuestions.length} total questions`)
-        
-        // Log sample questions to verify they're React-specific
-        aiQuestions.slice(0, 2).forEach((q, idx) => {
-          console.log(`[Quiz] 🤖 AI Question ${idx + 1}: "${q.question.substring(0, 70)}..."`)
-        })
-        
         // Add AI questions after current position
         const updated = [
           ...allQuestions.slice(0, currentQuestionIndex + 1),
@@ -396,20 +383,21 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
         setCurrentQuestionIndex(prev => prev + 1)
         setSelectedAnswer(null)
         
-        console.log(`[Quiz] ✨ AI questions added. Continuing from question ${currentQuestionIndex + 2}`)
       } else {
         console.warn(`⚠️ [Quiz] No AI questions were generated. APIs may be unavailable or parsing failed.`)
         setErrorMessage('No additional questions could be loaded. Please try again or continue with remaining questions.')
       }
     } catch (error) {
       console.error('❌ [Quiz] Failed to load AI questions:', error)
-      if (error instanceof Error) {
-        console.error('❌ [Quiz] Error details:', {
-          message: error.message,
-          stack: error.stack,
-          name: error.name
-        })
-      }
+      captureWarning(error, {
+        day,
+        topic: day ? getTopicForDay(day) : undefined,
+        requestedCount: count,
+      }, {
+        feature: 'quiz',
+        'quiz.action': 'load_ai',
+        ...(day != null ? { 'app.day': String(day) } : {}),
+      })
       setErrorMessage(`Failed to load additional questions: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`)
     } finally {
       setGeneratingAI(false)

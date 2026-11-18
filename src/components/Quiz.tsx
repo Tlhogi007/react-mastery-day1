@@ -90,23 +90,6 @@ function Quiz({ questions, title = 'Self-Assessment Quiz', day, enableAI = false
         enabled: !completed && !generatingAI && !showQuestionPrompt
     })
 
-    // Log when AI questions are loaded
-    useEffect(() => {
-        if (aiQuestionsLoaded && allQuestions.length > localQuestionsCount) {
-            const aiCount = allQuestions.length - localQuestionsCount
-            console.log(`[Quiz Component] ✨ AI questions loaded! Total: ${allQuestions.length} (${localQuestionsCount} local + ${aiCount} AI)`)
-        }
-    }, [aiQuestionsLoaded, allQuestions.length, localQuestionsCount])
-
-    // Log when user enters AI section
-    useEffect(() => {
-        if (isAISection && aiQuestionsLoaded) {
-            const aiQuestionNumber = currentQuestionIndex - localQuestionsCount + 1
-            const totalAIQuestions = allQuestions.length - localQuestionsCount
-            console.log(`[Quiz Component] 🤖 Now displaying AI-generated question ${aiQuestionNumber} of ${totalAIQuestions}`)
-        }
-    }, [isAISection, currentQuestionIndex, localQuestionsCount, aiQuestionsLoaded, allQuestions.length])
-
     const containerStyle: React.CSSProperties = {
         border: '2px solid var(--border-primary)',
         borderRadius: '8px',

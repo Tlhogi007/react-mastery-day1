@@ -23,7 +23,6 @@ function Day04Memoization(): JSX.Element {
         day={4}
         title="Bailouts & Memoization"
         description="Master React.memo, useMemo, useCallback, and referential equality to prevent unnecessary re-renders."
-        progress={60}
       />
 
       <Tabs

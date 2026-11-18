@@ -21,7 +21,6 @@ function Day07Reflection(): JSX.Element {
         day={7}
         title="Weekly Deep Reflection"
         description="Test your understanding of Week 1 concepts - be able to explain without notes."
-        progress={75}
       />
 
       <Tabs

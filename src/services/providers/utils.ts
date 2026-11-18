@@ -52,18 +52,15 @@ export function parseAIQuestions(
     const foundMatches = [...normalized.matchAll(pattern)]
     if (foundMatches.length > 0) {
       matches = foundMatches
-      console.log(`[AI Parser] Using pattern that matched ${foundMatches.length} questions`)
       break
     }
   }
   
   if (matches.length === 0) {
     console.warn('[AI Parser] Could not parse questions from generated text. Format may be unexpected.')
-    console.log('[AI Parser] Generated text sample:', normalized.substring(0, 500))
     return []
   }
   
-  console.log(`[AI Parser] Found ${matches.length} potential questions using pattern matching`)
   
   // Process each match
   for (let i = 0; i < Math.min(matches.length, count); i++) {
@@ -152,7 +149,6 @@ export function parseAIQuestions(
     return questions
   }
 
-  console.log(`✅ [AI Parser] Successfully parsed ${questions.length} questions from AI-generated text`)
   return questions
 }
 

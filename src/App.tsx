@@ -4,6 +4,7 @@ import type { ExerciseKey, ExercisesRegistry } from './types/exercises'
 import Landing from './pages/Landing'
 import SearchBar from './components/SearchBar'
 import { initGA, trackPageView, tracking } from './lib/googleAnalytics'
+import { setAppContext } from './lib/sentry'
 import { MemoizedSidebar, MemoizedProgressDashboard, MemoizedBreadcrumbs } from './components/memoized/MemoizedComponents'
 import SettingsModal from './components/SettingsModal'
 import AnalyticsPanel from './components/AnalyticsPanel'
@@ -112,6 +113,33 @@ function App(): JSX.Element {
     initGA()
   }, [])
 
+  // Sentry context for alerts (day / view / exercise)
+  useEffect(() => {
+    if (showLanding) {
+      setAppContext({ view: 'landing', day: null, exercise: null, week: null })
+      return
+    }
+    if (showTools) {
+      setAppContext({
+        view: 'tools',
+        day: exercises[currentExercise]?.day ?? null,
+        exercise: currentExercise,
+        week: exercises[currentExercise]?.week ?? null,
+      })
+      return
+    }
+    if (currentView === 'community') {
+      setAppContext({ view: 'community', day: null, exercise: null, week: null })
+      return
+    }
+    setAppContext({
+      view: 'exercises',
+      day: exercises[currentExercise]?.day ?? null,
+      exercise: currentExercise,
+      week: exercises[currentExercise]?.week ?? null,
+    })
+  }, [showLanding, showTools, currentView, currentExercise, exercises])
+
   // Track page views
   useEffect(() => {
     if (!showLanding) {
@@ -181,11 +209,26 @@ function App(): JSX.Element {
   const handleExerciseSelect = (key: ExerciseKey): void => {
     setCurrentExercise(key)
     setCurrentView('exercises')
+    setShowTools(false)
     if (isMobile) {
       setShowSidebar(false)
     }
     analytics.trackExerciseComplete(exercises[key].day, exercises[key].week)
   }
+
+  const handleNavigateToDay = useCallback((day: number): void => {
+    const entry = (Object.entries(exercises) as [ExerciseKey, (typeof exercises)[ExerciseKey]][])
+      .find(([, exercise]) => exercise.day === day)
+    if (!entry) {
+      window.dispatchEvent(
+        new CustomEvent('showToast', {
+          detail: { message: `Day ${day} is not available yet`, type: 'error' },
+        })
+      )
+      return
+    }
+    handleExerciseSelect(entry[0])
+  }, [exercises, handleExerciseSelect])
 
   // Get exercise keys in order
   const exerciseKeys = useMemo(() => Object.keys(exercises) as ExerciseKey[], [exercises])
@@ -562,7 +605,10 @@ function App(): JSX.Element {
               {/* Exercise Content, Tools, or Community */}
               <Suspense fallback={<CardSkeleton />}>
                 {showTools ? (
-                  <Tools onBack={() => setShowTools(false)} />
+                  <Tools
+                    onBack={() => setShowTools(false)}
+                    onNavigateToDay={handleNavigateToDay}
+                  />
                 ) : currentView === 'community' ? (
                   <CommunityPage />
                 ) : ExerciseComponent ? (

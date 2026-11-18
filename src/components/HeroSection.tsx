@@ -1,13 +1,30 @@
 import { type JSX } from 'react'
+import { progressStorage } from '../services/progressStorage'
 
 interface HeroSectionProps {
   day: number
   title: string
   description: string
+  /** Optional override; defaults to real progress from local storage */
   progress?: number
 }
 
-function HeroSection({ day, title, description, progress = 0 }: HeroSectionProps): JSX.Element {
+function getDayProgress(day: number): number {
+  if (progressStorage.isDayCompleted(day)) return 100
+
+  const dayKey = `day${String(day).padStart(2, '0')}`
+  const quizScore = progressStorage.getQuizScore(dayKey)
+  if (typeof quizScore === 'number') {
+    // Quiz score contributes up to 80% until the day is marked complete
+    return Math.min(80, Math.max(0, Math.round(quizScore * 0.8)))
+  }
+
+  return 0
+}
+
+function HeroSection({ day, title, description, progress }: HeroSectionProps): JSX.Element {
+  const displayProgress = progress ?? getDayProgress(day)
+
   const containerStyle: React.CSSProperties = {
     background: 'linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-card) 100%)',
     padding: '60px 40px',
@@ -54,36 +71,34 @@ function HeroSection({ day, title, description, progress = 0 }: HeroSectionProps
         </div>
       </div>
 
-      {progress > 0 && (
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '8px',
-            fontSize: '14px',
-            color: 'var(--text-secondary)'
-          }}>
-            <span>Progress</span>
-            <span>{progress}%</span>
-          </div>
-          <div style={{
-            height: '8px',
-            background: 'var(--bg-section)',
-            borderRadius: '4px',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              height: '100%',
-              width: `${progress}%`,
-              background: 'linear-gradient(90deg, var(--button-primary), var(--link-color))',
-              transition: 'width 0.3s',
-              borderRadius: '4px',
-              boxShadow: '0 2px 8px rgba(33, 150, 243, 0.3)'
-            }} />
-          </div>
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '8px',
+          fontSize: '14px',
+          color: 'var(--text-secondary)'
+        }}>
+          <span>Progress</span>
+          <span>{displayProgress}%</span>
         </div>
-      )}
+        <div style={{
+          height: '8px',
+          background: 'var(--bg-section)',
+          borderRadius: '4px',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            height: '100%',
+            width: `${displayProgress}%`,
+            background: 'linear-gradient(90deg, var(--button-primary), var(--link-color))',
+            transition: 'width 0.3s',
+            borderRadius: '4px',
+            boxShadow: displayProgress > 0 ? '0 2px 8px rgba(33, 150, 243, 0.3)' : 'none'
+          }} />
+        </div>
+      </div>
     </div>
   )
 }

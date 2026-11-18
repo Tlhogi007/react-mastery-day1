@@ -31,7 +31,6 @@ export const triviaDBProvider: APIProvider = {
       try {
         // Add delay between requests to avoid rate limits (except first attempt)
         if (attempt > 0) {
-          console.log(`[TriviaDB] Retry attempt ${attempt + 1}/${maxRetries}, waiting ${retryDelay}ms...`)
           await new Promise(resolve => setTimeout(resolve, retryDelay))
           retryDelay *= 2 // Exponential backoff: 2s, 4s, 8s
         }
@@ -78,7 +77,6 @@ export const triviaDBProvider: APIProvider = {
           }
         }).slice(0, count)
         
-        console.log(`✅ [TriviaDB] Successfully fetched ${questions.length} questions`)
         console.warn(`⚠️ [TriviaDB] Note: These are general programming questions, not React-specific. They may be filtered out if React-specific content is required.`)
         return questions
       } catch (error) {
