@@ -2,6 +2,7 @@
  * Server-side AI quiz proxy — keeps Groq/Together keys off the client.
  * Env (server only, never VITE_*): GROQ_API_KEY, TOGETHER_API_KEY
  */
+/// <reference types="node" />
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import {
   generateQuizContent,
