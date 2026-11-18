@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type JSX, type ReactNode } from 'react'
 import { ClerkProvider } from '@clerk/react'
+import { ui } from '@clerk/ui'
 import {
   getClerkAppearance,
   resolveAppColorMode,
@@ -43,6 +44,7 @@ export function ThemedClerkProvider({
   return (
     <ClerkProvider
       publishableKey={publishableKey}
+      ui={ui}
       signInFallbackRedirectUrl="/"
       signUpFallbackRedirectUrl="/"
       afterSignOutUrl="/#rm=landing"
