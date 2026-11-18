@@ -1,3 +1,10 @@
+## [1.5.5](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.4...v1.5.5) (2026-11-18)
+
+
+### Bug Fixes
+
+* **ui:** polish mobile responsiveness across lessons and chrome ([d2d56df](https://github.com/Tlhogi007/react-mastery-day1/commit/d2d56df78de6d81390d8548dd1aa210170f9f140))
+
 ## [1.5.4](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.3...v1.5.4) (2026-11-18)
 
 
