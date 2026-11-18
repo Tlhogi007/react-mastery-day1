@@ -141,11 +141,16 @@ async function authHeaders(): Promise<HeadersInit | null> {
 export async function fetchUserCloud(): Promise<UserDataResponse | null> {
   const headers = await authHeaders()
   if (!headers) return null
-  const res = await fetch('/api/user-data', { method: 'GET', headers, cache: 'no-store' })
-  if (!res.ok) return null
-  const data = (await res.json()) as UserDataResponse
-  if (data.quota) emitAiQuota(data.quota)
-  return data
+  try {
+    const res = await fetch('/api/user-data', { method: 'GET', headers, cache: 'no-store' })
+    if (!res.ok) return null
+    const data = (await res.json()) as UserDataResponse
+    if (data.quota) emitAiQuota(data.quota)
+    return data
+  } catch {
+    // Offline / Vite restart / transient network — local progress still works
+    return null
+  }
 }
 
 export async function pushUserCloud(
@@ -153,17 +158,21 @@ export async function pushUserCloud(
 ): Promise<UserDataResponse | null> {
   const headers = await authHeaders()
   if (!headers) return null
-  const res = await fetch('/api/user-data', {
-    method: 'PUT',
-    headers,
-    body: JSON.stringify(snapshot),
-    cache: 'no-store',
-  })
-  if (!res.ok) return null
-  const data = (await res.json()) as UserDataResponse
-  if (data.cloud) applySnapshotLocally(data.cloud)
-  if (data.quota) emitAiQuota(data.quota)
-  return data
+  try {
+    const res = await fetch('/api/user-data', {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(snapshot),
+      cache: 'no-store',
+    })
+    if (!res.ok) return null
+    const data = (await res.json()) as UserDataResponse
+    if (data.cloud) applySnapshotLocally(data.cloud)
+    if (data.quota) emitAiQuota(data.quota)
+    return data
+  } catch {
+    return null
+  }
 }
 
 /** Pull cloud quota, then PUT local snapshot (server merges with existing cloud). */

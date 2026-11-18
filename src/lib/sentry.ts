@@ -7,12 +7,17 @@ export type AppView = 'landing' | 'exercises' | 'tools' | 'community' | 'setting
 export function initSentry(): void {
   if (!DSN) return
 
+  // Dev Fast Refresh / Vite restarts flood Sentry with false positives (hook queues,
+  // mid-HMR ReferenceErrors, dynamic import failures). Opt in with VITE_SENTRY_ENABLE_DEV=1.
+  const enableInDev = import.meta.env.VITE_SENTRY_ENABLE_DEV === '1'
+  const enabled = Boolean(DSN) && (import.meta.env.PROD || enableInDev)
+
   Sentry.init({
     dsn: DSN,
     environment: import.meta.env.MODE,
     release: typeof __APP_VERSION__ !== 'undefined' ? `react-mastery@${__APP_VERSION__}` : undefined,
     sendDefaultPii: false,
-    enabled: Boolean(DSN),
+    enabled,
     integrations: [
       Sentry.browserTracingIntegration(),
       Sentry.replayIntegration({
@@ -30,18 +35,38 @@ export function initSentry(): void {
       'ResizeObserver loop completed with undelivered notifications',
       'AbortError',
       'Non-Error promise rejection captured',
+      /^Failed to fetch$/,
+      /Failed to fetch dynamically imported module/,
+      /Loading chunk [\d]+ failed/,
+      /ChunkLoadError/,
     ],
     beforeSend(event) {
       const message = event.message || event.exception?.values?.[0]?.value || ''
       if (typeof message !== 'string') return event
 
-      // Drop SDK setup noise only — AI failures are captured as warnings (see captureWarning)
+      // Drop SDK setup noise — AI upstream failures use captureWarning
       if (
         message.includes('Sentry setup verification') ||
-        message.includes('client SDK verification')
+        message.includes('client SDK verification') ||
+        message.includes('AI proxy ') ||
+        message.includes('Should have a queue')
       ) {
         return null
       }
+
+      const frames =
+        event.exception?.values?.flatMap((v) => v.stacktrace?.frames || []) || []
+      const isViteHmr = frames.some((f) => {
+        const file = f.filename || ''
+        const fn = f.function || ''
+        return (
+          file.includes('@react-refresh') ||
+          fn.includes('performReactRefresh') ||
+          fn.includes('scheduleRefresh')
+        )
+      })
+      if (isViteHmr) return null
+
       return event
     },
   })
