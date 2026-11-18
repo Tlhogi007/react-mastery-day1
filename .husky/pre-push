@@ -3,3 +3,6 @@
 if git rev-parse --verify origin/main >/dev/null 2>&1; then
   node scripts/check-conventional-commit.mjs --range origin/main..HEAD
 fi
+
+# Static auth / secrets / Clerk proxy gates on every push.
+npm run security

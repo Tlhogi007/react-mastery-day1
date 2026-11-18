@@ -31,11 +31,34 @@ function clientIp(req: VercelRequest): string {
   return '0.0.0.0'
 }
 
-function clerkPath(req: VercelRequest): string {
+/** Relative FAPI path only — blocks scheme / traversal / userinfo SSRF tricks. */
+function clerkPath(req: VercelRequest): string | null {
   const q = req.query.clerkPath
-  if (typeof q === 'string') return decodeURIComponent(q).replace(/^\/+/, '')
-  if (Array.isArray(q) && q[0]) return decodeURIComponent(String(q[0])).replace(/^\/+/, '')
-  return ''
+  const raw =
+    typeof q === 'string'
+      ? q
+      : Array.isArray(q) && q[0]
+        ? String(q[0])
+        : ''
+  if (!raw) return null
+  let decoded = raw
+  try {
+    decoded = decodeURIComponent(raw)
+  } catch {
+    return null
+  }
+  const path = decoded.replace(/^\/+/, '')
+  if (
+    !path ||
+    path.includes('..') ||
+    path.includes('\\') ||
+    path.includes('://') ||
+    path.includes('@') ||
+    !/^[a-zA-Z0-9._~/-]+$/.test(path)
+  ) {
+    return null
+  }
+  return path
 }
 
 function readRawBody(req: IncomingMessage): Promise<Buffer> {
@@ -74,7 +97,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
     const suffix = clerkPath(req)
     if (!suffix) {
-      res.status(400).json({ error: 'Missing clerkPath' })
+      res.status(400).json({ error: 'Invalid or missing clerkPath' })
       return
     }
 
@@ -137,9 +160,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     res.end(Buffer.from(await upstream.arrayBuffer()))
   } catch (err) {
     console.error('[clerk-fapi proxy]', err)
-    res.status(502).json({
-      error: 'Clerk Frontend API proxy failed',
-      detail: err instanceof Error ? err.message : String(err),
-    })
+    res.status(502).json({ error: 'Clerk Frontend API proxy failed' })
   }
 }

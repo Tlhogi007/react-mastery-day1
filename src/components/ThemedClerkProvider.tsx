@@ -43,9 +43,14 @@ export function ThemedClerkProvider({
 
   // Only production (pk_live_) needs /__clerk — vercel.app cannot CNAME clerk.*.
   // Development keys use accounts.dev and must not go through the FAPI proxy.
+  // Proxy must be a same-origin relative path (never an absolute URL).
+  const envProxy = (import.meta.env.VITE_CLERK_PROXY_URL as string | undefined)?.trim()
   const proxyUrl =
-    (import.meta.env.VITE_CLERK_PROXY_URL as string | undefined)?.trim() ||
-    (publishableKey.startsWith('pk_live_') ? '/__clerk' : undefined)
+    envProxy && envProxy.startsWith('/') && !envProxy.startsWith('//')
+      ? envProxy
+      : publishableKey.startsWith('pk_live_')
+        ? '/__clerk'
+        : undefined
 
   return (
     <ClerkProvider
