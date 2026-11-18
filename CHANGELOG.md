@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.17...v1.6.0) (2026-11-18)
+
+
+### Features
+
+* **landing:** add how-to-use steps and clarify free vs sign-in copy ([7cb4a40](https://github.com/Tlhogi007/react-mastery-day1/commit/7cb4a4040e9a6a6b7a0532c4f1d455dda9675fb7))
+
 ## [1.5.17](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.16...v1.5.17) (2026-11-18)
 
 
