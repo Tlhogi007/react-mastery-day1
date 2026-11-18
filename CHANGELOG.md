@@ -1,3 +1,10 @@
+## [1.5.3](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.2...v1.5.3) (2026-11-18)
+
+
+### Bug Fixes
+
+* **ui:** align community badges and select chevrons ([07d77b4](https://github.com/Tlhogi007/react-mastery-day1/commit/07d77b4f183bb320de93c33566bd351fa91aa7c0))
+
 ## [1.5.2](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.1...v1.5.2) (2026-11-18)
 
 
