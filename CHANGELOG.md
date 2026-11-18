@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.4.0...v1.5.0) (2026-11-18)
+
+
+### Features
+
+* **admin:** AI usage/ban controls, community attributions, and account page ([8374964](https://github.com/Tlhogi007/react-mastery-day1/commit/8374964c810384db1df503c90759068b45a504cf))
+
 # [1.4.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.3.0...v1.4.0) (2026-11-18)
 
 
