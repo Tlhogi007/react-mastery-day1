@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.2.0...v1.3.0) (2026-11-18)
+
+
+### Features
+
+* **auth:** sync learner progress and show free AI quota ([08a2b28](https://github.com/Tlhogi007/react-mastery-day1/commit/08a2b28783ee466488f917179d36f1763e180ab9))
+
 # [1.2.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.1.0...v1.2.0) (2026-11-18)
 
 
