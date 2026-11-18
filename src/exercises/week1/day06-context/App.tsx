@@ -1,4 +1,11 @@
-import { useState, type JSX } from 'react'
+import {
+  createContext,
+  memo,
+  useContext,
+  useRef,
+  useState,
+  type JSX,
+} from 'react'
 import '../../exerciseLayout.css'
 import Challenge from '../../../components/Challenge'
 import Quiz from '../../../components/Quiz'
@@ -17,20 +24,190 @@ import VisualDiagram from '../../../components/VisualDiagram'
 import PerformanceMonitor from '../../../components/PerformanceMonitor'
 import { day06Challenges, day06Quiz, day06Debugging, day06RealWorld } from './challenges'
 
+type User = { name: string; id: number }
+
+/** Combined context — any field change re-renders every consumer. */
+const CombinedContext = createContext<{ user: User; theme: string } | null>(null)
+const UserContext = createContext<User | null>(null)
+const ThemeContext = createContext<string | null>(null)
+
+function useRenderCount(): number {
+  const count = useRef(0)
+  count.current += 1
+  return count.current
+}
+
+function CombinedHeader(): JSX.Element {
+  const ctx = useContext(CombinedContext)!
+  const renders = useRenderCount()
+  return (
+    <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '4px' }}>
+      <div>Header (reads user)</div>
+      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+        User: {ctx.user.name}
+      </div>
+      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+        Rendered: {renders} times
+      </div>
+    </div>
+  )
+}
+
+function CombinedSidebar(): JSX.Element {
+  const ctx = useContext(CombinedContext)!
+  const renders = useRenderCount()
+  return (
+    <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '4px' }}>
+      <div>Sidebar (reads theme)</div>
+      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+        Theme: {ctx.theme}
+      </div>
+      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+        Rendered: {renders} times
+      </div>
+    </div>
+  )
+}
+
+function CombinedContent(): JSX.Element {
+  useContext(CombinedContext) // subscribed, uses nothing
+  const renders = useRenderCount()
+  return (
+    <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '4px' }}>
+      <div>Content (uses neither field)</div>
+      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+        Rendered: {renders} times
+      </div>
+    </div>
+  )
+}
+
+function SplitHeader(): JSX.Element {
+  const user = useContext(UserContext)!
+  const renders = useRenderCount()
+  return (
+    <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '4px' }}>
+      <div>Header (UserContext only)</div>
+      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+        User: {user.name}
+      </div>
+      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+        Rendered: {renders} times
+      </div>
+    </div>
+  )
+}
+
+function SplitSidebar(): JSX.Element {
+  const theme = useContext(ThemeContext)!
+  const renders = useRenderCount()
+  return (
+    <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '4px' }}>
+      <div>Sidebar (ThemeContext only)</div>
+      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+        Theme: {theme}
+      </div>
+      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+        Rendered: {renders} times
+      </div>
+    </div>
+  )
+}
+
+const SplitContent = memo(function SplitContent(): JSX.Element {
+  const renders = useRenderCount()
+  return (
+    <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '4px' }}>
+      <div>Content (no context)</div>
+      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+        Rendered: {renders} times
+      </div>
+    </div>
+  )
+})
+
+function CombinedDemo({
+  user,
+  theme,
+  onUser,
+  onTheme,
+}: {
+  user: User
+  theme: string
+  onUser: () => void
+  onTheme: () => void
+}): JSX.Element {
+  // Intentionally NOT memoized — simulates the classic Context footgun.
+  const value = { user, theme }
+  return (
+    <CombinedContext.Provider value={value}>
+      <DemoControls onUser={onUser} onTheme={onTheme} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+        <CombinedHeader />
+        <CombinedSidebar />
+        <CombinedContent />
+      </div>
+      <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '12px' }}>
+        Combined context: changing user or theme re-renders every consumer (including Content).
+      </p>
+    </CombinedContext.Provider>
+  )
+}
+
+function SplitDemo({
+  user,
+  theme,
+  onUser,
+  onTheme,
+}: {
+  user: User
+  theme: string
+  onUser: () => void
+  onTheme: () => void
+}): JSX.Element {
+  return (
+    <UserContext.Provider value={user}>
+      <ThemeContext.Provider value={theme}>
+        <DemoControls onUser={onUser} onTheme={onTheme} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+          <SplitHeader />
+          <SplitSidebar />
+          <SplitContent />
+        </div>
+        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '12px' }}>
+          Split contexts: theme change should not bump Header; Content (memo, no context) stays put.
+        </p>
+      </ThemeContext.Provider>
+    </UserContext.Provider>
+  )
+}
+
+function DemoControls({ onUser, onTheme }: { onUser: () => void; onTheme: () => void }): JSX.Element {
+  return (
+    <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+      <button type="button" className="lesson-full-btn" onClick={onUser} style={{ width: 'auto', padding: '8px 16px' }}>
+        Change User
+      </button>
+      <button type="button" className="lesson-full-btn" onClick={onTheme} style={{ width: 'auto', padding: '8px 16px' }}>
+        Change Theme
+      </button>
+    </div>
+  )
+}
+
 function Day06Context(): JSX.Element {
-  const [user, setUser] = useState({ name: 'John', id: 1 })
+  const [user, setUser] = useState<User>({ name: 'John', id: 1 })
   const [theme, setTheme] = useState('light')
-  const [renderCount, setRenderCount] = useState({ header: 0, sidebar: 0, content: 0 })
+  const [mode, setMode] = useState<'combined' | 'split'>('combined')
 
   const handleUserChange = (): void => {
-    setUser({ name: 'Jane', id: 2 })
-    setRenderCount(prev => ({ ...prev, header: prev.header + 1 }))
+    setUser((u) => ({ name: u.name === 'John' ? 'Jane' : 'John', id: u.id === 1 ? 2 : 1 }))
   }
 
   const handleThemeChange = (): void => {
-    setTheme(t => t === 'light' ? 'dark' : 'light')
-    setRenderCount(prev => ({ ...prev, sidebar: prev.sidebar + 1 }))
+    setTheme((t) => (t === 'light' ? 'dark' : 'light'))
   }
+
 
   return (
     <div style={{ color: 'var(--text-primary)' }}>
@@ -73,9 +250,9 @@ function Day06Context(): JSX.Element {
                     borderRadius: '8px',
                     marginBottom: '20px'
                   }}>
-                    <p><strong>📝 Exercise:</strong> Click the buttons below to see how Context updates cause all consumers to re-render!</p>
+                    <p><strong>Exercise:</strong> Toggle Combined vs Split, then Change User / Theme. Counts are real React renders (not faked).</p>
                     <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '10px' }}>
-                      Watch the render counts increase for all components, even when they don't use the changed value
+                      Combined: every consumer bumps. Split: only consumers of that context bump; memoized Content stays quiet.
                     </p>
                   </div>
 
@@ -86,63 +263,49 @@ function Day06Context(): JSX.Element {
                     background: 'var(--bg-section)',
                     marginBottom: '20px'
                   }}>
-                    <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
                       <button
-                        onClick={handleUserChange}
+                        type="button"
+                        className="lesson-full-btn"
                         style={{
-                          padding: '8px 16px',
-                          background: 'var(--button-primary)',
-                          color: 'var(--button-text)',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
+                          width: 'auto',
+                          padding: '6px 12px',
+                          opacity: mode === 'combined' ? 1 : 0.7,
                         }}
+                        onClick={() => setMode('combined')}
                       >
-                        Change User
+                        Combined (bad)
                       </button>
                       <button
-                        onClick={handleThemeChange}
+                        type="button"
+                        className="lesson-full-btn"
                         style={{
-                          padding: '8px 16px',
-                          background: 'var(--button-primary)',
-                          color: 'var(--button-text)',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
+                          width: 'auto',
+                          padding: '6px 12px',
+                          opacity: mode === 'split' ? 1 : 0.7,
                         }}
+                        onClick={() => setMode('split')}
                       >
-                        Change Theme
+                        Split (better)
                       </button>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-                      <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '4px' }}>
-                        <div>Header (needs user)</div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                          User: {user.name}
-                        </div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                          Rendered: {renderCount.header} times
-                        </div>
-                      </div>
-                      <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '4px' }}>
-                        <div>Sidebar (needs theme)</div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                          Theme: {theme}
-                        </div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                          Rendered: {renderCount.sidebar} times
-                        </div>
-                      </div>
-                      <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '4px' }}>
-                        <div>Content (needs neither)</div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                          Rendered: {renderCount.content} times
-                        </div>
-                      </div>
-                    </div>
-                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '12px' }}>
-                      💡 Notice: All components re-render when ANY context value changes, even if they don't use it!
-                    </p>
+                    {mode === 'combined' ? (
+                      <CombinedDemo
+                        key="combined"
+                        user={user}
+                        theme={theme}
+                        onUser={handleUserChange}
+                        onTheme={handleThemeChange}
+                      />
+                    ) : (
+                      <SplitDemo
+                        key="split"
+                        user={user}
+                        theme={theme}
+                        onUser={handleUserChange}
+                        onTheme={handleThemeChange}
+                      />
+                    )}
                   </div>
                 </Card>
 
