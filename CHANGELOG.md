@@ -1,3 +1,10 @@
+## [1.6.2](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.6.1...v1.6.2) (2026-11-18)
+
+
+### Bug Fixes
+
+* **ui:** reload stale Vite chunks after deploy instead of blank error ([a17c83d](https://github.com/Tlhogi007/react-mastery-day1/commit/a17c83dd2dd5afc600097d18182e4d14a5dab660))
+
 ## [1.6.1](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.6.0...v1.6.1) (2026-11-18)
 
 
