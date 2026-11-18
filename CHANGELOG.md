@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.1.0...v1.2.0) (2026-11-18)
+
+
+### Features
+
+* **auth:** gate hosted AI with Clerk and harden quotas ([5fb8864](https://github.com/Tlhogi007/react-mastery-day1/commit/5fb8864e1ef06d250bdfbbeb66709d0dfdc57f87))
+
 # [1.1.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.0.0...v1.1.0) (2026-11-18)
 
 
