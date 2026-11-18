@@ -19,7 +19,10 @@
     "type-check": "tsc --noEmit",
     "release": "semantic-release",
     "stress": "node scripts/stress-test.mjs",
-    "stress:http": "node scripts/stress-http.mjs"
+    "stress:http": "node scripts/stress-http.mjs",
+    "check:commit": "node scripts/check-conventional-commit.mjs",
+    "check:commits": "node scripts/check-conventional-commit.mjs --range origin/main..HEAD",
+    "prepare": "husky"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
@@ -44,6 +47,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "husky": "^9.1.7",
     "playwright": "^1.58.2",
     "semantic-release": "^24.2.9",
     "typescript": "^5.9.3",

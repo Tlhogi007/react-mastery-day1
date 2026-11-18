@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+# Block push if unpushed commits are not conventional (semantic-release would skip).
+if git rev-parse --verify origin/main >/dev/null 2>&1; then
+  node scripts/check-conventional-commit.mjs --range origin/main..HEAD
+fi

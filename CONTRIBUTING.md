@@ -25,6 +25,22 @@ Bug fixes, features, and UI changes belong in **this** repository.
 2. Create a branch
 3. Open a PR with a clear description
 
+### Commit messages (required)
+
+This repo uses **semantic-release**. Non-conventional commits are rejected by a local hook and CI — prose like `Ship security hardening` will **not** bump the version.
+
+```bash
+feat: add timed quiz mode          # minor
+fix(ui): correct favicon contrast  # patch
+feat!: drop React 17 support       # major
+chore: tweak eslint                # no bump (still allowed)
+```
+
+```bash
+npm run check:commit -- .git/COMMIT_EDITMSG   # validate one message
+npm run check:commits                         # validate unpushed commits
+```
+
 ## How content reaches the site
 
 ```bash

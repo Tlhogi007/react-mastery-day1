@@ -1,0 +1,41 @@
+name: Commit convention
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  check-commits:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate conventional commits
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+            node scripts/check-conventional-commit.mjs --range "${BASE}..${HEAD}"
+          else
+            # On push to main: validate commits since previous tag (or last 20)
+            if git describe --tags --abbrev=0 >/dev/null 2>&1; then
+              RANGE="$(git describe --tags --abbrev=0)..HEAD"
+            else
+              RANGE="HEAD~20..HEAD"
+            fi
+            # Don't fail the push job for historical prose before the hook existed —
+            # only fail if HEAD itself is non-conventional.
+            node scripts/check-conventional-commit.mjs --range HEAD~1..HEAD
+            echo "Range scan (advisory): ${RANGE}"
+            node scripts/check-conventional-commit.mjs --range "${RANGE}" || true
+          fi
