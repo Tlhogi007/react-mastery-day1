@@ -5,6 +5,7 @@
 
 import { useEffect, useState, type JSX } from 'react'
 import { BYO_KEYS_CHANGED_EVENT, byoAiKeys } from '../../services/byoAiKeys'
+import { AiQuotaBadge } from '../AiQuotaBadge'
 
 interface QuizHeaderProps {
     title: string
@@ -70,6 +71,7 @@ function QuizHeader({
                         Using your key · not shared quota
                     </span>
                 )}
+                {!usingByo && <AiQuotaBadge />}
                 {enableAI && day && (
                     <label style={{
                         display: 'flex',

@@ -186,5 +186,7 @@ export async function fetchViaAiProxy(
   const data = (await res.json()) as { content?: string }
   if (!data.content) return []
   clearAiGate()
+  // Refresh remaining free quota badge after a successful hosted generation.
+  void import('../userCloudSync').then((m) => m.fetchUserCloud()).catch(() => undefined)
   return parseAIQuestions(data.content, topic, count)
 }

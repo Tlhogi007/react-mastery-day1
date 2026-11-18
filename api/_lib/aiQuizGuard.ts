@@ -14,6 +14,8 @@
  *     Still optional for anonymous / IP+global memory fallbacks.
  */
 
+import { redisConfigured, redisGet, redisIncr } from './redis.js'
+
 const WINDOW_MS = 60_000
 
 type WindowEntry = { count: number; resetAt: number }
@@ -27,6 +29,14 @@ function envInt(name: string, fallback: number): number {
   const raw = process.env[name]
   const n = raw ? Number(raw) : NaN
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback
+}
+
+export function freePerUserDayLimit(): number {
+  return envInt('AI_QUIZ_FREE_PER_USER_DAY', 5)
+}
+
+export function userFreeQuotaRedisKey(userId: string, day = utcDay()): string {
+  return `ai-quiz:user:${userId}:${day}`
 }
 
 export function maxQuestionsPerRequest(): number {
@@ -54,41 +64,29 @@ export type GuardResult =
       retryAfterSec?: number
     }
 
-function redisConfigured(): boolean {
-  return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+export type UserFreeQuotaStatus = {
+  used: number
+  limit: number
+  remaining: number
+  day: string
+  available: boolean
 }
 
-async function redisIncr(key: string): Promise<number | null> {
-  const url = process.env.UPSTASH_REDIS_REST_URL
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN
-  if (!url || !token) return null
-  try {
-    const base = url.replace(/\/$/, '')
-    const res = await fetch(base, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(['INCR', key]),
-      signal: AbortSignal.timeout(3000),
-    })
-    if (!res.ok) return null
-    const data = (await res.json()) as { result?: number }
-    const count = Number(data.result) || 0
-    if (count === 1) {
-      void fetch(base, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(['EXPIRE', key, 172800]),
-      }).catch(() => undefined)
-    }
-    return count
-  } catch {
-    return null
+/** Read-only free-tier usage (does not increment). */
+export async function getUserFreeQuotaStatus(userId: string): Promise<UserFreeQuotaStatus> {
+  const limit = freePerUserDayLimit()
+  const day = utcDay()
+  if (!userId || userId === 'anonymous' || !redisConfigured()) {
+    return { used: 0, limit, remaining: limit, day, available: false }
+  }
+  const raw = await redisGet(userFreeQuotaRedisKey(userId, day))
+  const used = Math.max(0, Number(raw) || 0)
+  return {
+    used,
+    limit,
+    remaining: Math.max(0, limit - used),
+    day,
+    available: true,
   }
 }
 
@@ -101,9 +99,8 @@ async function redisIncr(key: string): Promise<number | null> {
 export async function allowUserFreeQuota(userId: string): Promise<GuardResult> {
   if (!userId || userId === 'anonymous') return { ok: true }
 
-  const maxFree = envInt('AI_QUIZ_FREE_PER_USER_DAY', 5)
-  const day = utcDay()
-  const key = `ai-quiz:user:${userId}:${day}`
+  const maxFree = freePerUserDayLimit()
+  const key = userFreeQuotaRedisKey(userId)
 
   if (!redisConfigured()) {
     return {

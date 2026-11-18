@@ -447,7 +447,7 @@ function SettingsModal({ isOpen, onClose, onReplayTour }: SettingsModalProps): J
                 <div style={sectionStyle}>
                     <h3 style={{ margin: '0 0 12px', fontSize: '18px', fontWeight: '600' }}>Your data</h3>
                     <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                        Progress, notes, and tools data stay in this browser. Export a backup before switching devices or clearing site data.
+                        Progress, notes, and tools stay in this browser. When signed in, progress / notes / reflections / last lab location also sync to your account (Upstash). Export a backup before clearing site data.
                     </p>
                     <input
                         ref={fileInputRef}
@@ -507,7 +507,7 @@ function SettingsModal({ isOpen, onClose, onReplayTour }: SettingsModalProps): J
                             This course covers React fundamentals, performance optimization, architecture patterns, and interview preparation.
                         </p>
                         <p style={{ margin: 0, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
-                            <strong style={{ color: 'var(--text-primary)' }}>Privacy.</strong> Learner progress, notes, reflections, tool data, and optional BYO AI keys stay in this browser only (not tied to your sign-in account). BYO keys are never uploaded to React Mastery. Usage analytics may go to Google Analytics when configured; crash reports to Sentry when configured.
+                            <strong style={{ color: 'var(--text-primary)' }}>Privacy.</strong> BYO AI keys stay in this browser only and are never uploaded. When signed in, progress, notes, reflections, and last lab location sync to your Clerk account for cross-device restore. Flashcards, snippets, and local analytics stay device-only. Usage analytics may go to Google Analytics when configured; crash reports to Sentry when configured.
                         </p>
                     </div>
                 </div>

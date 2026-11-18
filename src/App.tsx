@@ -10,13 +10,17 @@ import SettingsModal from './components/SettingsModal'
 import { AuthButton } from './components/AuthButton'
 import { AiAuthBridge } from './components/AiAuthBridge'
 import { AiQuotaModal } from './components/AiQuotaModal'
+import { SignedInGreeting } from './components/SignedInGreeting'
+import { UserCloudSync } from './components/UserCloudSync'
 import {
   clearLabNavigationState,
+  getActiveTab,
   readAuthReturnTo,
   setActiveTab,
   writeLabSession,
 } from './services/authReturnTo'
 import { clearQuizProgress } from './services/quizResume'
+import { USER_CLOUD_SYNCED_EVENT } from './services/userCloudSync'
 import { SignOutLandingRedirect } from './components/SignOutLandingRedirect'
 import AnalyticsPanel from './components/AnalyticsPanel'
 import KeyboardShortcutsHelp from './components/KeyboardShortcutsHelp'
@@ -151,6 +155,16 @@ function App(): JSX.Element {
   useEffect(() => {
     if (savedReturn?.tab) setActiveTab(savedReturn.tab)
   }, [savedReturn])
+
+  useEffect(() => {
+    const bump = () => setDayCompleteTick((n) => n + 1)
+    window.addEventListener(USER_CLOUD_SYNCED_EVENT, bump)
+    window.addEventListener('rm-progress-changed', bump)
+    return () => {
+      window.removeEventListener(USER_CLOUD_SYNCED_EVENT, bump)
+      window.removeEventListener('rm-progress-changed', bump)
+    }
+  }, [])
 
   // Initialize Google Analytics
   useEffect(() => {
@@ -454,6 +468,24 @@ function App(): JSX.Element {
   return (
     <>
       {clerkEnabled && <SignOutLandingRedirect onSignedOut={handleSignedOut} />}
+      {clerkEnabled && !showLanding && (
+        <UserCloudSync
+          exercise={currentExercise}
+          view={currentView}
+          tools={showTools}
+          tab={getActiveTab() || undefined}
+          progressEpoch={dayCompleteTick}
+          onRestoredLab={(lab) => {
+            if (lab.exercise in exercises) {
+              setCurrentExercise(lab.exercise as ExerciseKey)
+            }
+            setCurrentView(lab.view)
+            setShowTools(lab.tools)
+            if (lab.tab) setActiveTab(lab.tab)
+            setDayCompleteTick((n) => n + 1)
+          }}
+        />
+      )}
       {showLanding ? (
         <Landing
           onGetStarted={() => {
@@ -637,7 +669,16 @@ function App(): JSX.Element {
                 </button>
 
                 {clerkEnabled && (
-                  <div style={{ flexShrink: 0, marginLeft: 'auto' }}>
+                  <div
+                    style={{
+                      flexShrink: 0,
+                      marginLeft: 'auto',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                    }}
+                  >
+                    <SignedInGreeting />
                     <AuthButton />
                   </div>
                 )}

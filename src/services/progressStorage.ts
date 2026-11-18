@@ -49,6 +49,9 @@ class ProgressStorage {
   saveProgress(progress: ProgressData): void {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(progress))
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('rm-progress-changed'))
+      }
     } catch (error) {
       console.warn('Failed to save progress to localStorage:', error)
     }

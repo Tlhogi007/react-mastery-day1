@@ -93,5 +93,16 @@ export const tracking = {
   
   studyModeToggled: (enabled: boolean) => {
     trackEvent('Settings', 'Study Mode', enabled ? 'Enabled' : 'Disabled')
-  }
+  },
+
+  /** Attach a stable Clerk user id (hashed prefix ok) for signed-in analytics. */
+  identifyUser: (userId: string) => {
+    if (!TRACKING_ID || !userId) return
+    try {
+      ReactGA.set({ userId })
+      trackEvent('Auth', 'Signed In Sync', userId.slice(0, 8))
+    } catch {
+      /* ignore */
+    }
+  },
 }

@@ -7,6 +7,10 @@
     "api/ai-quiz.ts": {
       "includeFiles": "api/_lib/**",
       "maxDuration": 30
+    },
+    "api/user-data.ts": {
+      "includeFiles": "api/_lib/**",
+      "maxDuration": 15
     }
   }
 }

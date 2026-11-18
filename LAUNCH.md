@@ -40,6 +40,10 @@ Details: https://github.com/Tlhogi007/react-mastery-content/blob/main/AUTO_REDEP
 - Per-IP caps + Upstash global daily budget
 - Vercel Bot Protection (challenge) on the project firewall
 - Learners can paste BYO keys in Settings (browser-only; skips hosted quota)
+- Signed-in cloud sync (`/api/user-data`): progress, notes, reflections, last lab location
+- Quiz UI shows remaining free AI generations (`N/5 free AI left`)
+- Greeting uses Clerk first name / username when signed in
+- GA `userId` set after signed-in sync (when Analytics configured)
 - No RBAC roles yet — add `plan: free|pro` later if monetizing
 
 ## After that
