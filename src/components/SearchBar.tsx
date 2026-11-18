@@ -51,20 +51,23 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
 
         const containerStyle: React.CSSProperties = {
             position: 'relative' as const,
-            marginBottom: '20px'
+            marginBottom: 0,
+            width: '100%',
         }
 
         const inputStyle: React.CSSProperties = {
             width: '100%',
-            padding: '12px 40px 12px 15px',
-            fontSize: '14px',
-            background: 'var(--bg-card)',
+            padding: '8px 32px 8px 12px',
+            fontSize: '13px',
+            fontFamily: 'inherit',
+            background: 'var(--bg-section)',
             color: 'var(--text-primary)',
-            border: `1px solid var(--border-color)`,
-            borderRadius: '8px',
+            border: '1px solid var(--border-color)',
+            borderRadius: 10,
             outline: 'none',
-            transition: 'border-color 0.2s',
-            boxSizing: 'border-box' as const
+            transition: 'border-color 0.15s ease',
+            boxSizing: 'border-box' as const,
+            height: 38,
         }
 
         const resultsStyle: React.CSSProperties = {
@@ -86,12 +89,12 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
         }
 
         return (
-            <div ref={searchRef} style={containerStyle}>
+            <div ref={searchRef} data-tutorial="search" style={containerStyle}>
                 <div style={{ position: 'relative' }}>
                     <input
                         ref={ref}
                         type="text"
-                        placeholder="Search concepts, exercises, or topics..."
+                        placeholder="Find a topic…"
                         value={query}
                         onChange={(e) => handleSearch(e.target.value)}
                         onFocus={() => query.length > 0 && setShowResults(true)}
@@ -100,20 +103,9 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
                         aria-controls="search-results"
                         style={{
                             ...inputStyle,
-                            borderColor: showResults ? 'var(--border-primary)' : 'var(--border-color)'
+                            borderColor: showResults ? 'var(--button-primary)' : 'var(--border-color)',
                         }}
                     />
-                    <span style={{
-                        position: 'absolute' as const,
-                        left: '12px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        fontSize: '16px',
-                        color: 'var(--text-secondary)',
-                        pointerEvents: 'none'
-                    }}>
-                        🔍
-                    </span>
                     {query && (
                         <button
                             onClick={() => {

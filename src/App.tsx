@@ -1,13 +1,10 @@
-import { useState, useMemo, useEffect, useRef, useCallback, type JSX } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback, lazy, Suspense, type JSX } from 'react'
 import './App.css'
 import type { ExerciseKey, ExercisesRegistry } from './types/exercises'
 import Landing from './pages/Landing'
-import CommunityPage from './pages/CommunityPage'
-import Tools from './pages/Tools'
 import SearchBar from './components/SearchBar'
 import { initGA, trackPageView, tracking } from './lib/googleAnalytics'
 import { MemoizedSidebar, MemoizedProgressDashboard, MemoizedBreadcrumbs } from './components/memoized/MemoizedComponents'
-import FloatingActions from './components/FloatingActions'
 import SettingsModal from './components/SettingsModal'
 import AnalyticsPanel from './components/AnalyticsPanel'
 import KeyboardShortcutsHelp from './components/KeyboardShortcutsHelp'
@@ -17,19 +14,23 @@ import ToastContainer from './components/ui/ToastContainer'
 import Confetti from './components/ui/Confetti'
 import PageTransition from './components/animations/PageTransition'
 import GuidedTutorial, { onboardingTutorial } from './components/GuidedTutorial'
+import { CardSkeleton } from './components/ui/LoadingSkeleton'
 import { settingsStorage } from './services/settingsStorage'
 import { analytics } from './services/analytics'
 import { progressStorage } from './services/progressStorage'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
-import { BREAKPOINTS, TIMEOUT } from './constants'
+import { BREAKPOINTS } from './constants'
 
-import Day01RenderingPipeline from './exercises/week1/day01-rendering-pipeline/App'
-import Day02Reconciliation from './exercises/week1/day02-reconciliation/App'
-import Day03Fiber from './exercises/week1/day03-fiber/App'
-import Day04Memoization from './exercises/week1/day04-memoization/App'
-import Day05Effects from './exercises/week1/day05-effects/App'
-import Day06Context from './exercises/week1/day06-context/App'
-import Day07Reflection from './exercises/week1/day07-reflection/App'
+const CommunityPage = lazy(() => import('./pages/CommunityPage'))
+const Tools = lazy(() => import('./pages/Tools'))
+
+const Day01RenderingPipeline = lazy(() => import('./exercises/week1/day01-rendering-pipeline/App'))
+const Day02Reconciliation = lazy(() => import('./exercises/week1/day02-reconciliation/App'))
+const Day03Fiber = lazy(() => import('./exercises/week1/day03-fiber/App'))
+const Day04Memoization = lazy(() => import('./exercises/week1/day04-memoization/App'))
+const Day05Effects = lazy(() => import('./exercises/week1/day05-effects/App'))
+const Day06Context = lazy(() => import('./exercises/week1/day06-context/App'))
+const Day07Reflection = lazy(() => import('./exercises/week1/day07-reflection/App'))
 
 const exercises: ExercisesRegistry = {
   'day01-rendering-pipeline': {
@@ -104,6 +105,7 @@ function App(): JSX.Element {
   const [showConfetti, setShowConfetti] = useState<boolean>(false)
   const [showTools, setShowTools] = useState<boolean>(false)
   const [showTutorial, setShowTutorial] = useState<boolean>(false)
+  const [dayCompleteTick, setDayCompleteTick] = useState(0)
 
   // Initialize Google Analytics
   useEffect(() => {
@@ -117,6 +119,14 @@ function App(): JSX.Element {
     }
   }, [currentExercise, showLanding])
 
+  // Reset scroll when leaving landing or switching exercises
+  useEffect(() => {
+    if (showLanding) return
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+  }, [showLanding, currentExercise, currentView])
+
   // Listen for confetti events
   useEffect(() => {
     const handleConfetti = (): void => {
@@ -126,9 +136,7 @@ function App(): JSX.Element {
     return () => window.removeEventListener('showConfetti', handleConfetti as EventListener)
   }, [])
 
-  // Refs for DOM elements (replacing direct queries)
   const searchInputRef = useRef<HTMLInputElement>(null)
-  const progressDashboardRef = useRef<HTMLDivElement>(null)
 
   const ExerciseComponent = exercises[currentExercise]?.component
   const currentExerciseData = exercises[currentExercise]
@@ -196,37 +204,23 @@ function App(): JSX.Element {
     }
   }, [currentIndex, exerciseKeys, handleExerciseSelect])
 
-  const handleRandomExercise = useCallback((): void => {
-    const randomKey = exerciseKeys[Math.floor(Math.random() * exerciseKeys.length)]
-    handleExerciseSelect(randomKey)
-    analytics.trackFeatureUsage('random_exercise')
-  }, [exerciseKeys, handleExerciseSelect])
-
-  const handleContinueLearning = useCallback((): void => {
-    // Find first incomplete exercise
-    const incomplete = exerciseKeys.find(key => {
-      const day = exercises[key].day
-      return !progressStorage.isDayCompleted(day)
-    })
-    if (incomplete) {
-      handleExerciseSelect(incomplete)
-      analytics.trackFeatureUsage('continue_learning')
-    }
-  }, [exerciseKeys, exercises, handleExerciseSelect])
-
   const handleMarkComplete = useCallback((): void => {
     const day = exercises[currentExercise].day
+    if (progressStorage.isDayCompleted(day)) return
     progressStorage.markDayCompleted(day)
+    setDayCompleteTick((n) => n + 1)
     analytics.trackFeatureUsage('mark_complete', { day })
-    // Show toast notification
-    const event = new CustomEvent('showToast', {
-      detail: {
-        message: `Day ${day} marked as complete! 🎉`,
-        type: 'success'
-      }
-    })
-    window.dispatchEvent(event)
+    window.dispatchEvent(
+      new CustomEvent('showToast', {
+        detail: { message: `Day ${day} marked complete`, type: 'success' },
+      })
+    )
   }, [currentExercise, exercises])
+
+  void dayCompleteTick
+  const isCurrentDayCompleted = progressStorage.isDayCompleted(
+    exercises[currentExercise].day
+  )
 
   // Keyboard shortcuts for navigation
   useKeyboardShortcuts({
@@ -310,363 +304,303 @@ function App(): JSX.Element {
   const appContainerStyle: React.CSSProperties = {
     display: 'flex',
     minHeight: '100vh',
-    background: 'var(--bg-primary)',
+    background: 'transparent',
     width: '100%',
     margin: 0,
     padding: 0
   }
 
+  const sidebarExpanded = showSidebar && !isMobile
+  const layoutEase = '0.4s cubic-bezier(0.22, 1, 0.36, 1)'
   const mainContentStyle: React.CSSProperties = {
     flex: 1,
-    padding: isMobile ? '20px' : '40px',
+    minWidth: 0,
+    padding: isMobile
+      ? '16px 16px 48px'
+      : sidebarExpanded
+        ? '24px 28px 56px'
+        : '24px 40px 56px',
     width: '100%',
     margin: 0,
     boxSizing: 'border-box',
-    transition: 'all 0.3s ease',
-    overflowX: 'hidden'
+    transition: `padding ${layoutEase}`,
+    overflowX: 'hidden',
   }
 
   const headerStyle: React.CSSProperties = {
     background: 'var(--bg-card)',
     border: '1px solid var(--border-color)',
-    borderRadius: '12px',
-    padding: isMobile ? '16px' : '20px 24px',
-    marginBottom: '30px',
+    borderRadius: 'var(--radius-md)',
+    padding: isMobile ? '12px 14px' : '14px 16px',
+    marginBottom: isMobile ? '16px' : '20px',
     display: 'flex',
-    justifyContent: 'space-between',
     alignItems: 'center',
     flexWrap: 'wrap',
-    gap: isMobile ? '12px' : '20px',
+    gap: isMobile ? '10px' : '12px',
     width: '100%',
     boxSizing: 'border-box',
-    boxShadow: 'var(--shadow-sm)'
+    boxShadow: 'none',
   }
+
+  const headerBtnStyle: React.CSSProperties = {
+    padding: '8px 14px',
+    background: 'var(--bg-card)',
+    border: '1px solid var(--border-color)',
+    borderRadius: 10,
+    cursor: 'pointer',
+    fontSize: 13,
+    fontWeight: 500,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
+    height: 38,
+    color: 'var(--text-primary)',
+    boxShadow: 'var(--shadow-sm)',
+  }
+
+  const lessonTitle = currentExerciseData
+    ? currentExerciseData.title.replace(/^Day \d+:\s*/i, '')
+    : "Today's lesson"
 
   return (
     <>
       {showLanding ? (
-        <Landing onGetStarted={() => setShowLanding(false)} />
+        <Landing
+          onGetStarted={() => {
+            window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+            document.documentElement.scrollTop = 0
+            document.body.scrollTop = 0
+            setShowLanding(false)
+            setShowTools(false)
+            setCurrentView('exercises')
+            setShowSidebar(true)
+            if (!settingsStorage.hasCompletedOnboarding()) {
+              // Let the lab shell mount before highlighting targets
+              window.setTimeout(() => setShowTutorial(true), 450)
+            }
+          }}
+        />
       ) : (
         <div style={appContainerStyle}>
-          {/* Sidebar */}
-          {showSidebar || isMobile ? (
-            <div style={{
+          {/* Sidebar — stays mounted so width can animate instead of hard-cut */}
+          <div
+            style={{
               position: isMobile ? 'fixed' : 'relative',
               zIndex: 1000,
-              height: isMobile ? '100vh' : 'auto',
-              transition: isMobile ? 'transform 0.3s ease' : 'none',
-              transform: isMobile && !showSidebar ? 'translateX(-100%)' : 'translateX(0)',
-              width: isMobile ? '280px' : (showSidebar ? '280px' : '80px'),
-              overflow: isMobile ? 'visible' : 'hidden',
-              ...(isMobile && {
-                left: 0,
-                top: 0
-              })
-            }}>
-              {isMobile && showSidebar && (
-                <div
-                  style={{
-                    position: 'fixed',
-                    top: 0,
+              height: isMobile ? '100vh' : '100vh',
+              flexShrink: 0,
+              overflow: 'hidden',
+              ...(isMobile
+                ? {
+                    width: 280,
                     left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'rgba(0,0,0,0.5)',
-                    zIndex: 999,
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => setShowSidebar(false)}
-                />
-              )}
+                    top: 0,
+                    transform: showSidebar ? 'translateX(0)' : 'translateX(-100%)',
+                    transition: `transform ${layoutEase}`,
+                    pointerEvents: showSidebar ? 'auto' : 'none',
+                  }
+                : {
+                    width: showSidebar ? 260 : 0,
+                    transition: `width ${layoutEase}`,
+                  }),
+            }}
+          >
+            {isMobile && showSidebar && (
+              <div
+                style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: 'rgba(0,0,0,0.35)',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  zIndex: 999,
+                  cursor: 'pointer',
+                }}
+                onClick={() => setShowSidebar(false)}
+              />
+            )}
+            <div style={{ width: isMobile ? 280 : 260, height: '100%' }}>
               <MemoizedSidebar
                 exercises={exercises}
                 currentExercise={currentExercise}
                 onExerciseSelect={handleExerciseSelect}
                 onToolsClick={() => {
                   setShowTools(true)
-                  setCurrentExercise('day01-rendering-pipeline')
+                  setCurrentView('exercises')
                 }}
-                onCommunityClick={() => setCurrentView('community')}
+                onCommunityClick={() => {
+                  setShowTools(false)
+                  setCurrentView('community')
+                }}
+                onSettingsClick={() => setShowSettings(true)}
+                onAnalyticsClick={() => setShowAnalytics(true)}
+                onShortcutsClick={() => setShowShortcutsHelp(true)}
                 onToggleCollapse={() => setShowSidebar(!showSidebar)}
-                isCollapsed={!showSidebar && !isMobile}
+                isCollapsed={false}
               />
             </div>
-          ) : null}
+          </div>
 
           {/* Main Content */}
           <div style={mainContentStyle}>
-            <main style={{ width: '100%' }}>
+            <main
+              style={{
+                width: '100%',
+                // Both values in px so the browser can interpolate smoothly
+                maxWidth: sidebarExpanded ? 960 : 2400,
+                marginLeft: 'auto',
+                marginRight: 'auto',
+                transition: `max-width ${layoutEase}`,
+              }}
+            >
               {/* Header */}
               <header style={headerStyle}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: isMobile ? '12px' : '20px',
-                  flex: isMobile ? '1 1 100%' : '1 1 auto',
-                  minWidth: 0,
-                  flexWrap: isMobile ? 'wrap' : 'nowrap'
-                }}>
-                  <button
-                    onClick={() => setShowSidebar(!showSidebar)}
-                    style={{
-                      padding: '8px 12px',
-                      background: 'var(--bg-section)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                      transition: 'all 0.2s ease'
-                    }}
-                    aria-label={showSidebar ? 'Collapse sidebar' : 'Expand sidebar'}
-                    title={showSidebar ? 'Collapse sidebar' : 'Expand sidebar'}
-                  >
-                    {showSidebar ? '◀' : '▶'} Menu
-                  </button>
-                  <div style={{ minWidth: 0, flex: '1 1 auto', overflow: 'hidden' }}>
-                    <h1 style={{
-                      margin: 0,
-                      fontSize: isMobile ? '18px' : '26px',
-                      fontWeight: 'bold',
-                      lineHeight: '1.3',
-                      color: 'var(--text-primary)'
-                    }}>
-                      30-Day Senior React Mastery
-                    </h1>
-                    <p style={{
-                      margin: '6px 0 0',
-                      fontSize: isMobile ? '12px' : '14px',
-                      color: 'var(--text-secondary)',
-                      lineHeight: '1.4'
-                    }}>
-                      Master React like a systems engineer
-                    </p>
-                  </div>
-                </div>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: isMobile ? '8px' : '10px',
-                  flex: isMobile ? '1 1 100%' : '0 0 auto',
-                  minWidth: isMobile ? '100%' : 'auto',
-                  maxWidth: isMobile ? '100%' : 'none',
-                  flexWrap: 'wrap',
-                  justifyContent: isMobile ? 'flex-start' : 'flex-end',
-                  marginLeft: isMobile ? 0 : 'auto'
-                }}>
-                  {!isMobile && (
-                    <>
-                      <button
-                        onClick={handleContinueLearning}
-                        style={{
-                          padding: '8px 12px',
-                          background: 'var(--bg-section)',
-                          border: '1px solid var(--border-color)',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '13px',
-                          color: 'var(--text-primary)',
-                          whiteSpace: 'nowrap',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          flexShrink: 0
-                        }}
-                        title="Continue Learning (c)"
-                      >
-                        ▶️ Continue
-                      </button>
-                      <button
-                        onClick={handleRandomExercise}
-                        style={{
-                          padding: '8px 12px',
-                          background: 'var(--bg-section)',
-                          border: '1px solid var(--border-color)',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '13px',
-                          color: 'var(--text-primary)',
-                          whiteSpace: 'nowrap',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          flexShrink: 0
-                        }}
-                        title="Random Exercise (r)"
-                      >
-                        🎲 Random
-                      </button>
-                      <button
-                        onClick={handleMarkComplete}
-                        disabled={progressStorage.isDayCompleted(exercises[currentExercise].day)}
-                        style={{
-                          padding: '8px 12px',
-                          background: progressStorage.isDayCompleted(exercises[currentExercise].day) ? 'var(--bg-success)' : 'var(--bg-section)',
-                          border: '1px solid var(--border-color)',
-                          borderRadius: '6px',
-                          cursor: progressStorage.isDayCompleted(exercises[currentExercise].day) ? 'default' : 'pointer',
-                          fontSize: '13px',
-                          color: 'var(--text-primary)',
-                          whiteSpace: 'nowrap',
-                          opacity: progressStorage.isDayCompleted(exercises[currentExercise].day) ? 0.7 : 1,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          flexShrink: 0
-                        }}
-                        title="Mark as Complete"
-                      >
-                        {progressStorage.isDayCompleted(exercises[currentExercise].day) ? '✅ Complete' : '✓ Mark Complete'}
-                      </button>
-                    </>
-                  )}
-                  <button
-                    onClick={() => setShowShortcutsHelp(true)}
-                    style={{
-                      padding: '8px 12px',
-                      background: 'var(--bg-section)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      color: 'var(--text-primary)',
-                      whiteSpace: 'nowrap',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      flexShrink: 0
-                    }}
-                    title="Keyboard Shortcuts (?)"
-                  >
-                    ⌨️ Help
-                  </button>
-                  <div style={{ flexShrink: 0 }}>
-                    <ThemeToggle />
-                  </div>
-                  <button
-                    onClick={() => {
-                      const newStudyMode = !studyMode
-                      setStudyMode(newStudyMode)
-                      analytics.trackFeatureUsage('study_mode', { enabled: newStudyMode })
-                      tracking.studyModeToggled(newStudyMode)
-                    }}
-                    style={{
-                      padding: '8px 12px',
-                      background: studyMode ? 'var(--bg-success)' : 'var(--bg-section)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      color: 'var(--text-primary)',
-                      fontWeight: studyMode ? 'bold' : 'normal',
-                      whiteSpace: 'nowrap',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      flexShrink: 0
-                    }}
-                    title="Toggle Study Mode"
-                  >
-                    {studyMode ? '🎯 Study Mode' : '📚 Study'}
-                  </button>
-                  <div style={{
-                    flex: isMobile ? '1 1 100%' : '1 1 auto',
-                    minWidth: isMobile ? '100%' : '200px',
-                    maxWidth: isMobile ? '100%' : '400px'
+                <button
+                  type="button"
+                  onClick={() => setShowSidebar(!showSidebar)}
+                  style={headerBtnStyle}
+                  aria-label={showSidebar ? 'Collapse sidebar' : 'Expand sidebar'}
+                  title={showSidebar ? 'Collapse sidebar' : 'Expand sidebar'}
+                >
+                  {showSidebar ? '◀' : '▶'} Menu
+                </button>
+
+                <div style={{ minWidth: 0, flex: '1 1 160px' }}>
+                  <h1 style={{
+                    margin: 0,
+                    fontFamily: 'var(--font-display)',
+                    fontSize: isMobile ? 16 : 18,
+                    fontWeight: 700,
+                    letterSpacing: '-0.02em',
+                    lineHeight: 1.2,
+                    color: 'var(--text-primary)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   }}>
-                    <SearchBar
-                      ref={searchInputRef}
-                      onSearch={handleSearch}
-                      results={searchResults}
-                      onResultClick={(day) => {
-                        // Find exercise by day number
-                        const exerciseKey = Object.entries(exercises).find(
-                          ([, exercise]) => exercise.day === day
-                        )?.[0] as ExerciseKey | undefined
-                        if (exerciseKey) {
-                          setCurrentExercise(exerciseKey)
-                          if (isMobile) {
-                            setShowSidebar(false)
-                          }
-                        }
-                      }}
-                    />
-                  </div>
+                    {lessonTitle}
+                  </h1>
+                  <p style={{
+                    margin: '3px 0 0',
+                    fontSize: 12,
+                    color: 'var(--text-muted)',
+                    lineHeight: 1.4,
+                  }}>
+                    {currentExerciseData
+                      ? `Week ${currentExerciseData.week} · Day ${String(currentExerciseData.day).padStart(2, '0')}`
+                      : 'Internals lab'}
+                  </p>
                 </div>
+
+                <div style={{
+                  flex: isMobile ? '1 1 100%' : '1 1 200px',
+                  minWidth: isMobile ? '100%' : 180,
+                  maxWidth: isMobile ? '100%' : 280,
+                }}>
+                  <SearchBar
+                    ref={searchInputRef}
+                    onSearch={handleSearch}
+                    results={searchResults}
+                    onResultClick={(day) => {
+                      const exerciseKey = Object.entries(exercises).find(
+                        ([, exercise]) => exercise.day === day
+                      )?.[0] as ExerciseKey | undefined
+                      if (exerciseKey) {
+                        setCurrentExercise(exerciseKey)
+                        if (isMobile) {
+                          setShowSidebar(false)
+                        }
+                      }
+                    }}
+                  />
+                </div>
+
+                <div style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
+                  <ThemeToggle />
+                </div>
+
+                <button
+                  type="button"
+                  data-tutorial="focus"
+                  onClick={() => {
+                    const newStudyMode = !studyMode
+                    setStudyMode(newStudyMode)
+                    analytics.trackFeatureUsage('study_mode', { enabled: newStudyMode })
+                    tracking.studyModeToggled(newStudyMode)
+                  }}
+                  title="Toggle focus mode"
+                  style={{
+                    ...headerBtnStyle,
+                    borderColor: studyMode ? 'var(--button-primary)' : 'var(--border-color)',
+                    background: studyMode ? 'var(--button-primary)' : 'var(--bg-card)',
+                    color: studyMode ? 'var(--button-text)' : 'var(--text-primary)',
+                    fontWeight: 600,
+                  }}
+                >
+                  {studyMode ? 'Exit focus' : 'Focus'}
+                </button>
               </header>
 
-              {/* Progress Dashboard */}
-              <div ref={progressDashboardRef}>
-                <MemoizedProgressDashboard exercises={exercises} />
-              </div>
+              <MemoizedProgressDashboard
+                key={dayCompleteTick}
+                exercises={exercises}
+              />
 
-              {/* Breadcrumbs */}
-              {!showTools && currentExerciseData && (
-                <MemoizedBreadcrumbs exercise={currentExerciseData} />
+              {!showTools && currentView === 'exercises' && currentExerciseData && (
+                <MemoizedBreadcrumbs
+                  exercise={currentExerciseData}
+                  isDayCompleted={isCurrentDayCompleted}
+                  onMarkComplete={handleMarkComplete}
+                />
               )}
 
               {/* Exercise Content, Tools, or Community */}
-              {showTools ? (
-                <Tools onBack={() => setShowTools(false)} />
-              ) : currentView === 'community' ? (
-                <CommunityPage />
-              ) : ExerciseComponent ? (
-                <StudyMode isActive={studyMode} onToggle={() => setStudyMode(!studyMode)}>
-                  <PageTransition transitionKey={currentExercise}>
-                    <ExerciseComponent />
-                  </PageTransition>
-                </StudyMode>
-              ) : (
-                <div style={{
-                  padding: '40px',
-                  textAlign: 'center',
-                  background: 'var(--bg-card)',
-                  borderRadius: '12px',
-                  border: '1px solid var(--border-color)'
-                }}>
-                  <p style={{ fontSize: '18px', color: 'var(--text-secondary)' }}>
-                    Exercise not found
-                  </p>
-                </div>
-              )}
+              <Suspense fallback={<CardSkeleton />}>
+                {showTools ? (
+                  <Tools onBack={() => setShowTools(false)} />
+                ) : currentView === 'community' ? (
+                  <CommunityPage />
+                ) : ExerciseComponent ? (
+                  <StudyMode isActive={studyMode} onToggle={() => setStudyMode(!studyMode)}>
+                    <PageTransition transitionKey={currentExercise}>
+                      <ExerciseComponent />
+                    </PageTransition>
+                  </StudyMode>
+                ) : (
+                  <div style={{
+                    padding: '40px',
+                    textAlign: 'center',
+                    background: 'var(--bg-card)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-color)'
+                  }}>
+                    <p style={{ fontSize: '18px', color: 'var(--text-secondary)' }}>
+                      Exercise not found
+                    </p>
+                  </div>
+                )}
+              </Suspense>
             </main>
           </div>
 
-          {/* Floating Action Buttons */}
-          <FloatingActions
-            onSearch={() => {
-              if (searchInputRef.current) {
-                searchInputRef.current.focus()
-                // Scroll to search bar smoothly
-                setTimeout(() => {
-                  searchInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                }, TIMEOUT.SCROLL_DELAY)
-              }
-            }}
-            onProgress={() => {
-              if (progressDashboardRef.current) {
-                progressDashboardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              } else {
-                window.scrollTo({ top: 0, behavior: 'smooth' })
-              }
-            }}
-            onSettings={() => {
-              setShowSettings(true)
-            }}
-            onAnalytics={() => {
-              setShowAnalytics(true)
-            }}
-            onTools={() => {
-              setShowTools(true)
+          {/* Settings Modal */}
+          <SettingsModal
+            isOpen={showSettings}
+            onClose={() => setShowSettings(false)}
+            onReplayTour={() => {
+              settingsStorage.setOnboardingComplete(false)
+              setShowTools(false)
+              setCurrentView('exercises')
+              setShowSidebar(true)
+              setShowLanding(false)
+              window.setTimeout(() => setShowTutorial(true), 200)
             }}
           />
-
-          {/* Settings Modal */}
-          <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
 
           {/* Analytics Panel */}
           {showAnalytics && <AnalyticsPanel onClose={() => setShowAnalytics(false)} />}
@@ -678,10 +612,16 @@ function App(): JSX.Element {
           {showTutorial && (
             <GuidedTutorial
               tutorialId="onboarding"
-              title="Welcome Tutorial"
+              title="How this lab works"
               steps={onboardingTutorial}
-              onComplete={() => setShowTutorial(false)}
-              onSkip={() => setShowTutorial(false)}
+              onComplete={() => {
+                settingsStorage.setOnboardingComplete(true)
+                setShowTutorial(false)
+              }}
+              onSkip={() => {
+                settingsStorage.setOnboardingComplete(true)
+                setShowTutorial(false)
+              }}
             />
           )}
 

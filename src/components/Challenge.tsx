@@ -58,8 +58,8 @@ function Challenge({ challenge }: ChallengeProps): JSX.Element {
         height={200}
       />
 
-      {challenge.hints.length > 0 && (
-        <div style={{ marginTop: '20px' }}>
+      <div style={{ marginTop: '20px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+        {challenge.hints.length > 0 && (
           <button
             onClick={() => setShowHint(prev => Math.min(prev + 1, challenge.hints.length))}
             disabled={showHint >= challenge.hints.length}
@@ -75,29 +75,11 @@ function Challenge({ challenge }: ChallengeProps): JSX.Element {
           >
             {showHint === 0 ? '💡 Show Hint' : `💡 Show Hint ${showHint + 1}`}
           </button>
-          {showHint > 0 && (
-            <div style={{
-              marginTop: '10px',
-              padding: '12px',
-              background: 'var(--bg-info)',
-              color: 'var(--text-on-info)',
-              borderRadius: '6px'
-            }}>
-              {challenge.hints.slice(0, showHint).map((hint, idx) => (
-                <div key={idx} style={{ marginTop: idx > 0 ? '8px' : '0' }}>
-                  <strong>Hint {idx + 1}:</strong> {hint}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      <div style={{ marginTop: '20px' }}>
+        )}
         <button
           onClick={() => setShowSolution(!showSolution)}
           style={{
-            padding: '10px 20px',
+            padding: '8px 16px',
             background: showSolution ? 'var(--bg-warning)' : 'var(--button-primary)',
             color: 'var(--button-text)',
             border: 'none',
@@ -107,27 +89,43 @@ function Challenge({ challenge }: ChallengeProps): JSX.Element {
         >
           {showSolution ? 'Hide Solution' : 'Show Solution'}
         </button>
-
-        {showSolution && (
-          <div style={{ marginTop: '20px' }}>
-            <h4>Solution:</h4>
-            <CodePlayground
-              initialCode={challenge.solution}
-              title="Solution Code"
-              height={200}
-            />
-            <div style={{
-              marginTop: '15px',
-              padding: '15px',
-              background: 'var(--bg-success)',
-              borderRadius: '6px'
-            }}>
-              <strong>Explanation:</strong>
-              <p style={{ marginTop: '8px' }}>{challenge.explanation}</p>
-            </div>
-          </div>
-        )}
       </div>
+
+      {showHint > 0 && challenge.hints.length > 0 && (
+        <div style={{
+          marginTop: '10px',
+          padding: '12px',
+          background: 'var(--bg-info)',
+          color: 'var(--text-on-info)',
+          borderRadius: '6px'
+        }}>
+          {challenge.hints.slice(0, showHint).map((hint, idx) => (
+            <div key={idx} style={{ marginTop: idx > 0 ? '8px' : '0' }}>
+              <strong>Hint {idx + 1}:</strong> {hint}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showSolution && (
+        <div style={{ marginTop: '20px' }}>
+          <h4>Solution:</h4>
+          <CodePlayground
+            initialCode={challenge.solution}
+            title="Solution Code"
+            height={200}
+          />
+          <div style={{
+            marginTop: '15px',
+            padding: '15px',
+            background: 'var(--bg-success)',
+            borderRadius: '6px'
+          }}>
+            <strong>Explanation:</strong>
+            <p style={{ marginTop: '8px' }}>{challenge.explanation}</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -31,8 +31,7 @@ function CrossDayConnections({ currentDay, connections }: CrossDayConnectionsPro
     padding: '12px',
     margin: '10px 0',
     background: 'var(--bg-section)',
-    borderRadius: '6px',
-    borderLeft: '4px solid var(--button-primary)'
+    borderRadius: '6px'
   }
 
   return (

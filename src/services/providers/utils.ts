@@ -156,19 +156,3 @@ export function parseAIQuestions(
   return questions
 }
 
-/**
- * Get API key from environment variables
- * Vite uses import.meta.env for environment variables
- */
-export function getGroqApiKey(): string | null {
-  return import.meta.env.VITE_GROQ_API_KEY || null
-}
-
-export function getTogetherApiKey(): string | null {
-  const key = import.meta.env.VITE_TOGETHER_API_KEY || null
-  if (!key) {
-    console.log('[Together AI] 🔍 Environment check - VITE_TOGETHER_API_KEY:', import.meta.env.VITE_TOGETHER_API_KEY ? 'exists but empty' : 'not found in import.meta.env')
-    console.log('[Together AI] 🔍 All env vars starting with VITE_:', Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')))
-  }
-  return key
-}

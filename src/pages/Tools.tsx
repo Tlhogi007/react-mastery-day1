@@ -2,7 +2,7 @@
  * Tools Page - Access to all learning tools
  */
 
-import { type JSX } from 'react'
+import { useEffect, useState, type JSX } from 'react'
 import QuickReference from '../components/QuickReference'
 import FlashcardSystem from '../components/FlashcardSystem'
 import CodeSnippetsLibrary from '../components/CodeSnippetsLibrary'
@@ -11,29 +11,51 @@ import LearningPathRecommendations from '../components/LearningPathRecommendatio
 import InterviewPrepMode from '../components/InterviewPrepMode'
 import CodeReviewLibrary from '../components/CodeReviewLibrary'
 import Tabs from '../components/Tabs'
-import { day01Quiz } from '../exercises/week1/day01-rendering-pipeline/challenges'
-import { day02Quiz } from '../exercises/week1/day02-reconciliation/challenges'
-import { day03Quiz } from '../exercises/week1/day03-fiber/challenges'
-import { day04Quiz } from '../exercises/week1/day04-memoization/challenges'
-import { day05Quiz } from '../exercises/week1/day05-effects/challenges'
-import { day06Quiz } from '../exercises/week1/day06-context/challenges'
-import { day07Quiz } from '../exercises/week1/day07-reflection/challenges'
+import type { QuizQuestion } from '../types/challenges'
 
 interface ToolsProps {
     onBack?: () => void
 }
 
 function Tools({ onBack }: ToolsProps): JSX.Element {
-    // Combine all quiz questions for interview prep
-    const allQuizQuestions = [
-        ...day01Quiz,
-        ...day02Quiz,
-        ...day03Quiz,
-        ...day04Quiz,
-        ...day05Quiz,
-        ...day06Quiz,
-        ...day07Quiz
-    ]
+    const [allQuizQuestions, setAllQuizQuestions] = useState<QuizQuestion[]>([])
+
+    useEffect(() => {
+        let cancelled = false
+        void (async () => {
+            const [
+                { day01Quiz },
+                { day02Quiz },
+                { day03Quiz },
+                { day04Quiz },
+                { day05Quiz },
+                { day06Quiz },
+                { day07Quiz },
+            ] = await Promise.all([
+                import('../exercises/week1/day01-rendering-pipeline/challenges'),
+                import('../exercises/week1/day02-reconciliation/challenges'),
+                import('../exercises/week1/day03-fiber/challenges'),
+                import('../exercises/week1/day04-memoization/challenges'),
+                import('../exercises/week1/day05-effects/challenges'),
+                import('../exercises/week1/day06-context/challenges'),
+                import('../exercises/week1/day07-reflection/challenges'),
+            ])
+            if (!cancelled) {
+                setAllQuizQuestions([
+                    ...day01Quiz,
+                    ...day02Quiz,
+                    ...day03Quiz,
+                    ...day04Quiz,
+                    ...day05Quiz,
+                    ...day06Quiz,
+                    ...day07Quiz,
+                ])
+            }
+        })()
+        return () => {
+            cancelled = true
+        }
+    }, [])
 
     return (
         <div style={{ color: 'var(--text-primary)', minHeight: '100vh', padding: '20px' }}>

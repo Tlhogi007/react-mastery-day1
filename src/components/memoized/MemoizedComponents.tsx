@@ -9,27 +9,12 @@ import ProgressDashboard from '../ProgressDashboard'
 import Breadcrumbs from '../Breadcrumbs'
 import Card from '../Card'
 
-// Memoized Sidebar - only re-renders when exercises or currentExercise changes
-export const MemoizedSidebar = memo(Sidebar, (prevProps, nextProps) => {
-  return (
-    prevProps.currentExercise === nextProps.currentExercise &&
-    Object.keys(prevProps.exercises).length === Object.keys(nextProps.exercises).length
-  )
-})
+// Default memo — custom comparators were skipping prop updates (e.g. isCollapsed)
+export const MemoizedSidebar = memo(Sidebar)
 
-// Memoized ProgressDashboard - only re-renders when exercises change
-export const MemoizedProgressDashboard = memo(ProgressDashboard, (prevProps, nextProps) => {
-  return Object.keys(prevProps.exercises).length === Object.keys(nextProps.exercises).length
-})
+export const MemoizedProgressDashboard = memo(ProgressDashboard)
 
-// Memoized Breadcrumbs - only re-renders when exercise changes
-export const MemoizedBreadcrumbs = memo(Breadcrumbs, (prevProps, nextProps) => {
-  return (
-    prevProps.exercise.day === nextProps.exercise.day &&
-    prevProps.exercise.title === nextProps.exercise.title &&
-    prevProps.exercise.week === nextProps.exercise.week
-  )
-})
+export const MemoizedBreadcrumbs = memo(Breadcrumbs)
 
 // Memoized Card - only re-renders when props change
 export const MemoizedCard = memo(Card)

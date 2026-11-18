@@ -1,8 +1,13 @@
 {
   "name": "react-mastery-day1",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
+  "author": "Letlhogonolo Sekwati <lsekwati97@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Tlhogi007/react-mastery-day1.git"
+  },
   "scripts": {
     "dev": "vite",
     "sync:content": "node scripts/sync-content.cjs",
@@ -11,7 +16,10 @@
     "build": "npm run prepare:content && tsc && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "release": "semantic-release",
+    "stress": "node scripts/stress-test.mjs",
+    "stress:http": "node scripts/stress-http.mjs"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
@@ -24,15 +32,19 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.58.2",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "@types/canvas-confetti": "^1.9.0",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "@vercel/node": "^31.0.2",
     "@vitejs/plugin-react": "^5.1.1",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
     "playwright": "^1.58.2",
+    "semantic-release": "^24.2.9",
     "typescript": "^5.9.3",
     "vite": "^7.3.1"
   }

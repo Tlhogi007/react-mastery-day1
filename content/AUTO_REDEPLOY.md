@@ -1,37 +1,32 @@
 # Auto-redeploy when content changes
 
-When a PR is merged to `main` in this repo, GitHub Actions calls a **Vercel Deploy Hook** so the React Mastery app rebuilds and picks up the new markdown.
+When `main` is updated, GitHub Actions POSTs a **Vercel Deploy Hook** so the app rebuilds with fresh community content. No account-wide `VERCEL_TOKEN` is used.
 
-## One-time setup (you)
+## Setup (one-time)
 
-### 1. Create a Deploy Hook on Vercel
+1. Vercel → **react-mastery-day1** → Settings → Git → **Deploy Hooks**
+2. Create a hook (e.g. name `content-sync`, branch `main`)
+3. Copy the hook URL
+4. Add it as a repo secret on the content repo:
 
-1. Open [Vercel Dashboard](https://vercel.com/dashboard) → project **react-mastery-day1**
-2. **Settings** → **Git** → **Deploy Hooks**
-3. Create a hook:
-   - Name: `content-repo`
-   - Branch: the branch your app deploys from (usually `main`)
-4. Copy the hook URL
+```bash
+gh secret set VERCEL_DEPLOY_HOOK_URL -R Tlhogi007/react-mastery-content
+```
 
-### 2. Add the secret on GitHub
+5. Remove the old broad token if present:
 
-1. Open https://github.com/Tlhogi007/react-mastery-content/settings/secrets/actions
-2. **New repository secret**
-   - Name: `VERCEL_DEPLOY_HOOK`
-   - Value: the hook URL from Vercel
+```bash
+gh secret delete VERCEL_TOKEN -R Tlhogi007/react-mastery-content || true
+```
 
-### 3. Ensure the app build syncs content
+Also revoke that token at https://vercel.com/account/tokens if it was only used for this.
 
-On the Vercel project, set (optional — the app also defaults to this URL):
+## Status
 
-- `CONTENT_REPO_URL` = `https://github.com/Tlhogi007/react-mastery-content.git`
-- `VITE_CONTENT_REPO_URL` = `https://github.com/Tlhogi007/react-mastery-content`
+- Secret: `VERCEL_DEPLOY_HOOK_URL` (project-scoped hook URL)
+- Workflow: `.github/workflows/redeploy-app.yml`
+- Live app: https://react-mastery-day1.vercel.app
 
-`npm run build` already runs `sync:content` then `generate:content`.
+## Manual test
 
-## Test
-
-- **Actions** → **Redeploy React Mastery app** → **Run workflow**, or
-- Push any commit to `main`
-
-You should see a new deployment on Vercel.
+Actions → **Redeploy React Mastery app** → **Run workflow**

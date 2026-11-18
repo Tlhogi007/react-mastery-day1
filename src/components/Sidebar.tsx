@@ -1,306 +1,284 @@
 import { type JSX } from 'react'
 import type { ExerciseKey, Exercise, ExercisesRegistry } from '../types/exercises'
 import FadeIn from './animations/FadeIn'
+import { formatBuildStamp } from '../lib/buildInfo'
 
 interface SidebarProps {
-    exercises: ExercisesRegistry
-    currentExercise: ExerciseKey
-    onExerciseSelect: (key: ExerciseKey) => void
-    onToolsClick?: () => void
-    onCommunityClick?: () => void
-    onToggleCollapse?: () => void
-    isCollapsed?: boolean
+  exercises: ExercisesRegistry
+  currentExercise: ExerciseKey
+  onExerciseSelect: (key: ExerciseKey) => void
+  onToolsClick?: () => void
+  onCommunityClick?: () => void
+  onSettingsClick?: () => void
+  onAnalyticsClick?: () => void
+  onShortcutsClick?: () => void
+  onToggleCollapse?: () => void
+  isCollapsed?: boolean
 }
 
-function Sidebar({ exercises, currentExercise, onExerciseSelect, onToolsClick, onCommunityClick, onToggleCollapse, isCollapsed = false }: SidebarProps): JSX.Element {
-    // onToolsClick is used in the button onClick handler below
-    // Group exercises by week
-    const exercisesByWeek = Object.entries(exercises).reduce((acc, [key, exercise]) => {
-        if (!acc[exercise.week]) {
-            acc[exercise.week] = []
-        }
-        acc[exercise.week].push({ key, exercise })
-        return acc
-    }, {} as Record<number, Array<{ key: ExerciseKey; exercise: Exercise }>>)
+function Sidebar({
+  exercises,
+  currentExercise,
+  onExerciseSelect,
+  onToolsClick,
+  onCommunityClick,
+  onSettingsClick,
+  onAnalyticsClick,
+  onShortcutsClick,
+  onToggleCollapse,
+  isCollapsed = false,
+}: SidebarProps): JSX.Element {
+  const exercisesByWeek = Object.entries(exercises).reduce(
+    (acc, [key, exercise]) => {
+      if (!acc[exercise.week]) acc[exercise.week] = []
+      acc[exercise.week].push({ key, exercise })
+      return acc
+    },
+    {} as Record<number, Array<{ key: ExerciseKey; exercise: Exercise }>>
+  )
 
-    const sidebarStyle: React.CSSProperties = {
-        width: isCollapsed ? '80px' : '280px',
+  return (
+    <aside
+      role="navigation"
+      aria-label="Study outline"
+      data-tutorial="sidebar"
+      style={{
+        width: isCollapsed ? 64 : 260,
         background: 'var(--bg-card)',
         borderRight: '1px solid var(--border-color)',
-        padding: isCollapsed ? '12px 8px' : '20px',
-        position: isCollapsed ? 'relative' : 'sticky',
+        padding: isCollapsed ? '12px 8px' : '20px 14px',
+        position: 'sticky',
         top: 0,
         height: '100vh',
         overflowY: 'auto',
         overflowX: 'hidden',
-        boxSizing: 'border-box',
         flexShrink: 0,
-        transition: 'width 0.3s ease, padding 0.3s ease',
-        boxShadow: isCollapsed ? 'none' : 'var(--shadow-sm)'
-    }
-
-    const weekStyle: React.CSSProperties = {
-        marginBottom: '30px'
-    }
-
-    const weekTitleStyle: React.CSSProperties = {
-        fontSize: isCollapsed ? '10px' : '14px',
-        fontWeight: 'bold',
-        color: 'var(--text-secondary)',
-        textTransform: 'uppercase',
-        letterSpacing: '1px',
-        marginBottom: '12px',
-        paddingBottom: '8px',
-        borderBottom: isCollapsed ? 'none' : '1px solid var(--border-color)',
-        textAlign: isCollapsed ? 'center' : 'left',
-        display: isCollapsed ? 'none' : 'block'
-    }
-
-    const dayItemStyle = (isActive: boolean): React.CSSProperties => ({
-        padding: isCollapsed ? '12px' : '12px 16px',
-        marginBottom: '6px',
-        borderRadius: '8px',
-        cursor: 'pointer',
-        background: isActive ? 'var(--bg-section)' : 'transparent',
-        border: isActive ? '2px solid var(--border-primary)' : '2px solid transparent',
-        transition: 'all 0.2s',
+        transition: 'width 0.2s ease',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: isCollapsed ? 'center' : 'flex-start',
-        gap: isCollapsed ? '0' : '12px',
-        flexDirection: isCollapsed ? 'column' : 'row',
-        position: 'relative'
-    })
+        flexDirection: 'column',
+      }}
+    >
+      <FadeIn>
+        <div
+          style={{
+            marginBottom: 20,
+            display: 'flex',
+            justifyContent: isCollapsed ? 'center' : 'space-between',
+            alignItems: 'flex-start',
+            gap: 8,
+          }}
+        >
+          {!isCollapsed && (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 16,
+                  fontWeight: 600,
+                  marginBottom: 2,
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                React Mastery
+              </div>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                Internals lab · Week 1
+              </p>
+            </div>
+          )}
+          {onToggleCollapse && (
+            <button
+              onClick={onToggleCollapse}
+              aria-label={isCollapsed ? 'Expand outline' : 'Collapse outline'}
+              style={{
+                padding: '4px 8px',
+                borderRadius: 4,
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-section)',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                fontSize: 11,
+                minWidth: isCollapsed ? '100%' : undefined,
+              }}
+            >
+              {isCollapsed ? '»' : '«'}
+            </button>
+          )}
+        </div>
+      </FadeIn>
 
-    const dayNumberStyle: React.CSSProperties = {
-        width: '32px',
-        height: '32px',
-        borderRadius: '8px',
-        background: 'var(--button-primary)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '14px',
-        fontWeight: 'bold',
-        color: 'var(--button-text)',
-        flexShrink: 0
-    }
+      {!isCollapsed && (onToolsClick || onCommunityClick) && (
+        <nav
+          data-tutorial="tools-community"
+          style={{
+            marginBottom: 20,
+            paddingBottom: 16,
+            borderBottom: '1px solid var(--border-color)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+          }}
+        >
+          {[
+            { label: 'Tools', onClick: onToolsClick },
+            { label: 'Community', onClick: onCommunityClick },
+          ]
+            .filter((item) => item.onClick)
+            .map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={item.onClick}
+                style={{
+                  textAlign: 'left',
+                  padding: '8px 10px',
+                  border: 'none',
+                  borderRadius: 4,
+                  background: 'transparent',
+                  color: 'var(--text-secondary)',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+        </nav>
+      )}
 
-    const dayInfoStyle: React.CSSProperties = {
-        flex: isCollapsed ? '0' : 1,
-        minWidth: 0,
-        display: isCollapsed ? 'none' : 'block',
-        textAlign: 'left'
-    }
-
-    const dayTitleStyle: React.CSSProperties = {
-        fontSize: '14px',
-        fontWeight: '500',
-        color: 'var(--text-primary)',
-        marginBottom: '4px',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap'
-    }
-
-    const dayDescStyle: React.CSSProperties = {
-        fontSize: '12px',
-        color: 'var(--text-secondary)',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap'
-    }
-
-    return (
-        <aside style={sidebarStyle} role="navigation" aria-label="Main navigation">
-            <FadeIn>
-                <div style={{
-                    marginBottom: isCollapsed ? '20px' : '30px',
-                    display: 'flex',
-                    justifyContent: isCollapsed ? 'center' : 'space-between',
-                    alignItems: 'start',
-                    flexDirection: isCollapsed ? 'column' : 'row',
-                    gap: isCollapsed ? '8px' : '0'
-                }}>
+      <div data-tutorial="sidebar-days">
+      {Object.entries(exercisesByWeek)
+        .sort(([a], [b]) => Number(a) - Number(b))
+        .map(([week, items]) => (
+          <div key={week} style={{ marginBottom: 24 }}>
+            {!isCollapsed && (
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: 'var(--text-muted)',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  marginBottom: 8,
+                  padding: '0 10px',
+                }}
+              >
+                Week {week}
+              </div>
+            )}
+            {items
+              .sort((a, b) => a.exercise.day - b.exercise.day)
+              .map(({ key, exercise }) => {
+                const isActive = key === currentExercise
+                const title = exercise.title.replace(/^Day \d+:\s*/i, '')
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => onExerciseSelect(key)}
+                    title={`Day ${exercise.day}: ${title}`}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 10,
+                      padding: isCollapsed ? '10px 6px' : '8px 10px',
+                      marginBottom: 2,
+                      border: 'none',
+                      borderRadius: 4,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      background: isActive ? 'var(--bg-info)' : 'transparent',
+                      color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                      justifyContent: isCollapsed ? 'center' : 'flex-start',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: 12,
+                        fontWeight: 500,
+                        color: isActive ? 'var(--button-primary)' : 'var(--text-muted)',
+                        minWidth: 18,
+                        paddingTop: 1,
+                      }}
+                    >
+                      {String(exercise.day).padStart(2, '0')}
+                    </span>
                     {!isCollapsed && (
-                        <div style={{ flex: 1 }}>
-                            <h2 style={{ margin: '0 0 8px', fontSize: '20px', fontWeight: 'bold' }}>
-                                30-Day React Mastery
-                            </h2>
-                            <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                Master React like a systems engineer
-                            </p>
-                        </div>
-                    )}
-                    {isCollapsed && (
-                        <div style={{
-                            width: '100%',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            marginBottom: '8px'
-                        }}>
-                            <div style={{
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '8px',
-                                background: 'var(--button-primary)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '18px',
-                                fontWeight: 'bold',
-                                color: 'var(--button-text)'
-                            }}>
-                                R
-                            </div>
-                        </div>
-                    )}
-                    {onToggleCollapse && (
-                        <button
-                            onClick={onToggleCollapse}
-                            style={{
-                                padding: '4px 8px',
-                                borderRadius: '4px',
-                                border: '1px solid var(--border-color)',
-                                background: 'var(--bg-section)',
-                                color: 'var(--text-primary)',
-                                cursor: 'pointer',
-                                fontSize: '12px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                minWidth: isCollapsed ? '100%' : '28px',
-                                height: '28px',
-                                alignSelf: isCollapsed ? 'stretch' : 'auto'
-                            }}
-                            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <span
+                          style={{
+                            display: 'block',
+                            fontSize: 13,
+                            fontWeight: isActive ? 600 : 500,
+                            lineHeight: 1.35,
+                            color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                          }}
                         >
-                            {isCollapsed ? '▶' : '◀'}
-                        </button>
+                          {title}
+                        </span>
+                      </span>
                     )}
-                </div>
-            </FadeIn>
+                  </button>
+                )
+              })}
+          </div>
+        ))}
+      </div>
 
-            {onToolsClick && (
-                <div style={{ marginBottom: '24px' }}>
-                    <button
-                        onClick={onToolsClick}
-                        style={{
-                            width: '100%',
-                            padding: isCollapsed ? '12px' : '12px',
-                            borderRadius: '6px',
-                            border: 'none',
-                            background: 'var(--button-primary)',
-                            color: 'var(--button-text)',
-                            cursor: 'pointer',
-                            fontSize: isCollapsed ? '20px' : '14px',
-                            fontWeight: 'bold',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: isCollapsed ? '0' : '8px',
-                            transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'scale(1.02)'
-                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'scale(1)'
-                            e.currentTarget.style.boxShadow = 'none'
-                        }}
-                        title={isCollapsed ? 'Learning Tools' : undefined}
-                    >
-                        {isCollapsed ? '🛠️' : '🛠️ Learning Tools'}
-                    </button>
-                </div>
-            )}
-
-            {onCommunityClick && (
-                <div style={{ marginBottom: '24px' }}>
-                    <button
-                        onClick={onCommunityClick}
-                        style={{
-                            width: '100%',
-                            padding: isCollapsed ? '12px' : '12px',
-                            borderRadius: '6px',
-                            border: 'none',
-                            background: 'var(--button-primary)',
-                            color: 'var(--button-text)',
-                            cursor: 'pointer',
-                            fontSize: isCollapsed ? '20px' : '14px',
-                            fontWeight: 'bold',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: isCollapsed ? '0' : '8px',
-                            transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'scale(1.02)'
-                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)'
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'scale(1)'
-                            e.currentTarget.style.boxShadow = 'none'
-                        }}
-                        title={isCollapsed ? 'Community' : undefined}
-                    >
-                        {isCollapsed ? '👥' : '👥 Community'}
-                    </button>
-                </div>
-            )}
-
-            {Object.entries(exercisesByWeek)
-                .sort(([a], [b]) => Number(a) - Number(b))
-                .map(([week, items]) => (
-                    <div key={week} style={weekStyle}>
-                        <div style={weekTitleStyle}>
-                            Week {week} — {week === '1' ? 'Internals' : week === '2' ? 'Performance' : week === '3' ? 'Architecture' : 'Interview'}
-                        </div>
-                        {items
-                            .sort((a, b) => a.exercise.day - b.exercise.day)
-                            .map(({ key, exercise }) => {
-                                const isActive = key === currentExercise
-                                return (
-                                    <div
-                                        key={key}
-                                        onClick={() => onExerciseSelect(key)}
-                                        style={dayItemStyle(isActive)}
-                                        onMouseEnter={(e) => {
-                                            if (!isActive) {
-                                                e.currentTarget.style.background = 'var(--bg-section)'
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!isActive) {
-                                                e.currentTarget.style.background = 'transparent'
-                                            }
-                                        }}
-                                        title={isCollapsed ? `Day ${exercise.day}: ${exercise.title}` : undefined}
-                                    >
-                                        <div style={dayNumberStyle}>
-                                            {exercise.day}
-                                        </div>
-                                        {!isCollapsed && (
-                                            <>
-                                                <div style={dayInfoStyle}>
-                                                    <div style={dayTitleStyle}>{exercise.title}</div>
-                                                    <div style={dayDescStyle}>{exercise.description}</div>
-                                                </div>
-                                                {isActive && (
-                                                    <div style={{ fontSize: '12px', color: 'var(--button-primary)' }}>→</div>
-                                                )}
-                                            </>
-                                        )}
-                                    </div>
-                                )
-                            })}
-                    </div>
+      {!isCollapsed && (
+        <div
+          style={{
+            marginTop: 'auto',
+            paddingTop: 16,
+            borderTop: '1px solid var(--border-color)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4,
+          }}
+        >
+          {(onAnalyticsClick || onSettingsClick || onShortcutsClick) && (
+            <div
+              data-tutorial="help-links"
+              style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}
+            >
+              {[
+                { label: 'Analytics', onClick: onAnalyticsClick },
+                { label: 'Settings', onClick: onSettingsClick },
+                { label: 'Keys', onClick: onShortcutsClick },
+              ]
+                .filter((item) => item.onClick)
+                .map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={item.onClick}
+                    style={{
+                      padding: '4px 8px',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: 4,
+                      background: 'transparent',
+                      color: 'var(--text-muted)',
+                      fontSize: 11,
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {item.label}
+                  </button>
                 ))}
-        </aside>
-    )
+            </div>
+          )}
+          <div className="build-stamp" title={formatBuildStamp()}>
+            {formatBuildStamp()}
+          </div>
+        </div>
+      )}
+    </aside>
+  )
 }
 
 export default Sidebar
+

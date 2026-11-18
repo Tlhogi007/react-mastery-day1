@@ -35,3 +35,6 @@ my_chat.json
 # Content sync (local path / GitHub URL for the content repo)
 .content-repo
 .content-cache
+.env*
+*.tsbuildinfo
+scripts/last-stress-report.json

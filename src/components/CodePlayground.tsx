@@ -14,40 +14,44 @@ interface CodePlaygroundProps {
     language?: 'javascript' | 'typescript' | 'jsx' | 'tsx'
 }
 
-// Simple syntax highlighter - clean and readable with theme support
+// Simple syntax highlighter — placeholders keep later passes from matching
+// inside already-emitted HTML (e.g. keyword "class" inside class="tok-keyword").
 function highlightCode(code: string, _language: string): string {
-    // Escape HTML first to prevent XSS and ensure proper rendering
     let highlighted = code
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
 
-    // Detect if light theme is active
-    const isLightTheme = document.documentElement.classList.contains('light-theme')
+    const placeholders: string[] = []
+    const protect = (match: string, className: string): string => {
+        const token = `\u0000${placeholders.length}\u0000`
+        placeholders.push(`<span class="${className}">${match}</span>`)
+        return token
+    }
 
-    // Theme-aware syntax highlighting colors
-    const keywordColor = isLightTheme ? '#d73a49' : '#c586c0'
-    const stringColor = isLightTheme ? '#032f62' : '#ce9178'
-    const commentColor = isLightTheme ? '#6a737d' : '#6a9955'
-    const numberColor = isLightTheme ? '#005cc5' : '#b5cea8'
+    // Protect comments & strings first so keywords/numbers inside them stay intact
+    highlighted = highlighted.replace(/\/\*[\s\S]*?\*\//g, (m) => protect(m, 'tok-comment'))
+    highlighted = highlighted.replace(/\/\/.*$/gm, (m) => protect(m, 'tok-comment'))
+    highlighted = highlighted.replace(/(["'`])(?:\\.|(?!\1)[\s\S])*\1/g, (m) => protect(m, 'tok-string'))
 
-    // Simple keyword highlighting (only common ones to avoid conflicts)
-    const keywords = ['function', 'const', 'let', 'var', 'return', 'if', 'else', 'for', 'while', 'class', 'import', 'export', 'from', 'default', 'async', 'await']
-
-    keywords.forEach(keyword => {
+    const keywords = [
+        'function', 'const', 'let', 'var', 'return', 'if', 'else', 'for', 'while',
+        'class', 'import', 'export', 'from', 'default', 'async', 'await',
+    ]
+    keywords.forEach((keyword) => {
         const regex = new RegExp(`\\b${keyword}\\b`, 'g')
-        highlighted = highlighted.replace(regex, `<span style="color: ${keywordColor}; font-weight: 500;">${keyword}</span>`)
+        highlighted = highlighted.replace(regex, () => protect(keyword, 'tok-keyword'))
     })
 
-    // Highlight strings
-    highlighted = highlighted.replace(/(&quot;|'|`)((?:(?=(\\?))\3.)*?)\1/g, `<span style="color: ${stringColor};">$&</span>`)
+    highlighted = highlighted.replace(/\u0000\d+\u0000|\b\d+\.?\d*\b/g, (m) => {
+        if (m.startsWith('\u0000')) return m
+        return protect(m, 'tok-number')
+    })
 
-    // Highlight comments
-    highlighted = highlighted.replace(/\/\/.*$/gm, `<span style="color: ${commentColor}; font-style: italic;">$&</span>`)
-    highlighted = highlighted.replace(/\/\*[\s\S]*?\*\//g, `<span style="color: ${commentColor}; font-style: italic;">$&</span>`)
-
-    // Highlight numbers
-    highlighted = highlighted.replace(/\b\d+\.?\d*\b/g, `<span style="color: ${numberColor};">$&</span>`)
+    // Restore last→first so nested indices stay stable
+    for (let i = placeholders.length - 1; i >= 0; i--) {
+        highlighted = highlighted.replace(`\u0000${i}\u0000`, placeholders[i])
+    }
 
     return highlighted
 }

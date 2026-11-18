@@ -37,6 +37,17 @@ or put that URL in `.content-repo`.
 VITE_CONTENT_REPO_URL=https://github.com/Tlhogi007/react-mastery-content
 ```
 
+## AI quiz keys (server only)
+
+Never use `VITE_` for provider secrets. Set on Vercel (and local `.env`):
+
+```
+GROQ_API_KEY=...
+TOGETHER_API_KEY=...
+```
+
+The browser calls `/api/ai-quiz`; keys stay on the server.
+
 ## Contributor flow
 
 1. Someone PRs markdown into **react-mastery-content**

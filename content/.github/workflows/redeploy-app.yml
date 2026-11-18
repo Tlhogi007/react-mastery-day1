@@ -9,16 +9,23 @@ jobs:
   trigger-vercel:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Vercel deploy hook
+      - name: Trigger Vercel Deploy Hook
         env:
-          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+          DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
         run: |
-          if [ -z "$VERCEL_DEPLOY_HOOK" ]; then
-            echo "Missing secret VERCEL_DEPLOY_HOOK."
-            echo "Create a Deploy Hook in Vercel → Project → Settings → Git → Deploy Hooks"
-            echo "Then add it as a repository secret named VERCEL_DEPLOY_HOOK."
+          if [ -z "$DEPLOY_HOOK_URL" ]; then
+            echo "Missing secret VERCEL_DEPLOY_HOOK_URL."
+            echo "Create a Deploy Hook in Vercel → Project → Settings → Git → Deploy Hooks,"
+            echo "then: gh secret set VERCEL_DEPLOY_HOOK_URL -R Tlhogi007/react-mastery-content"
             exit 1
           fi
-          curl -fsS -X POST "$VERCEL_DEPLOY_HOOK"
-          echo
-          echo "Vercel redeploy triggered."
+          # Only allow Vercel deploy-hook hosts (no open redirect / SSRF via secret misuse)
+          case "$DEPLOY_HOOK_URL" in
+            https://api.vercel.com/v1/integrations/deploy/*) ;;
+            *)
+              echo "DEPLOY_HOOK_URL must be a Vercel Deploy Hook URL."
+              exit 1
+              ;;
+          esac
+          curl -fsS -X POST "$DEPLOY_HOOK_URL"
+          echo "Deploy hook triggered."

@@ -5,9 +5,10 @@ import { Z_INDEX } from '../constants'
 interface SettingsModalProps {
     isOpen: boolean
     onClose: () => void
+    onReplayTour?: () => void
 }
 
-function SettingsModal({ isOpen, onClose }: SettingsModalProps): JSX.Element {
+function SettingsModal({ isOpen, onClose, onReplayTour }: SettingsModalProps): JSX.Element {
     const modalRef = useRef<HTMLDivElement>(null)
     const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>(() => {
         // Load theme from localStorage on mount
@@ -247,6 +248,36 @@ function SettingsModal({ isOpen, onClose }: SettingsModalProps): JSX.Element {
                         {theme === 'dark' && <span>✓</span>}
                     </div>
                 </div>
+
+                {onReplayTour && (
+                    <div style={sectionStyle}>
+                        <h3 style={{ margin: '0 0 12px', fontSize: '18px', fontWeight: '600' }}>Help</h3>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onReplayTour()
+                                onClose()
+                            }}
+                            style={{
+                                width: '100%',
+                                padding: '12px 14px',
+                                background: 'var(--bg-section)',
+                                color: 'var(--text-primary)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: 8,
+                                fontSize: 14,
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                textAlign: 'left',
+                            }}
+                        >
+                            Replay tour
+                            <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-muted)', marginTop: 4 }}>
+                                Full product walkthrough — days, progress, tabs, search, focus, tools, settings
+                            </div>
+                        </button>
+                    </div>
+                )}
 
                 <div style={sectionStyle}>
                     <h3 style={{ margin: '0 0 12px', fontSize: '18px', fontWeight: '600' }}>About</h3>

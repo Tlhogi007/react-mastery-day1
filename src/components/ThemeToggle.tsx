@@ -99,25 +99,18 @@ function ThemeToggle({ className }: ThemeToggleProps): JSX.Element {
       aria-label={getTitle()}
       style={{
         padding: '8px 12px',
-        background: 'var(--bg-section)',
+        background: 'var(--bg-card)',
         border: '1px solid var(--border-color)',
-        borderRadius: '8px',
+        borderRadius: 10,
         cursor: 'pointer',
-        fontSize: '20px',
-        display: 'flex',
+        fontSize: 16,
+        display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        transition: 'all 0.2s',
-        minWidth: '44px',
-        height: '44px'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = 'var(--bg-tertiary)'
-        e.currentTarget.style.transform = 'scale(1.05)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'var(--bg-section)'
-        e.currentTarget.style.transform = 'scale(1)'
+        transition: 'background 0.15s ease',
+        minWidth: 40,
+        height: 38,
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
       {getIcon()}

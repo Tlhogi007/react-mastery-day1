@@ -4,12 +4,13 @@
 
 export interface SettingsData {
   theme: 'light' | 'dark' | 'auto'
-  // Add more settings here as needed
+  onboardingComplete?: boolean
 }
 
 const STORAGE_KEY = 'react-mastery-settings'
 const DEFAULT_SETTINGS: SettingsData = {
-  theme: 'auto'
+  theme: 'auto',
+  onboardingComplete: false,
 }
 
 class SettingsStorage {
@@ -56,6 +57,16 @@ class SettingsStorage {
   setTheme(theme: 'light' | 'dark' | 'auto'): void {
     const settings = this.getSettings()
     settings.theme = theme
+    this.saveSettings(settings)
+  }
+
+  hasCompletedOnboarding(): boolean {
+    return Boolean(this.getSettings().onboardingComplete)
+  }
+
+  setOnboardingComplete(complete = true): void {
+    const settings = this.getSettings()
+    settings.onboardingComplete = complete
     this.saveSettings(settings)
   }
 

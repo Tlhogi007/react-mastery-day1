@@ -126,10 +126,8 @@ export async function fetchFromProviders(
   console.warn(`[API] 💡 Suggestions:`)
   console.warn(`[API]   1. Hugging Face models may be deprecated (410 Gone)`)
   console.warn(`[API]   2. Open Trivia DB provides generic programming questions, not React-specific`)
-  console.warn(`[API]   3. For better React-specific questions, add API keys:`)
-  console.warn(`[API]      - Groq: Get free API key from https://console.groq.com/`)
-  console.warn(`[API]      - Together AI: Get free API key from https://api.together.xyz/`)
-  console.warn(`[API]      - Add VITE_GROQ_API_KEY or VITE_TOGETHER_API_KEY to .env file`)
+  console.warn(`[API]   3. For React-specific AI questions, set server env GROQ_API_KEY / TOGETHER_API_KEY`)
+  console.warn(`[API]      (never VITE_*) and call /api/ai-quiz — see .env.example`)
   console.warn(`[API]   4. Consider using local React-specific templates instead`)
   return []
 }

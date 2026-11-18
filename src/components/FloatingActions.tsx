@@ -1,221 +1,166 @@
 import { useState, type JSX } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Z_INDEX } from '../constants'
-import SlideUp from './animations/SlideUp'
 
 interface FloatingActionsProps {
-    onSearch?: () => void
-    onProgress?: () => void
-    onSettings?: () => void
-    onAnalytics?: () => void
-    onTools?: () => void
+  onSearch?: () => void
+  onProgress?: () => void
+  onSettings?: () => void
+  onAnalytics?: () => void
+  onTools?: () => void
 }
 
-function FloatingActions({ onSearch, onProgress, onSettings, onAnalytics, onTools }: FloatingActionsProps): JSX.Element {
-    // onTools is used in the button onClick handler below
-    const [isOpen, setIsOpen] = useState<boolean>(false)
+interface FabAction {
+  id: string
+  label: string
+  icon: string
+  onClick?: () => void
+}
 
-    const containerStyle: React.CSSProperties = {
+function FloatingActions({
+  onSearch,
+  onProgress,
+  onSettings,
+  onAnalytics,
+  onTools,
+}: FloatingActionsProps): JSX.Element {
+  const [isOpen, setIsOpen] = useState(false)
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
+
+  const actions: FabAction[] = [
+    { id: 'search', label: 'Search', icon: '🔍', onClick: onSearch },
+    { id: 'progress', label: 'Progress', icon: '📊', onClick: onProgress },
+    { id: 'analytics', label: 'Analytics', icon: '📈', onClick: onAnalytics },
+    { id: 'tools', label: 'Learning tools', icon: '🛠️', onClick: onTools },
+    { id: 'settings', label: 'Settings', icon: '⚙️', onClick: onSettings },
+  ]
+
+  const tooltipStyle: React.CSSProperties = {
+    position: 'absolute',
+    right: 'calc(100% + 10px)',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    whiteSpace: 'nowrap',
+    background: 'var(--bg-elevated)',
+    color: 'var(--text-primary)',
+    border: '1px solid var(--border-color)',
+    borderRadius: 6,
+    padding: '6px 10px',
+    fontSize: 12,
+    fontWeight: 600,
+    fontFamily: 'var(--font-ui)',
+    pointerEvents: 'none',
+    boxShadow: 'var(--shadow-md)',
+    zIndex: 2,
+  }
+
+  return (
+    <div
+      style={{
         position: 'fixed',
-        bottom: '24px',
-        right: '24px',
-        zIndex: Z_INDEX.FLOATING_ACTIONS
-    }
+        bottom: 24,
+        right: 24,
+        zIndex: Z_INDEX.FLOATING_ACTIONS,
+      }}
+    >
+      <div style={{ position: 'relative' }}>
+        <AnimatePresence>
+          {isOpen &&
+            actions.map((action, index) => {
+              const bottom = 52 + (index + 1) * 60
+              return (
+                <motion.button
+                  key={action.id}
+                  type="button"
+                  aria-label={action.label}
+                  initial={{ opacity: 0, y: 12, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.9 }}
+                  transition={{ duration: 0.18, delay: index * 0.04 }}
+                  onClick={() => {
+                    action.onClick?.()
+                    setIsOpen(false)
+                    setHoveredId(null)
+                  }}
+                  onMouseEnter={() => setHoveredId(action.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  style={{
+                    position: 'absolute',
+                    bottom,
+                    right: 0,
+                    width: 44,
+                    height: 44,
+                    borderRadius: 8,
+                    border: '1px solid var(--border-color)',
+                    background:
+                      hoveredId === action.id ? 'var(--bg-section)' : 'var(--bg-card)',
+                    color: 'var(--text-primary)',
+                    fontSize: 18,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: 'var(--shadow-md)',
+                    zIndex: 1001 - index,
+                  }}
+                >
+                  {action.icon}
+                  {hoveredId === action.id && (
+                    <span style={tooltipStyle} role="tooltip">
+                      {action.label}
+                    </span>
+                  )}
+                </motion.button>
+              )
+            })}
+        </AnimatePresence>
 
-    const buttonStyle: React.CSSProperties = {
-        width: '56px',
-        height: '56px',
-        borderRadius: '50%',
-        border: 'none',
-        background: 'var(--button-primary)',
-        color: 'var(--button-text)',
-        fontSize: '28px',
-        cursor: 'pointer',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontWeight: '300',
-        position: 'relative' as const
-    }
-
-    const actionButtonStyle = (index: number, isVisible: boolean): React.CSSProperties => {
-        const spacing = 68 // Space between buttons
-        const buttonHeight = 56 // Main button height
-        const bottomOffset = buttonHeight + (index + 1) * spacing
-
-        return {
-            position: 'absolute' as const,
-            bottom: `${bottomOffset}px`,
-            right: '0',
-            width: '48px',
-            height: '48px',
-            borderRadius: '50%',
+        <button
+          type="button"
+          aria-label={isOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={isOpen}
+          onClick={() => {
+            setIsOpen((open) => !open)
+            setHoveredId(null)
+          }}
+          onMouseEnter={() => setHoveredId('menu')}
+          onMouseLeave={() => setHoveredId(null)}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 6,
             border: '1px solid var(--border-color)',
-            background: 'var(--bg-card)',
-            color: 'var(--text-primary)',
-            fontSize: '20px',
+            background: 'var(--button-primary)',
+            color: 'var(--button-text)',
+            fontSize: 20,
             cursor: 'pointer',
+            boxShadow: 'var(--shadow-md)',
+            transition: 'background 0.15s ease, transform 0.2s ease',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            opacity: isVisible ? 1 : 0,
-            transform: isVisible ? 'scale(1) translateY(0)' : 'scale(0.8) translateY(10px)',
-            pointerEvents: isVisible ? 'auto' : 'none',
-            boxShadow: isVisible ? '0 4px 12px rgba(0,0,0,0.15)' : '0 2px 4px rgba(0,0,0,0.1)',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            zIndex: 1001 - index // Ensure proper stacking
-        }
-    }
-
-    return (
-        <div style={containerStyle}>
-            <div style={{ position: 'relative' }}>
-                {isOpen && (
-                    <>
-                        <SlideUp delay={0.1}>
-                            <button
-                                onClick={() => {
-                                    onSearch?.()
-                                    setIsOpen(false)
-                                }}
-                                style={actionButtonStyle(0, isOpen)}
-                                title="Search"
-                                onMouseEnter={(e) => {
-                                    if (isOpen) {
-                                        e.currentTarget.style.transform = 'scale(1.1) translateY(-2px)'
-                                        e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)'
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (isOpen) {
-                                        e.currentTarget.style.transform = 'scale(1) translateY(0)'
-                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
-                                    }
-                                }}
-                            >
-                                🔍
-                            </button>
-                        </SlideUp>
-                        <SlideUp delay={0.15}>
-                            <button
-                                onClick={() => {
-                                    onProgress?.()
-                                    setIsOpen(false)
-                                }}
-                                style={actionButtonStyle(1, isOpen)}
-                                title="Progress"
-                                onMouseEnter={(e) => {
-                                    if (isOpen) {
-                                        e.currentTarget.style.transform = 'scale(1.1) translateY(-2px)'
-                                        e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)'
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (isOpen) {
-                                        e.currentTarget.style.transform = 'scale(1) translateY(0)'
-                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
-                                    }
-                                }}
-                            >
-                                📊
-                            </button>
-                        </SlideUp>
-                        <SlideUp delay={0.2}>
-                            <button
-                                onClick={() => {
-                                    onAnalytics?.()
-                                    setIsOpen(false)
-                                }}
-                                style={actionButtonStyle(2, isOpen)}
-                                title="Analytics"
-                                onMouseEnter={(e) => {
-                                    if (isOpen) {
-                                        e.currentTarget.style.transform = 'scale(1.1) translateY(-2px)'
-                                        e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)'
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (isOpen) {
-                                        e.currentTarget.style.transform = 'scale(1) translateY(0)'
-                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
-                                    }
-                                }}
-                            >
-                                📈
-                            </button>
-                        </SlideUp>
-                        <SlideUp delay={0.25}>
-                            <button
-                                onClick={() => {
-                                    onTools?.()
-                                    setIsOpen(false)
-                                }}
-                                style={actionButtonStyle(3, isOpen)}
-                                title="Learning Tools"
-                                onMouseEnter={(e) => {
-                                    if (isOpen) {
-                                        e.currentTarget.style.transform = 'scale(1.1) translateY(-2px)'
-                                        e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)'
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (isOpen) {
-                                        e.currentTarget.style.transform = 'scale(1) translateY(0)'
-                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
-                                    }
-                                }}
-                            >
-                                🛠️
-                            </button>
-                        </SlideUp>
-                        <SlideUp delay={0.3}>
-                            <button
-                                onClick={() => {
-                                    onSettings?.()
-                                    setIsOpen(false)
-                                }}
-                                style={actionButtonStyle(4, isOpen)}
-                                title="Settings"
-                                onMouseEnter={(e) => {
-                                    if (isOpen) {
-                                        e.currentTarget.style.transform = 'scale(1.1) translateY(-2px)'
-                                        e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)'
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (isOpen) {
-                                        e.currentTarget.style.transform = 'scale(1) translateY(0)'
-                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
-                                    }
-                                }}
-                            >
-                                ⚙️
-                            </button>
-                        </SlideUp>
-                    </>
-                )}
-                <button
-                    onClick={() => setIsOpen(!isOpen)}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = isOpen ? 'rotate(45deg) scale(1.1)' : 'rotate(0deg) scale(1.1)'
-                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.3)'
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = isOpen ? 'rotate(45deg) scale(1)' : 'rotate(0deg) scale(1)'
-                        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)'
-                    }}
-                    style={{
-                        ...buttonStyle,
-                        transform: isOpen ? 'rotate(45deg)' : 'rotate(0deg)'
-                    }}
-                    title={isOpen ? 'Close' : 'Menu'}
-                >
-                    {isOpen ? '✕' : '+'}
-                </button>
-            </div>
-        </div>
-    )
+            position: 'relative',
+            transform: isOpen ? 'rotate(45deg)' : 'rotate(0deg)',
+          }}
+        >
+          {isOpen ? '✕' : '+'}
+          {hoveredId === 'menu' && (
+            <span
+              style={{
+                ...tooltipStyle,
+                transform: isOpen
+                  ? 'translateY(-50%) rotate(-45deg)'
+                  : 'translateY(-50%)',
+              }}
+              role="tooltip"
+            >
+              {isOpen ? 'Close' : 'Menu'}
+            </span>
+          )}
+        </button>
+      </div>
+    </div>
+  )
 }
 
 export default FloatingActions

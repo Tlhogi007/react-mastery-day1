@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import './Landing.css'
 import { tracking } from '../lib/googleAnalytics'
+import { formatBuildStamp } from '../lib/buildInfo'
 
 interface LandingProps {
   onGetStarted: () => void
@@ -48,6 +49,11 @@ export default function Landing({ onGetStarted }: LandingProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
+            <h1 className="brand-mark">
+              React Mastery
+              <span>Lab</span>
+            </h1>
+
             <div className="terminal-window">
               <div className="terminal-header">
                 <span className="terminal-dot red"></span>
@@ -67,7 +73,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
                   >
                     <pre className="code-bad">{codeSnippets[currentSnippet].bad}</pre>
                     <div className="code-error">
-                      <span className="error-icon">⚠️</span>
+                      <span className="error-icon">!</span>
                       {codeSnippets[currentSnippet].issue}
                     </div>
                   </motion.div>
@@ -75,14 +81,14 @@ export default function Landing({ onGetStarted }: LandingProps) {
               </div>
             </div>
 
-            <h1 className="hero-title-unique">
-              Master React Internals
+            <h2 className="hero-title-unique">
+              Internals you can feel
               <br />
-              <span className="highlight">in 30 Days</span>
-            </h1>
+              <span className="highlight">in 30 days</span>
+            </h2>
 
             <p className="hero-subtitle-unique">
-              From setState to Fiber. Structured learning path for engineers who want to understand, not just use React.
+              From setState to Fiber — deliberate practice for engineers who want to understand React, not just use it.
             </p>
 
             <button className="cta-unique" onClick={() => {
@@ -157,7 +163,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
               <div className="concept-visual">
                 <div className="memo-visual">
                   <div className="memo-box">memo</div>
-                  <div className="memo-skip">⚡</div>
+                  <div className="memo-skip">skip</div>
                 </div>
               </div>
               <h3>Performance Optimization</h3>
@@ -179,7 +185,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
             </div>
             <div className="split-divider">
               <div className="divider-line"></div>
-              <div className="divider-icon">⚡</div>
+              <div className="divider-icon">vs</div>
             </div>
             <div className="split-side after">
               <h3>React Mastery</h3>
@@ -195,28 +201,82 @@ export default function Landing({ onGetStarted }: LandingProps) {
 
         <section className="week-section">
           <h2 className="section-title-unique">30-Day Structured Roadmap</h2>
-          <div className="days-timeline">
+          <div className="roadmap">
             {[
-              { day: 1, topic: 'Week 1: React Internals' },
-              { day: 2, topic: 'Rendering Pipeline & Virtual DOM' },
-              { day: 3, topic: 'Reconciliation & Fiber Architecture' },
-              { day: 4, topic: 'Week 2: Performance & Concurrency' },
-              { day: 5, topic: 'Concurrent Rendering & Transitions' },
-              { day: 6, topic: 'Suspense & Code Splitting' },
-              { day: 7, topic: 'Week 3: Architecture & Patterns' }
-            ].map((item, i) => (
-              <motion.div
-                key={item.day}
-                className="day-item"
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
+              {
+                week: 1,
+                title: 'React Internals',
+                focus: 'Mental models & how React actually works',
+                available: true,
+                topics: [
+                  'Rendering Pipeline & Virtual DOM',
+                  'Reconciliation & Fiber Architecture',
+                  'Bailouts, Effects, Context',
+                ],
+              },
+              {
+                week: 2,
+                title: 'Performance & Concurrency',
+                focus: 'Think like React 18',
+                available: false,
+                topics: [
+                  'Concurrent Rendering & Transitions',
+                  'Suspense & Code Splitting',
+                  'SSR, Hydration & Profiling',
+                ],
+              },
+              {
+                week: 3,
+                title: 'Architecture & Patterns',
+                focus: 'Scale beyond components',
+                available: false,
+                topics: [
+                  'State strategy & colocation',
+                  'Optimistic UI & error boundaries',
+                  'Server Components thinking',
+                ],
+              },
+              {
+                week: 4,
+                title: 'Interview Domination',
+                focus: 'Articulate like Senior / Staff',
+                available: false,
+                topics: [
+                  'Rapid recall & debug drills',
+                  'Trade-offs & whiteboard design',
+                  'Your React philosophy',
+                ],
+              },
+            ].map((block, i) => (
+              <motion.article
+                key={block.week}
+                className={`roadmap-week${block.available ? '' : ' is-soon'}`}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                whileHover={{ x: 10 }}
+                transition={{ delay: i * 0.08 }}
               >
-                <span className="day-number">{item.day === 1 || item.day === 4 || item.day === 7 ? '📅' : '•'}</span>
-                <span className="day-topic">{item.topic}</span>
-              </motion.div>
+                <header className="roadmap-week-header">
+                  <span className="roadmap-week-badge">Week {block.week}</span>
+                  <div className="roadmap-week-copy">
+                    <div className="roadmap-week-title-row">
+                      <h3 className="roadmap-week-title">{block.title}</h3>
+                      {!block.available && (
+                        <span className="roadmap-soon-pill">Coming soon</span>
+                      )}
+                    </div>
+                    <p className="roadmap-week-focus">{block.focus}</p>
+                  </div>
+                </header>
+                <ul className="roadmap-topics">
+                  {block.topics.map((topic) => (
+                    <li key={topic} className="roadmap-topic">
+                      <span className="roadmap-topic-mark" aria-hidden="true" />
+                      <span>{topic}</span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.article>
             ))}
           </div>
         </section>
@@ -241,7 +301,10 @@ export default function Landing({ onGetStarted }: LandingProps) {
         </section>
 
         <footer className="footer-unique">
-          <p>A structured path to React mastery • Built for ambitious engineers</p>
+          <p>React internals practice lab · no signup required</p>
+          <p className="build-stamp" style={{ marginTop: 8 }}>
+            {formatBuildStamp()}
+          </p>
         </footer>
       </div>
     </div>

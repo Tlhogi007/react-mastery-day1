@@ -13,10 +13,10 @@ function Card({ children, title, icon, badge, style, onClick }: CardProps): JSX.
   const cardStyle: React.CSSProperties = {
     background: 'var(--bg-card)',
     border: '1px solid var(--border-color)',
-    borderRadius: '12px',
-    padding: '24px',
-    boxShadow: 'var(--shadow-sm)',
-    transition: 'all 0.2s ease',
+    borderRadius: 'var(--radius-md)',
+    padding: '20px',
+    boxShadow: 'none',
+    transition: 'background 0.15s ease',
     cursor: onClick ? 'pointer' : 'default',
     ...style
   }

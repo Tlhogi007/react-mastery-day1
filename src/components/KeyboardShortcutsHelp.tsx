@@ -1,180 +1,191 @@
-/**
- * Keyboard Shortcuts Help Modal
- */
-
 import { type JSX, useEffect, useRef } from 'react'
 
 interface KeyboardShortcutsHelpProps {
-    isOpen: boolean
-    onClose: () => void
+  isOpen: boolean
+  onClose: () => void
 }
 
+type Shortcut = { keys: string[]; action: string }
+
+const SECTIONS: { title: string; items: Shortcut[] }[] = [
+  {
+    title: 'Move around',
+    items: [
+      { keys: ['J', '→'], action: 'Next lesson' },
+      { keys: ['K', '←'], action: 'Previous lesson' },
+      { keys: ['R'], action: 'Shuffle lesson' },
+      { keys: ['C'], action: 'Continue where you left off' },
+    ],
+  },
+  {
+    title: 'Quiz',
+    items: [
+      { keys: ['1–4'], action: 'Pick an answer' },
+      { keys: ['Space'], action: 'Next question' },
+      { keys: ['S'], action: 'Skip' },
+    ],
+  },
+  {
+    title: 'Desk',
+    items: [
+      { keys: ['?'], action: 'Open this list' },
+      { keys: ['Esc'], action: 'Close panels' },
+    ],
+  },
+]
+
 function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelpProps): JSX.Element {
-    const modalRef = useRef<HTMLDivElement>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
 
-    useEffect(() => {
-        if (!isOpen) return
+  useEffect(() => {
+    if (!isOpen) return
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') onClose()
+    }
+    modalRef.current?.focus()
+    document.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prev
+    }
+  }, [isOpen, onClose])
 
-        const handleEscape = (e: KeyboardEvent): void => {
-            if (e.key === 'Escape') {
-                onClose()
-            }
-        }
+  if (!isOpen) return <></>
 
-        if (modalRef.current) {
-            modalRef.current.focus()
-        }
-
-        document.addEventListener('keydown', handleEscape)
-        return () => document.removeEventListener('keydown', handleEscape)
-    }, [isOpen, onClose])
-
-    if (!isOpen) return <></>
-
-    const containerStyle: React.CSSProperties = {
+  return (
+    <div
+      style={{
         position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.5)',
+        inset: 0,
+        background: 'rgba(28, 25, 22, 0.45)',
         zIndex: 2000,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px'
-    }
-
-    const modalStyle: React.CSSProperties = {
-        background: 'var(--bg-card)',
-        borderRadius: '12px',
-        padding: '30px',
-        maxWidth: '600px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        border: '2px solid var(--border-primary)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
-    }
-
-    const shortcutRowStyle: React.CSSProperties = {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '12px',
-        marginBottom: '8px',
-        background: 'var(--bg-section)',
-        borderRadius: '6px',
-        border: '1px solid var(--border-color)'
-    }
-
-    const keyStyle: React.CSSProperties = {
-        padding: '4px 8px',
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border-color)',
-        borderRadius: '4px',
-        fontFamily: 'monospace',
-        fontSize: '12px',
-        fontWeight: '600',
-        minWidth: '30px',
-        textAlign: 'center'
-    }
-
-    return (
-        <div style={containerStyle} onClick={onClose}>
-            <div
-                ref={modalRef}
-                style={modalStyle}
-                onClick={(e) => e.stopPropagation()}
-                tabIndex={-1}
-            >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h2 style={{ margin: 0 }}>⌨️ Keyboard Shortcuts</h2>
-                    <button
-                        onClick={onClose}
-                        style={{
-                            padding: '8px 12px',
-                            background: 'var(--bg-section)',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '16px'
-                        }}
-                        aria-label="Close"
-                    >
-                        ✕
-                    </button>
-                </div>
-
-                <div style={{ marginBottom: '20px' }}>
-                    <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '18px' }}>Navigation</h3>
-                    <div style={shortcutRowStyle}>
-                        <span><strong>j</strong> or <strong>→</strong></span>
-                        <span style={keyStyle}>j / →</span>
-                        <span>Next exercise</span>
-                    </div>
-                    <div style={shortcutRowStyle}>
-                        <span><strong>k</strong> or <strong>←</strong></span>
-                        <span style={keyStyle}>k / ←</span>
-                        <span>Previous exercise</span>
-                    </div>
-                    <div style={shortcutRowStyle}>
-                        <span><strong>r</strong></span>
-                        <span style={keyStyle}>r</span>
-                        <span>Random exercise</span>
-                    </div>
-                    <div style={shortcutRowStyle}>
-                        <span><strong>c</strong></span>
-                        <span style={keyStyle}>c</span>
-                        <span>Continue learning</span>
-                    </div>
-                </div>
-
-                <div style={{ marginBottom: '20px' }}>
-                    <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '18px' }}>Quiz</h3>
-                    <div style={shortcutRowStyle}>
-                        <span><strong>1-4</strong></span>
-                        <span style={keyStyle}>1-4</span>
-                        <span>Select answer option</span>
-                    </div>
-                    <div style={shortcutRowStyle}>
-                        <span><strong>Space</strong> or <strong>Enter</strong></span>
-                        <span style={keyStyle}>Space / Enter</span>
-                        <span>Next question</span>
-                    </div>
-                    <div style={shortcutRowStyle}>
-                        <span><strong>s</strong></span>
-                        <span style={keyStyle}>s</span>
-                        <span>Skip question</span>
-                    </div>
-                </div>
-
-                <div style={{ marginBottom: '20px' }}>
-                    <h3 style={{ marginTop: 0, marginBottom: '15px', fontSize: '18px' }}>General</h3>
-                    <div style={shortcutRowStyle}>
-                        <span><strong>?</strong></span>
-                        <span style={keyStyle}>?</span>
-                        <span>Show this help</span>
-                    </div>
-                    <div style={shortcutRowStyle}>
-                        <span><strong>Esc</strong></span>
-                        <span style={keyStyle}>Esc</span>
-                        <span>Close modals</span>
-                    </div>
-                </div>
-
-                <div style={{
-                    padding: '12px',
-                    background: 'var(--bg-info)',
-                    color: 'var(--text-on-info)',
-                    borderRadius: '6px',
-                    fontSize: '13px'
-                }}>
-                    💡 <strong>Tip:</strong> Shortcuts are disabled when typing in input fields
-                </div>
-            </div>
+        padding: 20,
+      }}
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="shortcuts-title"
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'var(--bg-card)',
+          borderRadius: 'var(--radius-md)',
+          maxWidth: 420,
+          width: '100%',
+          maxHeight: 'min(90vh, 560px)',
+          overflow: 'hidden',
+          border: '1px solid var(--border-color)',
+          boxShadow: 'var(--shadow-lg)',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '14px 16px',
+            borderBottom: '1px solid var(--border-color)',
+          }}
+        >
+          <h2
+            id="shortcuts-title"
+            style={{
+              margin: 0,
+              fontFamily: 'var(--font-display)',
+              fontSize: 17,
+              fontWeight: 550,
+            }}
+          >
+            Keyboard
+          </h2>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            style={{
+              border: '1px solid var(--border-color)',
+              background: 'var(--bg-section)',
+              color: 'var(--text-secondary)',
+              padding: '4px 10px',
+              fontSize: 12,
+              cursor: 'pointer',
+            }}
+          >
+            Close
+          </button>
         </div>
-    )
+
+        <div style={{ overflowY: 'auto', padding: '12px 14px 16px' }}>
+          {SECTIONS.map((section) => (
+            <section key={section.title} style={{ marginBottom: 14 }}>
+              <h3
+                style={{
+                  margin: '6px 4px 8px',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: 'var(--text-muted)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  fontFamily: 'var(--font-ui)',
+                }}
+              >
+                {section.title}
+              </h3>
+              <div style={{ border: '1px solid var(--border-color)', borderRadius: 4, overflow: 'hidden' }}>
+                {section.items.map((item, i) => (
+                  <div
+                    key={item.action}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '10px 12px',
+                      borderTop: i === 0 ? 'none' : '1px solid var(--border-color)',
+                      background: 'var(--bg-card)',
+                    }}
+                  >
+                    <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{item.action}</span>
+                    <span style={{ display: 'flex', gap: 4 }}>
+                      {item.keys.map((key) => (
+                        <kbd
+                          key={key}
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: 11,
+                            padding: '2px 6px',
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-section)',
+                            color: 'var(--text-secondary)',
+                            borderRadius: 3,
+                          }}
+                        >
+                          {key}
+                        </kbd>
+                      ))}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+          <p style={{ margin: '8px 4px 0', fontSize: 12, color: 'var(--text-muted)' }}>
+            Shortcuts pause while you type in a field.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default KeyboardShortcutsHelp
