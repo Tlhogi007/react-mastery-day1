@@ -1,3 +1,10 @@
+## [1.5.9](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.8...v1.5.9) (2026-11-18)
+
+
+### Bug Fixes
+
+* **auth:** proxy Clerk FAPI through /__clerk on vercel.app ([0950e94](https://github.com/Tlhogi007/react-mastery-day1/commit/0950e940b478f32e33002ce6606eb75695d5d726))
+
 ## [1.5.8](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.7...v1.5.8) (2026-11-18)
 
 
