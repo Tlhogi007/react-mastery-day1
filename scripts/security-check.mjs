@@ -203,6 +203,21 @@ if (!fapi.includes('Clerk-Secret-Key')) {
 } else {
   ok('Clerk-Secret-Key set on upstream request only')
 }
+if (!fapi.includes('CLERK_FAPI_PROXY_ENABLED')) {
+  fail('clerk-fapi must be opt-in via CLERK_FAPI_PROXY_ENABLED (fail closed)')
+} else {
+  ok('FAPI proxy requires CLERK_FAPI_PROXY_ENABLED=1')
+}
+if (!fapi.includes('Forbidden origin') && !fapi.includes('requestAllowed')) {
+  fail('clerk-fapi must reject disallowed Origins')
+} else {
+  ok('FAPI proxy checks request origin')
+}
+if (!fapi.includes('MAX_BODY_BYTES') && !fapi.includes('Payload too large')) {
+  fail('clerk-fapi must enforce a request body size limit')
+} else {
+  ok('FAPI proxy enforces body size limit')
+}
 
 // ── 5. Clerk provider / redirect hygiene ───────────────────────────────────
 console.log('\n[5] Clerk provider redirects')
@@ -241,6 +256,14 @@ if (!auth.includes('authorizedParties')) {
   fail('JWT verify should use authorizedParties (azp binding)')
 } else {
   ok('authorizedParties used for JWT azp binding')
+}
+if (
+  !auth.includes("VERCEL_ENV === 'production'") ||
+  !auth.includes("userId: 'anonymous'")
+) {
+  fail('requireAiUser must fail closed in production when Clerk is unset')
+} else {
+  ok('requireAiUser fails closed in production without Clerk')
 }
 
 const webhook = read('api/clerk-webhook.ts')

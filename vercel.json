@@ -21,6 +21,7 @@
       "maxDuration": 20
     },
     "api/clerk-fapi.ts": {
+      "includeFiles": "api/_lib/**",
       "maxDuration": 30
     }
   },

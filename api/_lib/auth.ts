@@ -1,6 +1,7 @@
 /**
  * Clerk JWT verification for API routes.
- * - requireAiUser: hosted AI (verified email/OAuth + not aiBanned; anonymous if Clerk unset)
+ * - requireAiUser: hosted AI (verified email/OAuth + not aiBanned;
+ *   anonymous only outside production when Clerk unset — production fails closed)
  * - requireCloudUser: learner sync (verified email/OAuth; bans do NOT apply)
  * - requireAdminUser: ADMIN_USER_IDS or metadata.role=admin
  */
@@ -136,6 +137,18 @@ export async function requireAiUser(req: VercelRequest): Promise<
     }
 > {
   if (!clerkConfigured()) {
+    // Local/dev convenience only. Production without CLERK_SECRET_KEY must not
+    // hand out free hosted AI as "anonymous".
+    const prod =
+      process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production'
+    if (prod) {
+      return {
+        ok: false,
+        status: 401,
+        code: 'auth_required',
+        error: 'Sign in to continue.',
+      }
+    }
     return { ok: true, user: { userId: 'anonymous' } }
   }
 

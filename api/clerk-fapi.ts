@@ -1,17 +1,21 @@
 /**
  * Proxies Clerk Frontend API through this origin.
- * Required on vercel.app production — you cannot CNAME clerk.*.vercel.app.
+ * Required on vercel.app with pk_live_ — you cannot CNAME clerk.*.vercel.app.
  *
  * Browser → /__clerk/*  (rewrite) → /api/clerk-fapi?clerkPath=* → frontend-api.clerk.dev
  *
  * Bodies must stay raw (Clerk uses form-urlencoded for sign_ins). Re-JSON-stringifying
  * parsed bodies causes 422 Unprocessable Content.
+ *
+ * Enable explicitly with CLERK_FAPI_PROXY_ENABLED=1 (fail closed by default).
  */
 /// <reference types="node" />
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import type { IncomingMessage } from 'http'
+import { clerkAuthorizedParties } from './_lib/auth.js'
 
 const FAPI_ORIGIN = 'https://frontend-api.clerk.dev'
+const MAX_BODY_BYTES = 1_000_000
 
 export const config = {
   api: {
@@ -61,11 +65,19 @@ function clerkPath(req: VercelRequest): string | null {
   return path
 }
 
-function readRawBody(req: IncomingMessage): Promise<Buffer> {
+function readRawBody(req: IncomingMessage, maxBytes: number): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = []
+    let total = 0
     req.on('data', (chunk: Buffer | string) => {
-      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+      const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
+      total += buf.length
+      if (total > maxBytes) {
+        reject(new Error('BODY_TOO_LARGE'))
+        req.destroy()
+        return
+      }
+      chunks.push(buf)
     })
     req.on('end', () => resolve(Buffer.concat(chunks)))
     req.on('error', reject)
@@ -81,11 +93,42 @@ const SKIP_REQ_HEADERS = new Set([
   'expect',
 ])
 
+function requestAllowed(req: VercelRequest): boolean {
+  const originHeader = req.headers.origin
+  const origin = typeof originHeader === 'string' ? originHeader.trim().replace(/\/$/, '') : ''
+  if (origin) {
+    const parties = new Set(clerkAuthorizedParties().map((p) => p.replace(/\/$/, '')))
+    return parties.has(origin)
+  }
+  // Same-origin browser requests sometimes omit Origin on GET.
+  const site = req.headers['sec-fetch-site']
+  if (site === 'same-origin' || site === 'none') return true
+  if (req.method === 'GET' || req.method === 'HEAD') return true
+  return false
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   try {
+    // Fail closed: proxy is only for pk_live_ on vercel.app — opt in via env.
+    if (process.env.CLERK_FAPI_PROXY_ENABLED !== '1') {
+      res.status(404).json({ error: 'Not found' })
+      return
+    }
+
     const secret = process.env.CLERK_SECRET_KEY
     if (!secret) {
       res.status(503).json({ error: 'CLERK_SECRET_KEY is not configured' })
+      return
+    }
+
+    if (!requestAllowed(req)) {
+      res.status(403).json({ error: 'Forbidden origin' })
+      return
+    }
+
+    const contentLength = Number(req.headers['content-length'] || 0)
+    if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+      res.status(413).json({ error: 'Payload too large' })
       return
     }
 
@@ -130,7 +173,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
     let body: Buffer | undefined
     if (req.method !== 'GET' && req.method !== 'HEAD') {
-      body = await readRawBody(req)
+      try {
+        body = await readRawBody(req, MAX_BODY_BYTES)
+      } catch (err) {
+        if (err instanceof Error && err.message === 'BODY_TOO_LARGE') {
+          res.status(413).json({ error: 'Payload too large' })
+          return
+        }
+        throw err
+      }
     }
 
     const upstream = await fetch(target, {
