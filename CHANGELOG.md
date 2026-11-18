@@ -1,3 +1,10 @@
+## [1.5.7](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.6...v1.5.7) (2026-11-18)
+
+
+### Bug Fixes
+
+* **auth:** pin Clerk UI to silence structural CSS warning ([07a63a4](https://github.com/Tlhogi007/react-mastery-day1/commit/07a63a4aec675054e76b0c533321b5f64335d61f))
+
 ## [1.5.6](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.5...v1.5.6) (2026-11-18)
 
 
