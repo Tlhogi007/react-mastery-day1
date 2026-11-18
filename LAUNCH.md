@@ -15,34 +15,17 @@
 - [x] App repo on GitHub  
 - [x] `vercel.json` + `.env.example`  
 
-## One-time (you — needs Vercel dashboard login)
+## Done for launch automation
 
-### 1. Deploy Hook → GitHub secret
+- [x] Vercel CLI authenticated (`tlhogi007`)
+- [x] Project linked; production deployed
+- [x] Env vars `VITE_CONTENT_REPO_URL` + `CONTENT_REPO_URL` set
+- [x] Content repo Action redeploys via `VERCEL_TOKEN` (verified green)
+- [x] Watching content repo for PR notifications
 
-1. Vercel → **react-mastery-day1** → Settings → Git → **Deploy Hooks**  
-2. Create hook named `content-repo` (branch `main`)  
-3. Copy URL → GitHub content repo → Settings → Secrets → Actions  
-4. Secret name: `VERCEL_DEPLOY_HOOK`  
-5. Re-run: https://github.com/Tlhogi007/react-mastery-content/actions  
+Optional later: connect GitHub under Vercel → Settings → Git for push-to-deploy on the app repo.
 
-Details: https://github.com/Tlhogi007/react-mastery-content/blob/main/AUTO_REDEPLOY.md  
-
-### 2. Vercel env vars
-
-Set for Production (and Preview if you want):
-
-| Name | Value |
-|------|--------|
-| `VITE_CONTENT_REPO_URL` | `https://github.com/Tlhogi007/react-mastery-content` |
-| `CONTENT_REPO_URL` | `https://github.com/Tlhogi007/react-mastery-content.git` |
-| `VITE_GA_TRACKING_ID` | your GA id (optional) |
-| AI keys | only if you use those features |
-
-Then **Redeploy** once so env vars apply.
-
-### 3. Notifications
-
-On the content repo: **Watch** → **Custom** → Pull requests (or All Activity).
+Details: https://github.com/Tlhogi007/react-mastery-content/blob/main/AUTO_REDEPLOY.md
 
 ## After that
 
