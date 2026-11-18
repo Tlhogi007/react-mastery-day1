@@ -1,3 +1,10 @@
+## [1.5.2](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.1...v1.5.2) (2026-11-18)
+
+
+### Bug Fixes
+
+* **auth:** keep cloud sync available when AI is banned ([fdcf040](https://github.com/Tlhogi007/react-mastery-day1/commit/fdcf0408a6cb0957da42d412f9b06a00f687af2d))
+
 ## [1.5.1](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.0...v1.5.1) (2026-11-18)
 
 
