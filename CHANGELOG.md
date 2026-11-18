@@ -1,3 +1,11 @@
+## [1.5.10](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.9...v1.5.10) (2026-11-18)
+
+
+### Bug Fixes
+
+* **auth:** remove unused clerk-fapi catch-all route ([7378022](https://github.com/Tlhogi007/react-mastery-day1/commit/7378022dd1c10937478d9c6370c30d253997fe79))
+* **auth:** use single /api/clerk-fapi rewrite for Clerk proxy ([2983f10](https://github.com/Tlhogi007/react-mastery-day1/commit/2983f1071d37740a2dd8986ed2cecb9ba1481664))
+
 ## [1.5.9](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.8...v1.5.9) (2026-11-18)
 
 
