@@ -1,3 +1,10 @@
+## [1.5.8](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.7...v1.5.8) (2026-11-18)
+
+
+### Bug Fixes
+
+* **ui:** show Sign in on landing after sign-out ([7fe2b3f](https://github.com/Tlhogi007/react-mastery-day1/commit/7fe2b3f3d700e43fc78ae488615b9389afe7519d))
+
 ## [1.5.7](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.5.6...v1.5.7) (2026-11-18)
 
 
