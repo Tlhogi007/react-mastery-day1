@@ -19,6 +19,15 @@
     "api/admin-ai.ts": {
       "includeFiles": "api/_lib/**",
       "maxDuration": 20
+    },
+    "api/clerk-fapi/[...path].ts": {
+      "maxDuration": 30
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/__clerk/:path*",
+      "destination": "/api/clerk-fapi/:path*"
+    }
+  ]
 }
