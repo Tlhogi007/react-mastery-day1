@@ -47,4 +47,7 @@ Content is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.
 
 ## Platform
 
+- Live app: https://react-mastery-day1.vercel.app
+- App source: https://github.com/Tlhogi007/react-mastery-day1
+
 Consumed by the React Mastery app via `npm run sync:content`.
