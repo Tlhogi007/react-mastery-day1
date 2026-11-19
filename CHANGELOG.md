@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.10.2...v1.11.0) (2026-11-19)
+
+
+### Features
+
+* polish launch chrome, quiz sheets, and low-data sync ([4ec095f](https://github.com/Tlhogi007/react-mastery-day1/commit/4ec095f4b0e9552d9944242baf81edc9257c2326))
+
 ## [1.10.2](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.10.1...v1.10.2) (2026-11-19)
 
 
