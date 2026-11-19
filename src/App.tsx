@@ -10,8 +10,10 @@ import SettingsModal from './components/SettingsModal'
 import { AuthButton } from './components/AuthButton'
 import { AiAuthBridge } from './components/AiAuthBridge'
 import { AiQuotaModal } from './components/AiQuotaModal'
+import { ShareDayButton } from './components/ShareDayButton'
 import { SignedInGreeting } from './components/SignedInGreeting'
 import { UserCloudSync } from './components/UserCloudSync'
+import { applyDocumentMeta } from './lib/shareDay'
 import {
   prepareLandingAfterSignOut,
   getActiveTab,
@@ -177,6 +179,34 @@ function App(): JSX.Element {
   useEffect(() => {
     initGA()
   }, [])
+
+  // Document title / OG + funnel: landing view vs day entered
+  const funnelExerciseRef = useRef<string | null>(null)
+  const landingTrackedRef = useRef(false)
+  useEffect(() => {
+    if (showLanding) {
+      applyDocumentMeta('landing')
+      trackPageView('/', 'React Mastery Lab')
+      if (!landingTrackedRef.current) {
+        landingTrackedRef.current = true
+        tracking.landingViewed()
+      }
+      funnelExerciseRef.current = null
+      return
+    }
+    const data = exercises[currentExercise]
+    if (!data || currentView !== 'exercises' || showTools) return
+    applyDocumentMeta({
+      key: currentExercise,
+      day: data.day,
+      week: data.week,
+      title: data.title.replace(/^Day \d+:\s*/i, ''),
+      description: data.description,
+    })
+    if (funnelExerciseRef.current === currentExercise) return
+    funnelExerciseRef.current = currentExercise
+    tracking.exerciseStarted(data.day, data.week)
+  }, [showLanding, currentExercise, currentView, showTools])
 
   // Sentry context for alerts (day / view / exercise)
   useEffect(() => {
@@ -728,6 +758,18 @@ function App(): JSX.Element {
                   }}
                 >
                   <ThemeToggle />
+                  {showFocusControl && currentExerciseData && (
+                    <ShareDayButton
+                      compact={isMobile}
+                      info={{
+                        key: currentExercise,
+                        day: currentExerciseData.day,
+                        week: currentExerciseData.week,
+                        title: currentExerciseData.title.replace(/^Day \d+:\s*/i, ''),
+                        description: currentExerciseData.description,
+                      }}
+                    />
+                  )}
                   {showFocusControl && (
                     <button
                       type="button"
@@ -840,6 +882,7 @@ function App(): JSX.Element {
               clerkEnabled
                 ? () => {
                     // Close our overlay first — it sits above Clerk's modal (z-index 2000).
+                    tracking.signInOpened('ai_gate')
                     setAiGate(null)
                     aiSignInRef.current?.()
                   }

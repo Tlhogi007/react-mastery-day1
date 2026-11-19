@@ -1,6 +1,7 @@
 import { type CSSProperties, type JSX } from 'react'
 import { UserButton, useAuth, useClerk } from '@clerk/react'
 import { prepareAuthReturnUrl } from '../services/authReturnTo'
+import { tracking } from '../lib/googleAnalytics'
 
 const btnStyle: CSSProperties = {
   display: 'inline-flex',
@@ -50,6 +51,7 @@ export function AuthButton(): JSX.Element {
       }}
       onClick={() => {
         if (!openSignIn) return
+        tracking.signInOpened('header')
         // Hash-free URL for Clerk; SPA restore still uses sessionStorage/hash locally.
         const url = prepareAuthReturnUrl()
         void openSignIn({

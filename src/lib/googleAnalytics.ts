@@ -47,11 +47,19 @@ export function trackEvent(
   })
 }
 
+/** Ordered funnel steps for GA Realtime / Explore. */
+export type FunnelStep = 'landing' | 'day1' | 'quiz' | 'sign_in'
+
+function funnelStep(step: FunnelStep, label?: string) {
+  trackEvent('Funnel', step, label)
+}
+
 // Track user actions
 export const tracking = {
   // Exercise tracking
   exerciseStarted: (day: number, week: number) => {
     trackEvent('Exercise', 'Started', `Week ${week} Day ${day}`)
+    if (day === 1) funnelStep('day1', `Week ${week} Day ${day}`)
   },
   
   exerciseCompleted: (day: number, week: number) => {
@@ -61,6 +69,7 @@ export const tracking = {
   // Quiz tracking
   quizStarted: (day: number) => {
     trackEvent('Quiz', 'Started', `Day ${day}`)
+    funnelStep('quiz', `Day ${day}`)
   },
   
   quizCompleted: (day: number, score: number) => {
@@ -79,6 +88,20 @@ export const tracking = {
   // Landing page tracking
   ctaClicked: (location: string) => {
     trackEvent('Landing', 'CTA Clicked', location)
+    funnelStep('landing', location)
+  },
+
+  landingViewed: () => {
+    trackEvent('Landing', 'Viewed')
+    funnelStep('landing', 'view')
+  },
+
+  dayShared: (day: number, exerciseKey: string, method: 'shared' | 'copied') => {
+    trackEvent('Share', method === 'shared' ? 'Native Share' : 'Copied Link', `Day ${day}:${exerciseKey}`)
+  },
+
+  signInOpened: (source: string) => {
+    trackEvent('Auth', 'Sign In Opened', source)
   },
   
   // Search tracking
@@ -101,6 +124,7 @@ export const tracking = {
     try {
       ReactGA.set({ userId })
       trackEvent('Auth', 'Signed In Sync', userId.slice(0, 8))
+      funnelStep('sign_in', userId.slice(0, 8))
     } catch {
       /* ignore */
     }

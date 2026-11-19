@@ -1,5 +1,6 @@
-import { useEffect, useState, type JSX, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type JSX, type ReactNode } from 'react'
 import { getActiveTab, setActiveTab as persistActiveTab } from '../services/authReturnTo'
+import { tracking } from '../lib/googleAnalytics'
 
 interface Tab {
   id: string
@@ -23,9 +24,25 @@ function Tabs({ tabs, defaultTab }: TabsProps): JSX.Element {
   const validIds = tabs.map((t) => t.id)
   const fallback = defaultTab && validIds.includes(defaultTab) ? defaultTab : validIds[0] || ''
   const [activeTab, setActiveTab] = useState<string>(() => readStoredTab(validIds, fallback))
+  const quizTracked = useRef(false)
 
   useEffect(() => {
     persistActiveTab(activeTab)
+  }, [activeTab])
+
+  useEffect(() => {
+    if (activeTab !== 'quiz' || quizTracked.current) return
+    quizTracked.current = true
+    let day = 1
+    try {
+      const raw = sessionStorage.getItem('rm-lab-session')
+      const parsed = raw ? (JSON.parse(raw) as { exercise?: string }) : null
+      const m = parsed?.exercise?.match(/day0*(\d+)/i)
+      if (m) day = Number(m[1]) || 1
+    } catch {
+      /* ignore */
+    }
+    tracking.quizStarted(day)
   }, [activeTab])
 
   const selectTab = (id: string) => {
