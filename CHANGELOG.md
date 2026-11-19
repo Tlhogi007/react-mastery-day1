@@ -1,3 +1,10 @@
+## [1.12.2](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.12.1...v1.12.2) (2026-11-19)
+
+
+### Bug Fixes
+
+* polish quiz toolbar and day chrome layout ([d615fa8](https://github.com/Tlhogi007/react-mastery-day1/commit/d615fa86672981b12f0937a28b94413c53e4791c))
+
 ## [1.12.1](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.12.0...v1.12.1) (2026-11-19)
 
 
