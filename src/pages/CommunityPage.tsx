@@ -3,7 +3,10 @@ import { motion } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import { getAllCommunityContent, getCommunityContent, type CommunityContent } from '../lib/contentLoader'
 import { tracking } from '../lib/googleAnalytics'
-import { CommunityAttribution } from '../components/CommunityAttribution'
+import {
+  CommunityAttribution,
+  CommunitySignedNote,
+} from '../components/CommunityAttribution'
 import { CommunityContributeHint } from '../components/CommunityContributeHint'
 import { CommunityHelpfulButton } from '../components/CommunityHelpfulButton'
 import { ContributorProfile } from '../components/ContributorProfile'
@@ -71,33 +74,35 @@ export default function CommunityPage({ initialSlug = null }: CommunityPageProps
           <header className="article-header">
             <h1>{selectedContent.title}</h1>
             <div className="article-meta">
-              <span className="author">
+              <div className="article-meta__byline">
                 <CommunityAttribution
                   author={selectedContent.author}
                   github={selectedContent.github}
                 />
-              </span>
-              {selectedContent.github && (
-                <button
-                  type="button"
-                  className="back-button"
-                  style={{ margin: 0, padding: '4px 8px', fontSize: 12 }}
-                  onClick={() => setProfileGithub(selectedContent.github || null)}
-                >
-                  View contributor
-                </button>
-              )}
-              <span className="difficulty">{selectedContent.difficulty}</span>
-              <span className="date">{selectedContent.date}</span>
-              {selectedContent.estimatedTime && (
-                <span className="time">{selectedContent.estimatedTime}</span>
-              )}
+              </div>
+              <div className="article-meta__facts">
+                {selectedContent.github && (
+                  <button
+                    type="button"
+                    className="article-meta__action"
+                    onClick={() => setProfileGithub(selectedContent.github || null)}
+                  >
+                    View contributor
+                  </button>
+                )}
+                <span className="difficulty">{selectedContent.difficulty}</span>
+                <span className="date">{selectedContent.date}</span>
+                {selectedContent.estimatedTime && (
+                  <span className="time">{selectedContent.estimatedTime}</span>
+                )}
+              </div>
             </div>
             <div className="article-tags">
               {selectedContent.tags.map(tag => (
                 <span key={tag} className="tag">{tag}</span>
               ))}
             </div>
+            <CommunitySignedNote github={selectedContent.github} />
             <div style={{ marginTop: 12 }}>
               <CommunityHelpfulButton slug={selectedContent.slug} />
             </div>
