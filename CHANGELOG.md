@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.12.2...v1.13.0) (2026-11-19)
+
+
+### Features
+
+* expand cloud sync, intro/support, and lab shell polish ([ecb75e0](https://github.com/Tlhogi007/react-mastery-day1/commit/ecb75e09b962cf4d54669b6119dbb8308fe44afe))
+
 ## [1.12.2](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.12.1...v1.12.2) (2026-11-19)
 
 
