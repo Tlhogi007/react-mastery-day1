@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.7.0...v1.8.0) (2026-11-19)
+
+
+### Features
+
+* community helpful votes, resume/progress UX, quiz explain, admin charts ([35df15f](https://github.com/Tlhogi007/react-mastery-day1/commit/35df15f04c0f4d708f7a2a883d17bd7188706e5b))
+
 # [1.7.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.6.3...v1.7.0) (2026-11-19)
 
 
