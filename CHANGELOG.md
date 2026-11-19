@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.11.0...v1.12.0) (2026-11-19)
+
+
+### Features
+
+* lighten first-fold chrome with exclusive accordions ([4f2a9ff](https://github.com/Tlhogi007/react-mastery-day1/commit/4f2a9ff9f7e489232f96efc7c81df9f2e78a3152))
+
 # [1.11.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.10.2...v1.11.0) (2026-11-19)
 
 
