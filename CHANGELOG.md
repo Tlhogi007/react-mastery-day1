@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.13.4...v1.14.0) (2026-11-19)
+
+
+### Features
+
+* polish intro splash glow and lock scroll ([5e31e3c](https://github.com/Tlhogi007/react-mastery-day1/commit/5e31e3c7a2aa2e0043f79b581310f7a31418dad3))
+
 ## [1.13.4](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.13.3...v1.13.4) (2026-11-19)
 
 
