@@ -47,8 +47,9 @@ class QuestionHistoryService {
       }
     }
     
-    const existing = this.history.get(question.id) || {
-      questionId: question.id,
+    const id = this.canonicalId(question.id)
+    const existing = this.history.get(id) || {
+      questionId: id,
       answeredCorrectly: false,
       timestamp: Date.now(),
       timeSpent: 0,
@@ -68,15 +69,58 @@ class QuestionHistoryService {
     if (questionDay) existing.day = questionDay
     if (questionTopic) existing.topic = questionTopic
 
-    this.history.set(question.id, existing)
+    this.history.set(id, existing)
     this.saveHistory()
+  }
+
+  /**
+   * Strip session duplicate suffixes so history matches the bank id.
+   * e.g. day03-q1-duplicate-123-0 → day03-q1
+   */
+  canonicalId(questionId: string): string {
+    return questionId.replace(/-duplicate-\d+-\d+$/i, '')
   }
 
   /**
    * Get history for a question
    */
   getHistory(questionId: string): QuestionHistoryEntry | null {
-    return this.history.get(questionId) || null
+    const id = this.canonicalId(questionId)
+    return this.history.get(id) || this.history.get(questionId) || null
+  }
+
+  /** Question ids already answered (optionally scoped to a day). */
+  getSeenQuestionIds(day?: number): Set<string> {
+    const ids = new Set<string>()
+    for (const entry of this.history.values()) {
+      if (day != null && entry.day != null && entry.day !== day) continue
+      ids.add(this.canonicalId(entry.questionId))
+    }
+    return ids
+  }
+
+  /** Prefer fresh local questions; fall back to still-missed ones; never invent duplicates. */
+  pickUnseenQuestions<T extends { id: string }>(
+    pool: T[],
+    excludeIds: Set<string>,
+    count: number,
+    day?: number,
+  ): T[] {
+    const seen = this.getSeenQuestionIds(day)
+    const blocked = new Set<string>([...seen, ...excludeIds].map((id) => this.canonicalId(id)))
+    const fresh = pool.filter((q) => !blocked.has(this.canonicalId(q.id)))
+    let source = fresh
+    if (source.length === 0) {
+      // Allow questions still answered incorrectly (review), but not mastered ones
+      source = pool.filter((q) => {
+        const id = this.canonicalId(q.id)
+        if (excludeIds.has(id) || excludeIds.has(q.id)) return false
+        const h = this.getHistory(id)
+        return Boolean(h && !h.answeredCorrectly)
+      })
+    }
+    const shuffled = [...source].sort(() => Math.random() - 0.5)
+    return shuffled.slice(0, Math.max(0, count))
   }
 
   /**
@@ -219,6 +263,54 @@ class QuestionHistoryService {
   clear(): void {
     this.history.clear()
     localStorage.removeItem(STORAGE_KEY)
+  }
+
+  /** Snapshot for cloud sync (array of entries). */
+  toJSON(): QuestionHistoryEntry[] {
+    return Array.from(this.history.values())
+  }
+
+  /** Merge cloud/local history by questionId (prefer higher attempts / newer lastSeen). */
+  mergeFromEntries(entries: unknown): void {
+    if (!Array.isArray(entries)) return
+    for (const raw of entries) {
+      if (!raw || typeof raw !== 'object') continue
+      const row = raw as Partial<QuestionHistoryEntry>
+      if (typeof row.questionId !== 'string' || !row.questionId) continue
+      const id = this.canonicalId(row.questionId)
+      const incoming: QuestionHistoryEntry = {
+        questionId: id,
+        answeredCorrectly: Boolean(row.answeredCorrectly),
+        timestamp: Number(row.timestamp) || Date.now(),
+        timeSpent: Number(row.timeSpent) || 0,
+        attempts: Math.max(0, Math.floor(Number(row.attempts) || 0)),
+        lastSeen: Number(row.lastSeen) || Date.now(),
+        difficulty: row.difficulty,
+        day: typeof row.day === 'number' ? row.day : undefined,
+        topic: typeof row.topic === 'string' ? row.topic : undefined,
+      }
+      const prev = this.history.get(id)
+      if (!prev) {
+        this.history.set(id, incoming)
+        continue
+      }
+      const preferIncoming =
+        incoming.attempts > prev.attempts ||
+        (incoming.attempts === prev.attempts && incoming.lastSeen >= prev.lastSeen)
+      if (preferIncoming) {
+        this.history.set(id, {
+          ...prev,
+          ...incoming,
+          // Once correct, stay correct unless incoming is newer and incorrect with more attempts
+          answeredCorrectly: incoming.answeredCorrectly || prev.answeredCorrectly,
+          attempts: Math.max(prev.attempts, incoming.attempts),
+        })
+      } else if (incoming.answeredCorrectly && !prev.answeredCorrectly) {
+        prev.answeredCorrectly = true
+        this.history.set(id, prev)
+      }
+    }
+    this.saveHistory()
   }
 
   /**

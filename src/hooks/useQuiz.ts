@@ -118,10 +118,19 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
     }
   }, [day])
 
-  // Initialize with randomized questions per session (skip if OAuth restore already applied)
+  // Initialize with unseen local questions when possible (skip if OAuth restore already applied)
   useEffect(() => {
     if (boot) return
-    const shuffled = [...questions].sort(() => Math.random() - 0.5)
+    const picked = questionHistory.pickUnseenQuestions(
+      questions,
+      new Set(),
+      questions.length,
+      day,
+    )
+    const shuffled =
+      picked.length > 0
+        ? picked
+        : [...questions].sort(() => Math.random() - 0.5)
     setAllQuestions(shuffled)
     setUsedLocalQuestionIds(new Set())
     setQuizStartTime(Date.now())
@@ -129,7 +138,12 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
     setIncorrectAnswers([])
     setSkippedQuestions(new Set())
     setTotalTimeSpent(0)
-  }, [questions, boot])
+    if (picked.length === 0 && questions.length > 0) {
+      setErrorMessage(
+        'You have already completed all local questions for this day. Retake will reuse the bank, or try AI questions.',
+      )
+    }
+  }, [questions, boot, day])
 
   // Persist progress so OAuth remount can continue mid-quiz
   useEffect(() => {
@@ -376,13 +390,17 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
     const timeSpent = Math.floor((Date.now() - questionStartTimeRef.current) / 1000)
     timePerQuestionRef.current.set(currentQuestion.id, timeSpent)
     
-    // Record as incorrect in history
+    // Record as incorrect in history + review list (skip ≠ ignore)
     const topic = day ? getTopicForDay(day) : undefined
     questionHistory.recordAnswer(currentQuestion, false, timeSpent, day, topic)
+    setIncorrectAnswers((prev) => {
+      if (prev.find((q) => q.id === currentQuestion.id)) return prev
+      return [...prev, currentQuestion]
+    })
     
     // Move to next question
     handleNext()
-  }, [currentQuestion, completed, handleNext])
+  }, [currentQuestion, completed, handleNext, day])
 
   const handleLoadMoreLocalQuestions = useCallback(async (count: number): Promise<void> => {
     if (!day) {
@@ -395,69 +413,56 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
 
     try {
       const topic = getTopicForDay(day)
-      
+
       // Fetch all available local questions
       const allLocalQuestions = await quizQuestionService.fetchLocalQuestions(topic, 100)
-      
-      // Filter out questions we've already shown
-      const unusedQuestions = allLocalQuestions.filter(q => !usedLocalQuestionIds.has(q.id))
-      
-      let questionsToUse: QuizQuestion[] = []
-      
-      if (unusedQuestions.length === 0) {
-        // No unused questions - check if we have any questions at all
-        if (allLocalQuestions.length === 0) {
-          console.warn(`[Quiz] ⚠️ No local questions found for topic: ${topic}`)
-          setErrorMessage('No local questions available for this topic. Try AI-generated questions instead.')
-          setGeneratingAI(false)
-          return
-        }
-        
-        // All questions have been used, but user wants more - reuse them (shuffled)
-        questionsToUse = [...allLocalQuestions].sort(() => Math.random() - 0.5)
-      } else {
-        // Use unused questions
-        questionsToUse = unusedQuestions
+      if (allLocalQuestions.length === 0) {
+        setErrorMessage('No local questions available for this topic. Try AI-generated questions instead.')
+        return
       }
-      
-      // Shuffle and take requested count (duplicate if needed)
-      const shuffled = [...questionsToUse].sort(() => Math.random() - 0.5)
-      const newQuestions: QuizQuestion[] = []
-      
-      // If we need more questions than available, duplicate them with unique IDs
-      for (let i = 0; i < count; i++) {
-        const sourceQuestion = shuffled[i % shuffled.length]
-        const timestamp = Date.now()
-        
-        // Create a copy with a unique ID to avoid conflicts
-        newQuestions.push({
-          ...sourceQuestion,
-          id: `${sourceQuestion.id}-duplicate-${timestamp}-${i}`
-        })
+
+      // Never repeat answered/shown local questions — no duplicate clones
+      const sessionExclude = new Set(
+        [...usedLocalQuestionIds, ...allQuestions.map((q) => q.id)].map((id) =>
+          questionHistory.canonicalId(id),
+        ),
+      )
+      const newQuestions = questionHistory.pickUnseenQuestions(
+        allLocalQuestions,
+        sessionExclude,
+        count,
+        day,
+      )
+
+      if (newQuestions.length === 0) {
+        setErrorMessage(
+          'No new local questions left for this day — you have already seen them all. Try AI-generated questions instead.',
+        )
+        return
       }
-      
-      if (newQuestions.length > 0) {
-        // Add new questions to the quiz (insert after current position)
-        const updated = [
-          ...allQuestions.slice(0, currentQuestionIndex + 1),
-          ...newQuestions,
-          ...allQuestions.slice(currentQuestionIndex + 1)
-        ]
-        setAllQuestions(updated)
-        
-        // Track these as used (use original IDs to avoid marking duplicates as used)
-        const originalIds = new Set(questionsToUse.map(q => q.id))
-        const newIds = new Set([...usedLocalQuestionIds, ...Array.from(originalIds)])
-        setUsedLocalQuestionIds(newIds)
-        
-        // Close prompt and continue to next question
-        setShowQuestionPrompt(false)
-        setQuestionPromptType(null)
-        setCurrentQuestionIndex(prev => prev + 1)
-        setSelectedAnswer(null)
-      } else {
-        setErrorMessage('No more local questions available. Try AI-generated questions instead.')
+
+      if (newQuestions.length < count) {
+        setErrorMessage(
+          `Only ${newQuestions.length} new local question${newQuestions.length === 1 ? '' : 's'} left — added those (no repeats).`,
+        )
       }
+
+      const updated = [
+        ...allQuestions.slice(0, currentQuestionIndex + 1),
+        ...newQuestions,
+        ...allQuestions.slice(currentQuestionIndex + 1),
+      ]
+      setAllQuestions(updated)
+      setUsedLocalQuestionIds(
+        new Set([
+          ...usedLocalQuestionIds,
+          ...newQuestions.map((q) => questionHistory.canonicalId(q.id)),
+        ]),
+      )
+      setShowQuestionPrompt(false)
+      setQuestionPromptType(null)
+      setCurrentQuestionIndex((prev) => prev + 1)
+      setSelectedAnswer(null)
     } catch (error) {
       console.error('❌ [Quiz] Failed to load more local questions:', error)
       setErrorMessage('Failed to load more local questions. Please try again.')
@@ -549,11 +554,20 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
     setLocalQuestionsCompleted(false)
     setAiQuestionCount(null)
     setGeneratingAI(false)
-    const shuffled = [...questions].sort(() => Math.random() - 0.5)
+    // Prefer questions not yet completed; do not mark the whole bank used up front
+    const fresh = questionHistory.pickUnseenQuestions(questions, new Set(), questions.length, day)
+    const shuffled =
+      fresh.length > 0
+        ? fresh
+        : [...questions].sort(() => Math.random() - 0.5)
     setAllQuestions(shuffled)
     setAiEnabled(false)
     setAiQuestionsLoaded(false)
-    setErrorMessage(null)
+    setErrorMessage(
+      fresh.length === 0 && questions.length > 0
+        ? 'All local questions were already completed. Showing the full bank again — or use AI / Retake Incorrect.'
+        : null,
+    )
     setShowQuestionPrompt(false)
     setQuestionPromptType(null)
     setIncorrectAnswers([])
@@ -563,9 +577,9 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
     setQuizStartTime(Date.now())
     questionStartTimeRef.current = Date.now()
     timePerQuestionRef.current.clear()
-    const initialIds = new Set(shuffled.map(q => q.id))
-    setUsedLocalQuestionIds(initialIds)
-  }, [questions])
+    setUsedLocalQuestionIds(new Set())
+    if (day != null) clearQuizProgress()
+  }, [questions, day])
 
   const resetWithIncorrectOnly = useCallback((): void => {
     if (incorrectAnswers.length === 0) return

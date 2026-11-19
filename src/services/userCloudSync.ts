@@ -2,6 +2,7 @@
  * Sync learner progress / notes / tools data to /api/user-data when signed in.
  */
 import { progressStorage, type LiveDayProgress, type ProgressData } from './progressStorage'
+import { questionHistory } from './questionHistory'
 import { getActiveTab, normalizeLabView, writeLabSession } from './authReturnTo'
 import { waitForAiAuthToken } from './aiAuthBridge'
 import { mergeSnapshots } from '../../api/_lib/userCloud'
@@ -31,6 +32,8 @@ export type UserCloudSnapshot = {
   lab?: LabCloudState | null
   /** Mid-quiz day bar — syncs across signed-in devices */
   liveProgress?: LiveDayProgress | null
+  /** Answered local/AI question ids — keeps “no repeats” consistent across devices */
+  questionHistory?: unknown
   notes?: unknown
   annotations?: unknown
   reflections?: unknown
@@ -97,6 +100,7 @@ export function buildLocalSnapshot(
     progress: progressStorage.getProgress(),
     lab,
     liveProgress: progressStorage.getLiveDayProgressState(),
+    questionHistory: questionHistory.toJSON(),
     notes: readJsonKey('react-mastery-notes'),
     annotations: readJsonKey('react-mastery-annotations'),
     reflections: readJsonKey('react-mastery-reflections'),
@@ -111,6 +115,9 @@ function applySnapshotLocally(cloud: UserCloudSnapshot): void {
   // does not wipe a device that has not pushed live progress yet.
   if (cloud.liveProgress != null) {
     progressStorage.applyLiveDayProgressState(cloud.liveProgress)
+  }
+  if (cloud.questionHistory != null) {
+    questionHistory.mergeFromEntries(cloud.questionHistory)
   }
   if (Array.isArray(cloud.notes)) writeJsonKey('react-mastery-notes', cloud.notes)
   if (Array.isArray(cloud.annotations)) writeJsonKey('react-mastery-annotations', cloud.annotations)
@@ -187,9 +194,20 @@ export async function pushUserCloud(
 
 /** Compare progress fields that should live-update across devices. */
 export function progressSyncFingerprint(snapshot: UserCloudSnapshot): string {
+  const historyIds = Array.isArray(snapshot.questionHistory)
+    ? snapshot.questionHistory
+        .map((row) =>
+          row && typeof row === 'object' && 'questionId' in row
+            ? String((row as { questionId: unknown }).questionId)
+            : '',
+        )
+        .filter(Boolean)
+        .sort()
+    : []
   return JSON.stringify({
     progress: snapshot.progress,
     liveProgress: snapshot.liveProgress ?? null,
+    historyIds,
   })
 }
 

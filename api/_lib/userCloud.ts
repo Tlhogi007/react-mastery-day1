@@ -30,6 +30,7 @@ export type UserCloudSnapshot = {
   progress: ProgressData
   lab?: LabCloudState | null
   liveProgress?: LiveProgressState | null
+  questionHistory?: unknown
   notes?: unknown
   annotations?: unknown
   reflections?: unknown
@@ -60,12 +61,52 @@ export function emptySnapshot(): UserCloudSnapshot {
     progress: emptyProgress(),
     lab: null,
     liveProgress: null,
+    questionHistory: [],
     notes: [],
     annotations: [],
     reflections: [],
     flashcards: [],
     snippets: [],
   }
+}
+
+function mergeQuestionHistory(local: unknown, cloud: unknown): unknown[] {
+  const map = new Map<string, Record<string, unknown>>()
+  const ingest = (list: unknown) => {
+    if (!Array.isArray(list)) return
+    for (const item of list) {
+      if (!item || typeof item !== 'object') continue
+      const row = item as Record<string, unknown>
+      const rawId = typeof row.questionId === 'string' ? row.questionId : null
+      if (!rawId) continue
+      const id = rawId.replace(/-duplicate-\d+-\d+$/i, '')
+      const prev = map.get(id)
+      const attempts = Math.max(0, Math.floor(Number(row.attempts) || 0))
+      const lastSeen = Number(row.lastSeen) || 0
+      if (!prev) {
+        map.set(id, { ...row, questionId: id, attempts, lastSeen })
+        continue
+      }
+      const prevAttempts = Math.max(0, Math.floor(Number(prev.attempts) || 0))
+      const prevLast = Number(prev.lastSeen) || 0
+      if (attempts > prevAttempts || (attempts === prevAttempts && lastSeen >= prevLast)) {
+        map.set(id, {
+          ...prev,
+          ...row,
+          questionId: id,
+          attempts: Math.max(prevAttempts, attempts),
+          answeredCorrectly: Boolean(row.answeredCorrectly) || Boolean(prev.answeredCorrectly),
+          lastSeen: Math.max(prevLast, lastSeen),
+        })
+      } else if (row.answeredCorrectly) {
+        prev.answeredCorrectly = true
+        map.set(id, prev)
+      }
+    }
+  }
+  ingest(cloud)
+  ingest(local)
+  return [...map.values()]
 }
 
 export function normalizeLiveProgress(raw: unknown): LiveProgressState | null {
@@ -199,6 +240,7 @@ export function mergeSnapshots(
     progress,
     lab: lab || null,
     liveProgress,
+    questionHistory: mergeQuestionHistory(l.questionHistory, c.questionHistory),
     notes: mergeById(l.notes, c.notes),
     annotations: mergeById(l.annotations, c.annotations),
     reflections: mergeById(l.reflections, c.reflections),
@@ -218,6 +260,7 @@ export function parseSnapshot(raw: string | null): UserCloudSnapshot | null {
       progress: normalizeProgress(parsed.progress),
       lab: parsed.lab ?? null,
       liveProgress: normalizeLiveProgress(parsed.liveProgress),
+      questionHistory: Array.isArray(parsed.questionHistory) ? parsed.questionHistory : [],
       notes: parsed.notes ?? [],
       annotations: parsed.annotations ?? [],
       reflections: parsed.reflections ?? [],
@@ -242,6 +285,7 @@ export function sanitizeIncomingSnapshot(body: unknown): UserCloudSnapshot | nul
     progress: normalizeProgress(o.progress),
     lab: o.lab ?? null,
     liveProgress: normalizeLiveProgress(o.liveProgress),
+    questionHistory: cappedArray(o.questionHistory, 2000),
     notes: cappedArray(o.notes, 500),
     annotations: cappedArray(o.annotations, 500),
     reflections: cappedArray(o.reflections, 500),
