@@ -1,3 +1,10 @@
+## [1.6.3](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.6.2...v1.6.3) (2026-11-19)
+
+
+### Bug Fixes
+
+* **auth:** show Sign in on AI gate and stop covering Clerk modal ([db010c6](https://github.com/Tlhogi007/react-mastery-day1/commit/db010c6c74eca7ef8288184c54303a5f0e81f686))
+
 ## [1.6.2](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.6.1...v1.6.2) (2026-11-18)
 
 
