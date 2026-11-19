@@ -123,11 +123,65 @@ export async function readLocalProgress(page: Page): Promise<{
   })
 }
 
+export async function readLiveProgress(page: Page): Promise<{
+  day: number
+  percent: number | null
+} | null> {
+  return page.evaluate(() => {
+    try {
+      const raw = localStorage.getItem('rm-live-day-progress')
+      if (!raw) return null
+      const parsed = JSON.parse(raw) as { day?: number; percent?: number | null }
+      if (typeof parsed.day !== 'number') return null
+      return {
+        day: parsed.day,
+        percent: parsed.percent == null ? null : Number(parsed.percent),
+      }
+    } catch {
+      return null
+    }
+  })
+}
+
+/** Simulate mid-quiz live % on this device and wait for cloud PUT. */
+export async function pushLiveProgress(
+  page: Page,
+  day: number,
+  percent: number,
+): Promise<void> {
+  const putPromise = waitForUserDataPut(page, 30_000)
+  await page.evaluate(
+    ({ day: d, percent: p }) => {
+      localStorage.setItem(
+        'rm-live-day-progress',
+        JSON.stringify({
+          day: d,
+          percent: p,
+          updatedAt: new Date().toISOString(),
+        }),
+      )
+      window.dispatchEvent(new CustomEvent('rm-progress-changed'))
+    },
+    { day, percent },
+  )
+  await putPromise
+}
+
 export async function waitForUserDataPut(page: Page, timeoutMs = 20_000) {
   return page.waitForResponse(
     (res) =>
       res.url().includes('/api/user-data') &&
       res.request().method() === 'PUT' &&
+      res.ok(),
+    { timeout: timeoutMs },
+  )
+}
+
+export async function waitForUserDataGet(page: Page, timeoutMs = 20_000) {
+  return page.waitForResponse(
+    (res) =>
+      res.url().includes('/api/user-data') &&
+      res.request().method() === 'GET' &&
       res.ok(),
     { timeout: timeoutMs },
   )

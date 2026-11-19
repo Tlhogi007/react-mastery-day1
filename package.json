@@ -21,6 +21,7 @@
     "test:e2e": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
     "test:e2e:progress": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test e2e/progress-bars.spec.ts",
     "test:e2e:cloud": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test e2e/cloud-sync.spec.ts",
+    "test:e2e:live": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test e2e/live-sync.spec.ts",
     "security": "node scripts/security-check.mjs",
     "security:audit": "SECURITY_AUDIT=1 node scripts/security-check.mjs",
     "sentry:autofix": "node scripts/setup-sentry-autofix.mjs --open",

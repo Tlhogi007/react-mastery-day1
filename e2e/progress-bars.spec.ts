@@ -14,7 +14,7 @@ test.describe('Progress bars during quiz (anonymous)', () => {
     await expect(page.getByText(/Question\s+1\s+of/i)).toBeVisible({ timeout: 10_000 })
 
     await expect
-      .poll(async () => page.evaluate(() => sessionStorage.getItem('rm-live-day-progress')), {
+      .poll(async () => page.evaluate(() => localStorage.getItem('rm-live-day-progress')), {
         timeout: 5_000,
       })
       .toBeTruthy()
@@ -22,8 +22,8 @@ test.describe('Progress bars during quiz (anonymous)', () => {
     await page.locator('.quiz-option').first().click()
     await expect
       .poll(async () => {
-        const raw = await page.evaluate(() => sessionStorage.getItem('rm-live-day-progress'))
-        return raw ? (JSON.parse(raw) as { percent: number }).percent : 0
+        const raw = await page.evaluate(() => localStorage.getItem('rm-live-day-progress'))
+        return raw ? (JSON.parse(raw) as { percent: number | null }).percent ?? 0 : 0
       })
       .toBeGreaterThan(1)
 

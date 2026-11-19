@@ -185,6 +185,32 @@ export async function pushUserCloud(
   }
 }
 
+/** Compare progress fields that should live-update across devices. */
+export function progressSyncFingerprint(snapshot: UserCloudSnapshot): string {
+  return JSON.stringify({
+    progress: snapshot.progress,
+    liveProgress: snapshot.liveProgress ?? null,
+  })
+}
+
+/**
+ * Pull cloud and merge into local without PUT.
+ * Used by the idle-device poll so phone updates appear on laptop live.
+ */
+export async function pullAndMergeUserCloud(
+  lab?: Partial<LabCloudState>,
+): Promise<{ changed: boolean; data: UserDataResponse | null }> {
+  const remote = await fetchUserCloud()
+  if (!remote?.cloud) return { changed: false, data: null }
+  const local = buildLocalSnapshot(lab)
+  const merged = mergeSnapshots(local, remote.cloud) as UserCloudSnapshot
+  if (progressSyncFingerprint(local) === progressSyncFingerprint(merged)) {
+    return { changed: false, data: remote }
+  }
+  applySnapshotLocally(merged)
+  return { changed: true, data: { ...remote, cloud: merged } }
+}
+
 /**
  * Pull cloud, merge into local (so empty devices restore immediately), then PUT.
  * Server merges again for multi-device safety.
