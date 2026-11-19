@@ -226,7 +226,9 @@ function Tabs({ tabs, defaultTab }: TabsProps): JSX.Element {
             flex: 1,
             minWidth: 0,
             gap: 0,
+            // overflow-x alone promotes overflow-y to auto → tiny useless vertical scrollbar
             overflowX: 'auto',
+            overflowY: 'hidden',
             scrollSnapType: 'x proximity',
           }}
         >

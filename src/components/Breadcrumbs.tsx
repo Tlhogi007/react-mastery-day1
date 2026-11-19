@@ -32,8 +32,9 @@ function Breadcrumbs({
               : 'Mark this day complete in your progress'
           }
           style={{
-            background: isDayCompleted ? 'var(--bg-success)' : 'var(--bg-card)',
-            color: isDayCompleted ? 'var(--text-on-success)' : 'var(--text-primary)',
+            background: isDayCompleted ? 'var(--bg-success)' : 'var(--button-primary)',
+            color: isDayCompleted ? 'var(--text-on-success)' : 'var(--button-text)',
+            borderColor: isDayCompleted ? 'var(--border-color)' : 'transparent',
             cursor: isDayCompleted ? 'default' : 'pointer',
           }}
         >

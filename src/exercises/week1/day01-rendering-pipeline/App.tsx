@@ -140,8 +140,14 @@ function Day01RenderingPipeline(): JSX.Element {
                                                 className="exercise-callout-toggle"
                                                 onClick={() => setShowConsoleLogs(!showConsoleLogs)}
                                                 style={{
-                                                    background: showConsoleLogs ? 'var(--button-primary)' : 'var(--bg-section)',
-                                                    color: showConsoleLogs ? 'var(--button-text)' : 'var(--text-primary)',
+                                                    background: 'var(--bg-section)',
+                                                    color: 'var(--text-primary)',
+                                                    borderColor: showConsoleLogs
+                                                      ? 'var(--button-primary)'
+                                                      : 'var(--border-color)',
+                                                    boxShadow: showConsoleLogs
+                                                      ? 'inset 0 0 0 1px var(--button-primary)'
+                                                      : 'none',
                                                 }}
                                             >
                                                 {showConsoleLogs ? 'Console Logs ON' : 'Console Logs OFF'}

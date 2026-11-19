@@ -16,7 +16,8 @@ export const cardStyle: CSSProperties = {
 }
 
 /**
- * Common button style pattern
+ * Primary progress / demo trigger — accent fill.
+ * Use quietButtonStyle for Hint, Reset, toggles, Prev/Next.
  */
 export const buttonStyle: CSSProperties = {
   padding: '12px 24px',
@@ -28,6 +29,19 @@ export const buttonStyle: CSSProperties = {
   fontWeight: '500',
   cursor: 'pointer',
   transition: 'background-color 0.2s'
+}
+
+/** Secondary controls — no accent fill */
+export const quietButtonStyle: CSSProperties = {
+  padding: '10px 14px',
+  background: 'var(--bg-section)',
+  color: 'var(--text-primary)',
+  border: '1px solid var(--border-color)',
+  borderRadius: '8px',
+  fontSize: '14px',
+  fontWeight: 600,
+  cursor: 'pointer',
+  transition: 'background-color 0.2s, border-color 0.2s',
 }
 
 /**

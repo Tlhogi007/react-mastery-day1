@@ -80,12 +80,7 @@ function QuizHeader({
                             checked={aiEnabled}
                             onChange={onToggleAI}
                             disabled={loadingAI}
-                            style={{
-                                width: '18px',
-                                height: '18px',
-                                cursor: loadingAI ? 'not-allowed' : 'pointer',
-                                flexShrink: 0,
-                            }}
+                            style={{ cursor: loadingAI ? 'not-allowed' : 'pointer' }}
                         />
                         <span>
                             {loadingAI

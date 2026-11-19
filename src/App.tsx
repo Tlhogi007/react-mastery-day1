@@ -537,12 +537,13 @@ function App(): JSX.Element {
     background: 'var(--bg-card)',
     border: '1px solid var(--border-color)',
     borderRadius: 'var(--radius-md)',
-    padding: isMobile ? '10px 12px' : '14px 16px',
+    padding: isMobile ? '12px' : '14px 16px',
     marginBottom: isMobile ? '12px' : '20px',
     display: 'flex',
     alignItems: 'center',
     flexWrap: 'wrap',
-    gap: isMobile ? '8px' : '12px',
+    columnGap: isMobile ? 10 : 12,
+    rowGap: isMobile ? 10 : 12,
     width: '100%',
     boxSizing: 'border-box',
     boxShadow: 'none',
@@ -844,7 +845,7 @@ function App(): JSX.Element {
                     marginLeft: 'auto',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: isMobile ? 2 : 2,
+                    gap: isMobile ? 6 : 8,
                     // Keep actions on the first row (right) when search wraps
                     order: isMobile ? 2 : undefined,
                   }}
@@ -943,7 +944,7 @@ function App(): JSX.Element {
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        marginLeft: isMobile ? 4 : 8,
+                        marginLeft: isMobile ? 2 : 4,
                       }}
                     >
                       <AuthButton />

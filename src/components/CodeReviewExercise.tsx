@@ -87,29 +87,33 @@ function CodeReviewExerciseComponent({ exercise, onComplete }: CodeReviewExercis
                         <h4 style={{ margin: 0 }}>Code to Review</h4>
                         <div style={{ display: 'flex', gap: '8px' }}>
                             <button
+                                type="button"
                                 onClick={() => setShowHints(!showHints)}
                                 style={{
                                     padding: '6px 12px',
-                                    borderRadius: '6px',
-                                    border: 'none',
-                                    background: showHints ? 'var(--button-primary)' : 'var(--bg-section)',
-                                    color: showHints ? 'var(--button-text)' : 'var(--text-primary)',
+                                    borderRadius: 8,
+                                    border: showHints ? '1px solid transparent' : '1px solid var(--border-color)',
+                                    background: showHints ? 'var(--bg-warning)' : 'var(--bg-section)',
+                                    color: showHints ? 'var(--text-on-warning)' : 'var(--text-primary)',
                                     cursor: 'pointer',
-                                    fontSize: '12px'
+                                    fontSize: 12,
+                                    fontWeight: 600,
                                 }}
                             >
                                 {showHints ? 'Hide' : 'Show'} Hints
                             </button>
                             <button
+                                type="button"
                                 onClick={() => setShowSolution(!showSolution)}
                                 style={{
                                     padding: '6px 12px',
-                                    borderRadius: '6px',
-                                    border: 'none',
-                                    background: showSolution ? 'var(--button-primary)' : 'var(--bg-section)',
-                                    color: showSolution ? 'var(--button-text)' : 'var(--text-primary)',
+                                    borderRadius: 8,
+                                    border: showSolution ? '1px solid transparent' : '1px solid var(--border-color)',
+                                    background: showSolution ? 'var(--bg-warning)' : 'var(--bg-section)',
+                                    color: showSolution ? 'var(--text-on-warning)' : 'var(--text-primary)',
                                     cursor: 'pointer',
-                                    fontSize: '12px'
+                                    fontSize: 12,
+                                    fontWeight: 600,
                                 }}
                             >
                                 {showSolution ? 'Hide' : 'Show'} Solution

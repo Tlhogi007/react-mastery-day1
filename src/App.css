@@ -135,6 +135,8 @@
 
   .touch-scroll-x {
     -webkit-overflow-scrolling: touch;
+    overflow-x: auto;
+    overflow-y: hidden;
     scrollbar-width: thin;
   }
 }

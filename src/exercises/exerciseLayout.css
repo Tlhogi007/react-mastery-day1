@@ -120,10 +120,11 @@
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  padding: clamp(12px, 3vw, 20px);
-  background: var(--bg-card);
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
+  /* Nested inside CollapsibleSection — no second card chrome */
+  padding: clamp(8px, 2vw, 12px) 0 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -156,6 +157,11 @@
   flex: 1 1 0;
   min-height: 40px;
   box-sizing: border-box;
+  background: var(--bg-section) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  font-weight: 600;
 }
 
 @container diagram-card (min-width: 560px) {
@@ -244,13 +250,17 @@
   box-sizing: border-box;
 }
 
-/* Beat global `button` / `button:hover` (sticky hover on touch) */
+/*
+ * Accent hierarchy: red fill = progress primaries only
+ * (Mark complete, quiz Next/Continue). Selection / nav = quiet.
+ */
 button.code-preset-btn--active,
 button.code-preset-btn--active:hover,
 button.code-preset-btn--active:focus {
-  background-color: var(--button-primary);
-  color: var(--button-text);
+  background-color: var(--bg-card);
+  color: var(--text-primary);
   border-color: var(--button-primary);
+  box-shadow: inset 0 0 0 1px var(--button-primary);
 }
 
 button.code-preset-btn:hover:not(.code-preset-btn--active) {
@@ -370,23 +380,52 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
   font-weight: 600;
 }
 
-/* Challenge hint/solution pair: stack on narrow, row when room */
+/* Challenge hint/solution — compact chips, never stretch */
 .challenge-actions {
-  container-type: inline-size;
-  container-name: challenge-actions;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
 }
 
-@container challenge-actions (min-width: 560px) {
-  .challenge-actions {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-  }
+.challenge-action-btn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  max-width: 100%;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  padding: 0 12px !important;
+  box-sizing: border-box;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  background: var(--bg-section) !important;
+  color: var(--text-primary) !important;
+  font-size: 13px !important;
+  font-weight: 600;
+  line-height: 1 !important;
+  cursor: pointer;
+}
 
-  .challenge-actions > .lesson-full-btn {
-    width: auto;
-    flex: 1 1 160px;
-  }
+.challenge-action-btn:hover:not(:disabled) {
+  background: var(--bg-card) !important;
+  border-color: var(--text-muted) !important;
+}
+
+.challenge-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.challenge-action-btn--active {
+  background: var(--bg-warning) !important;
+  color: var(--text-on-warning) !important;
+  border-color: transparent !important;
 }
 
 .reflection-export-row {
@@ -445,12 +484,14 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
   min-height: 40px;
   min-width: 40px;
   padding: 6px 12px;
-  background: var(--button-primary);
-  color: var(--button-text);
-  border: none;
-  border-radius: 4px;
+  background: var(--bg-section);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
   cursor: pointer;
   box-sizing: border-box;
+  font-weight: 600;
+  font-size: 13px;
 }
 
 .visual-diagram-nav__btn:disabled {
@@ -709,8 +750,7 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
   background: var(--bg-section);
   padding: 10px;
   border-radius: 4px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
   color: var(--text-primary);
   font-size: 12px;
   max-width: 100%;
@@ -719,6 +759,18 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: normal;
+}
+
+/* Debugging / challenge snippets: wrap fully — no nested scrollbars */
+.lesson-code--snippet,
+.lesson-code--snippet > code {
+  overflow: visible !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  max-height: none !important;
 }
 
 .lesson-code > code {
@@ -1053,10 +1105,10 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
 .quiz-segment button.quiz-segment__opt--active:hover,
 .quiz-segment button.quiz-segment__opt--active:focus,
 .quiz-segment button.quiz-segment__opt--active:focus-visible {
-  background: var(--button-primary);
-  background-color: var(--button-primary);
-  color: var(--button-text);
-  border-color: transparent;
+  background: var(--bg-section);
+  background-color: var(--bg-section);
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 1.5px var(--button-primary);
 }
 
 .quiz-loading {
@@ -1126,12 +1178,27 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
 }
 
 .quiz-header__ai-toggle {
-  display: flex;
-  align-items: flex-start;
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
   font-size: 13px;
-  line-height: 1.35;
+  line-height: 1.25;
   flex: 1 1 220px;
+  min-width: 0;
+  margin: 0;
+}
+
+.quiz-header__ai-toggle input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.quiz-header__ai-toggle > span {
+  display: inline-flex;
+  align-items: center;
   min-width: 0;
 }
 

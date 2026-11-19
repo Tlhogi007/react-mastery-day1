@@ -100,15 +100,21 @@ function CodePlayground({
         return () => ro.disconnect()
     }, [])
 
-    // Sync line numbers scroll with textarea
+    // One scroll surface (textarea); mirror into gutter + syntax preview
     useEffect(() => {
         const textarea = textareaRef.current
-        const lineNumbers = lineNumbersRef.current
-
-        if (!textarea || !lineNumbers) return
+        if (!textarea) return
 
         const handleScroll = (): void => {
-            lineNumbers.scrollTop = textarea.scrollTop
+            const top = textarea.scrollTop
+            const left = textarea.scrollLeft
+            if (lineNumbersRef.current) {
+                lineNumbersRef.current.scrollTop = top
+            }
+            if (previewRef.current) {
+                previewRef.current.scrollTop = top
+                previewRef.current.scrollLeft = left
+            }
         }
 
         textarea.addEventListener('scroll', handleScroll)
@@ -226,10 +232,12 @@ function CodePlayground({
         position: 'relative',
         background: 'var(--code-bg, var(--bg-secondary))',
         height: `${height}px`,
+        maxHeight: `${height}px`,
         display: 'flex',
         overflow: 'hidden',
         borderTop: '1px solid var(--border-light)',
         maxWidth: '100%',
+        minHeight: 0,
     }
 
     const lineNumbersStyle: React.CSSProperties = {
@@ -243,11 +251,11 @@ function CodePlayground({
         userSelect: 'none',
         textAlign: 'right',
         minWidth: softWrap ? '36px' : '50px',
-        overflowY: 'auto',
-        overflowX: 'hidden',
+        overflow: 'hidden',
         whiteSpace: 'pre',
         flexShrink: 0,
         height: '100%',
+        minHeight: 0,
         boxSizing: 'border-box',
     }
 
@@ -255,13 +263,16 @@ function CodePlayground({
         position: 'relative',
         flex: 1,
         minWidth: 0,
-        overflow: 'auto',
-        WebkitOverflowScrolling: 'touch',
+        minHeight: 0,
+        height: '100%',
+        overflow: 'hidden',
     }
 
     const textareaStyle: React.CSSProperties = {
+        // Fill the fixed editor pane — avoid intrinsic height expanding a flex ancestor
+        position: 'absolute',
+        inset: 0,
         width: '100%',
-        minWidth: 0,
         height: '100%',
         padding: softWrap ? '12px' : '15px',
         fontFamily: '"Fira Code", "Consolas", "Monaco", "Courier New", monospace',
@@ -271,13 +282,11 @@ function CodePlayground({
         resize: 'none' as const,
         outline: 'none',
         tabSize: 2,
-        // Soft-wrap in narrow columns; prefer wrap at spaces (not mid-token)
         whiteSpace: softWrap ? 'pre-wrap' : 'pre',
         overflowWrap: softWrap ? 'break-word' : 'normal',
         wordBreak: 'normal',
-        overflowX: 'auto',
+        overflowX: softWrap ? 'hidden' : 'auto',
         overflowY: 'auto',
-        position: 'relative',
         zIndex: showPreview ? 0 : 1,
         margin: 0,
         boxSizing: 'border-box',
@@ -287,8 +296,7 @@ function CodePlayground({
 
     const previewStyle: React.CSSProperties = {
         position: 'absolute',
-        top: 0,
-        left: 0,
+        inset: 0,
         width: '100%',
         height: '100%',
         padding: softWrap ? '12px' : '15px',
@@ -299,8 +307,7 @@ function CodePlayground({
         whiteSpace: softWrap ? 'pre-wrap' : 'pre',
         overflowWrap: softWrap ? 'break-word' : 'normal',
         wordBreak: 'normal',
-        overflow: 'auto',
-        WebkitOverflowScrolling: 'touch',
+        overflow: 'hidden',
         zIndex: 1,
         background: 'var(--code-bg, var(--bg-secondary))',
         margin: 0,

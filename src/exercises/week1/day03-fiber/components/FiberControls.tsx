@@ -4,7 +4,7 @@
  */
 
 import { type JSX } from 'react'
-import { buttonStyle } from '../../../../utils/styles'
+import { buttonStyle, quietButtonStyle } from '../../../../utils/styles'
 import '../../../exerciseLayout.css'
 
 interface FiberControlsProps {
@@ -39,18 +39,18 @@ function FiberControls({
                         marginRight: undefined,
                     }}
                 >
-                    {isProcessing ? 'Processing...' : '▶️ Start Processing'}
+                    {isProcessing ? 'Processing…' : 'Start processing'}
                 </button>
                 <button
                     type="button"
                     className="lesson-full-btn"
                     onClick={onReset}
                     style={{
-                        ...buttonStyle,
+                        ...quietButtonStyle,
                         width: undefined,
                     }}
                 >
-                    🔄 Reset
+                    Reset
                 </button>
             </div>
             {wasInterrupted && (

@@ -66,16 +66,34 @@ function Challenge({ challenge }: ChallengeProps): JSX.Element {
         height={200}
       />
 
-      <div className="lesson-action-stack challenge-actions" style={{ marginTop: '20px' }}>
+      <div
+        style={{
+          marginTop: 16,
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: 8,
+        }}
+      >
         {challenge.hints.length > 0 && (
           <button
             type="button"
-            className="lesson-full-btn"
             onClick={() => setShowHint(prev => Math.min(prev + 1, challenge.hints.length))}
             disabled={showHint >= challenge.hints.length}
             style={{
-              background: 'var(--button-primary)',
-              color: 'var(--button-text)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: 36,
+              minHeight: 36,
+              padding: '0 12px',
+              borderRadius: 8,
+              border: '1px solid var(--border-color)',
+              background: 'var(--bg-section)',
+              color: 'var(--text-primary)',
+              fontSize: 13,
+              fontWeight: 600,
+              fontFamily: 'inherit',
               cursor: showHint >= challenge.hints.length ? 'not-allowed' : 'pointer',
               opacity: showHint >= challenge.hints.length ? 0.5 : 1,
             }}
@@ -85,11 +103,21 @@ function Challenge({ challenge }: ChallengeProps): JSX.Element {
         )}
         <button
           type="button"
-          className="lesson-full-btn"
           onClick={() => setShowSolution(!showSolution)}
           style={{
-            background: showSolution ? 'var(--bg-warning)' : 'var(--button-primary)',
-            color: showSolution ? 'var(--text-on-warning)' : 'var(--button-text)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: 36,
+            minHeight: 36,
+            padding: '0 12px',
+            borderRadius: 8,
+            border: showSolution ? '1px solid transparent' : '1px solid var(--border-color)',
+            background: showSolution ? 'var(--bg-warning)' : 'var(--bg-section)',
+            color: showSolution ? 'var(--text-on-warning)' : 'var(--text-primary)',
+            fontSize: 13,
+            fontWeight: 600,
+            fontFamily: 'inherit',
             cursor: 'pointer',
           }}
         >

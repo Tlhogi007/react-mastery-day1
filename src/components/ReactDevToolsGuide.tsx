@@ -10,27 +10,27 @@ function ReactDevToolsGuide({ day, focusAreas = [] }: DevToolsGuideProps): JSX.E
     const [activeTab, setActiveTab] = useState<string>('profiler')
 
     const containerStyle: React.CSSProperties = {
-        border: '2px solid var(--border-primary)',
-        borderRadius: '8px',
+        border: '1px solid var(--border-color)',
+        borderRadius: 10,
         padding: 'clamp(12px, 3vw, 20px)',
         background: 'var(--bg-card)',
-        marginTop: '20px',
+        marginTop: 0,
         width: '100%',
         maxWidth: '100%',
         minWidth: 0,
         boxSizing: 'border-box',
-        // Don't clip the tab row — overflow:hidden was cutting off "Setup"
         overflow: 'visible',
     }
 
     const tabStyle = (isActive: boolean): React.CSSProperties => ({
         padding: '10px 12px',
-        background: isActive ? 'var(--button-primary)' : 'var(--bg-section)',
-        color: isActive ? 'var(--button-text)' : 'var(--text-primary)',
+        background: isActive ? 'var(--bg-card)' : 'var(--bg-section)',
+        color: 'var(--text-primary)',
         border: 'none',
+        borderBottom: isActive ? '2px solid var(--button-primary)' : '2px solid transparent',
         borderRadius: '4px 4px 0 0',
         cursor: 'pointer',
-        fontWeight: isActive ? 700 : 500,
+        fontWeight: isActive ? 600 : 500,
         fontSize: 13,
         flex: '1 1 0',
         minWidth: 0,
