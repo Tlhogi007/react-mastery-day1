@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.9.0...v1.10.0) (2026-11-19)
+
+
+### Features
+
+* live-pull cloud progress across signed-in devices ([6f11496](https://github.com/Tlhogi007/react-mastery-day1/commit/6f1149673d2847b34198b8add9f86f7728e81223))
+
 # [1.9.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.8.1...v1.9.0) (2026-11-19)
 
 
