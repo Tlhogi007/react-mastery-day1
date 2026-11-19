@@ -1,3 +1,10 @@
+## [1.13.1](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.13.0...v1.13.1) (2026-11-19)
+
+
+### Bug Fixes
+
+* unblock quiz AI escape and sync exhausted-bank banner ([19ef279](https://github.com/Tlhogi007/react-mastery-day1/commit/19ef279631fd2648026fd434a25c2d9849ffc122))
+
 # [1.13.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.12.2...v1.13.0) (2026-11-19)
 
 
