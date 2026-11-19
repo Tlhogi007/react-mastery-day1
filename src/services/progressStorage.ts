@@ -11,12 +11,21 @@ export interface ProgressData {
 }
 
 const STORAGE_KEY = 'react-mastery-progress'
+const LIVE_PROGRESS_KEY = 'rm-live-day-progress'
 const DEFAULT_PROGRESS: ProgressData = {
   completedDays: [],
   completedQuizzes: {},
   currentStreak: 0,
   lastActivityDate: '',
   quizScores: {}
+}
+
+type LiveDayProgress = { day: number; percent: number }
+
+function emitProgressChanged(): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('rm-progress-changed'))
+  }
 }
 
 class ProgressStorage {
@@ -49,11 +58,42 @@ class ProgressStorage {
   saveProgress(progress: ProgressData): void {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(progress))
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('rm-progress-changed'))
-      }
+      emitProgressChanged()
     } catch (error) {
       console.warn('Failed to save progress to localStorage:', error)
+    }
+  }
+
+  /**
+   * In-progress quiz overlay for the current day (session only).
+   * Cleared when the quiz finishes or the learner leaves the quiz.
+   */
+  setLiveDayProgress(day: number, percent: number | null): void {
+    try {
+      if (percent == null || !Number.isFinite(percent)) {
+        sessionStorage.removeItem(LIVE_PROGRESS_KEY)
+      } else {
+        const payload: LiveDayProgress = {
+          day,
+          percent: Math.min(80, Math.max(0, Math.round(percent))),
+        }
+        sessionStorage.setItem(LIVE_PROGRESS_KEY, JSON.stringify(payload))
+      }
+      emitProgressChanged()
+    } catch {
+      /* ignore */
+    }
+  }
+
+  getLiveDayProgress(day: number): number | null {
+    try {
+      const raw = sessionStorage.getItem(LIVE_PROGRESS_KEY)
+      if (!raw) return null
+      const parsed = JSON.parse(raw) as LiveDayProgress
+      if (parsed?.day !== day || typeof parsed.percent !== 'number') return null
+      return parsed.percent
+    } catch {
+      return null
     }
   }
 
@@ -168,6 +208,8 @@ class ProgressStorage {
   clearProgress(): void {
     try {
       localStorage.removeItem(STORAGE_KEY)
+      sessionStorage.removeItem(LIVE_PROGRESS_KEY)
+      emitProgressChanged()
     } catch (error) {
       console.warn('Failed to clear progress:', error)
     }

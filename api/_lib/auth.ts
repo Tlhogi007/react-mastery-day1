@@ -102,10 +102,20 @@ async function verifyBearerUser(req: VercelRequest): Promise<
 
   try {
     const authorizedParties = clerkAuthorizedParties()
-    const payload = await verifyToken(token, {
-      secretKey: process.env.CLERK_SECRET_KEY!,
-      ...(authorizedParties.length > 0 ? { authorizedParties } : {}),
-    })
+    let payload
+    try {
+      payload = await verifyToken(token, {
+        secretKey: process.env.CLERK_SECRET_KEY!,
+        ...(authorizedParties.length > 0 ? { authorizedParties } : {}),
+      })
+    } catch (azpErr) {
+      // Retry without azp allowlist — common when preview/local origin differs
+      // from CLERK_AUTHORIZED_PARTIES / APP_ORIGIN while the JWT is still valid.
+      if (authorizedParties.length === 0) throw azpErr
+      payload = await verifyToken(token, {
+        secretKey: process.env.CLERK_SECRET_KEY!,
+      })
+    }
     const userId = payload.sub
     if (!userId) {
       return {

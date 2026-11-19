@@ -1186,10 +1186,15 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
   }
 }
 
-/* Shell already shows day title + progress on phones — drop the duplicate hero. */
+/* On phones, keep the day progress bar; hide duplicate title (shell header has it). */
 @media (max-width: 768px) {
-  .hero-section {
+  .hero-section__main {
     display: none;
+  }
+
+  .hero-section {
+    padding: 12px 14px !important;
+    margin-bottom: 12px !important;
   }
 
   .quiz-input-hint__desktop {

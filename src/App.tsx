@@ -388,9 +388,9 @@ function App(): JSX.Element {
     )
   }, [currentExercise, exercises])
 
-  void dayCompleteTick
-  const isCurrentDayCompleted = progressStorage.isDayCompleted(
-    exercises[currentExercise].day
+  const isCurrentDayCompleted = useMemo(
+    () => progressStorage.isDayCompleted(exercises[currentExercise].day),
+    [currentExercise, dayCompleteTick],
   )
 
   // Keyboard shortcuts for navigation
@@ -570,6 +570,14 @@ function App(): JSX.Element {
   return (
     <>
       {clerkEnabled && <SignOutLandingRedirect onSignedOut={handleSignedOut} />}
+      {clerkEnabled && (
+        <AiAuthBridge
+          onGate={(event) => setAiGate(event)}
+          onSignInReady={(open) => {
+            aiSignInRef.current = open
+          }}
+        />
+      )}
       {clerkEnabled && (
         <UserCloudSync
           exercise={currentExercise}
@@ -889,15 +897,6 @@ function App(): JSX.Element {
               </Suspense>
             </main>
           </div>
-
-          {clerkEnabled && (
-            <AiAuthBridge
-              onGate={(event) => setAiGate(event)}
-              onSignInReady={(open) => {
-                aiSignInRef.current = open
-              }}
-            />
-          )}
 
           <AiQuotaModal
             open={Boolean(aiGate)}

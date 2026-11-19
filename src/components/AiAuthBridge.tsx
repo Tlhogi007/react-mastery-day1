@@ -18,7 +18,12 @@ export function AiAuthBridge({ onGate, onSignInReady }: AiAuthBridgeProps): JSX.
   useEffect(() => {
     registerAiAuthTokenGetter(async () => {
       if (!isSignedIn) return null
-      return getToken()
+      // Prefer a fresh session JWT — cached tokens can fail azp/verify after remount
+      try {
+        return (await getToken({ skipCache: true })) || (await getToken())
+      } catch {
+        return getToken()
+      }
     })
     return () => registerAiAuthTokenGetter(null)
   }, [getToken, isSignedIn])

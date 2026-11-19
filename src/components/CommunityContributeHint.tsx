@@ -40,9 +40,9 @@ estimatedTime: 8 min read
   }
 
   return (
-    <>
+    <div className="contribute-hint">
       <Show when="signed-out">
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
+        <p>
           Sign in with <strong>GitHub</strong> so Community can show a signed @{`{username}`} byline on
           your articles.
         </p>
@@ -50,7 +50,6 @@ estimatedTime: 8 min read
       <Show when="signed-in">
         <div
           style={{
-            marginTop: 12,
             padding: 12,
             borderRadius: 8,
             background: 'var(--bg-section)',
@@ -99,6 +98,6 @@ estimatedTime: 8 min read
           </button>
         </div>
       </Show>
-    </>
+    </div>
   )
 }

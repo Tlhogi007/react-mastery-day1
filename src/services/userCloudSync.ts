@@ -4,6 +4,7 @@
 import { progressStorage, type ProgressData } from './progressStorage'
 import { getActiveTab, normalizeLabView, writeLabSession } from './authReturnTo'
 import { waitForAiAuthToken } from './aiAuthBridge'
+import { mergeSnapshots } from '../../api/_lib/userCloud'
 
 export const USER_CLOUD_SYNCED_EVENT = 'rm-user-cloud-synced'
 export const AI_QUOTA_UPDATED_EVENT = 'rm-ai-quota-updated'
@@ -130,7 +131,8 @@ export function emitAiQuota(quota: AiQuotaStatus): void {
 }
 
 async function authHeaders(): Promise<HeadersInit | null> {
-  const token = await waitForAiAuthToken(2500)
+  // Bounded wait — AiAuthBridge must be mounted (including on landing) for tokens
+  const token = await waitForAiAuthToken(40, 100)
   if (!token) return null
   return {
     Authorization: `Bearer ${token}`,
@@ -175,9 +177,24 @@ export async function pushUserCloud(
   }
 }
 
-/** Pull cloud quota, then PUT local snapshot (server merges with existing cloud). */
+/**
+ * Pull cloud, merge into local (so empty devices restore immediately), then PUT.
+ * Server merges again for multi-device safety.
+ */
 export async function syncUserCloudOnSignIn(lab?: Partial<LabCloudState>): Promise<UserDataResponse | null> {
   const local = buildLocalSnapshot(lab)
-  await fetchUserCloud()
-  return pushUserCloud(local)
+  // Token can lag Clerk.user by a tick after OAuth / testing sign-in
+  let remote = await fetchUserCloud()
+  if (!remote) {
+    await new Promise((r) => setTimeout(r, 400))
+    remote = await fetchUserCloud()
+  }
+  const seeded =
+    remote?.cloud != null
+      ? (mergeSnapshots(local, remote.cloud) as UserCloudSnapshot)
+      : local
+  if (remote?.cloud) {
+    applySnapshotLocally(seeded)
+  }
+  return pushUserCloud(seeded)
 }

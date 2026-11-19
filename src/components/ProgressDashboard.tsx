@@ -1,12 +1,28 @@
 import { useEffect, useState, type JSX } from 'react'
 import type { ExercisesRegistry } from '../types/exercises'
 import { progressStorage } from '../services/progressStorage'
-import { getWeakQuizTopics, getWeek1Completion } from '../lib/learningPath'
+import {
+  getWeakQuizTopics,
+  getWeek1Completion,
+  getWeightedProgressPercent,
+} from '../lib/learningPath'
+import { USER_CLOUD_SYNCED_EVENT } from '../services/userCloudSync'
 
 interface ProgressDashboardProps {
   exercises: ExercisesRegistry
   onOpenCertificate?: () => void
   onJumpToDay?: (day: number) => void
+}
+
+function readDashboardState(totalDays: number) {
+  return {
+    completedDays: progressStorage.getCompletedDaysCount(),
+    completedQuizzes: progressStorage.getCompletedQuizzesCount(),
+    currentStreak: progressStorage.getCurrentStreak(),
+    weak: getWeakQuizTopics(totalDays),
+    week1: getWeek1Completion(totalDays),
+    overallProgress: getWeightedProgressPercent(totalDays),
+  }
 }
 
 function ProgressDashboard({
@@ -15,28 +31,22 @@ function ProgressDashboard({
   onJumpToDay,
 }: ProgressDashboardProps): JSX.Element {
   const totalDays = Object.keys(exercises).length
-  const [completedDays, setCompletedDays] = useState(0)
-  const [completedQuizzes, setCompletedQuizzes] = useState(0)
-  const [currentStreak, setCurrentStreak] = useState(0)
-  const [weak, setWeak] = useState(() => getWeakQuizTopics(7))
-  const [week1, setWeek1] = useState(() => getWeek1Completion(7))
+  const [snap, setSnap] = useState(() => readDashboardState(totalDays))
   const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
-    const refresh = () => {
-      setCompletedDays(progressStorage.getCompletedDaysCount())
-      setCompletedQuizzes(progressStorage.getCompletedQuizzesCount())
-      setCurrentStreak(progressStorage.getCurrentStreak())
-      setWeak(getWeakQuizTopics(7))
-      setWeek1(getWeek1Completion(7))
-    }
+    const refresh = () => setSnap(readDashboardState(totalDays))
     refresh()
     window.addEventListener('rm-progress-changed', refresh)
-    return () => window.removeEventListener('rm-progress-changed', refresh)
-  }, [])
+    window.addEventListener(USER_CLOUD_SYNCED_EVENT, refresh)
+    return () => {
+      window.removeEventListener('rm-progress-changed', refresh)
+      window.removeEventListener(USER_CLOUD_SYNCED_EVENT, refresh)
+    }
+  }, [totalDays])
 
+  const { completedDays, completedQuizzes, currentStreak, weak, week1, overallProgress } = snap
   const totalQuizzes = totalDays
-  const overallProgress = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0
 
   const rows = [
     { label: 'Days finished', value: `${completedDays} / ${totalDays}`, pct: totalDays ? (completedDays / totalDays) * 100 : 0 },

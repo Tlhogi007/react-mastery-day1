@@ -43,12 +43,25 @@ export function UserCloudSync({
       return
     }
     if (syncedForUser.current === userId) return
-    syncedForUser.current = userId
 
     let cancelled = false
-    void (async () => {
+    let retryTimer: number | null = null
+    let attempts = 0
+
+    const run = async () => {
       const result = await syncUserCloudOnSignIn({ exercise, view, tools, tab })
-      if (cancelled || !result) return
+      if (cancelled) return
+      // Token bridge can lag behind Clerk on landing — retry until one sync succeeds
+      if (!result) {
+        attempts += 1
+        if (attempts < 12) {
+          retryTimer = window.setTimeout(() => {
+            void run()
+          }, 500)
+        }
+        return
+      }
+      syncedForUser.current = userId
       if (userId) tracking.identifyUser(userId)
       if (result.cloud.lab && onRestoredLab) {
         onRestoredLab({
@@ -58,12 +71,15 @@ export function UserCloudSync({
           tab: result.cloud.lab.tab,
         })
       }
-    })()
+    }
+
+    void run()
 
     return () => {
       cancelled = true
+      if (retryTimer) window.clearTimeout(retryTimer)
     }
-    // Initial sign-in sync only once per userId
+    // Initial sign-in sync once per userId (with retries on token lag)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, isSignedIn, userId])
 

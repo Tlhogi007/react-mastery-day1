@@ -2,9 +2,9 @@
  * Local-dev middleware mirroring /api/admin-ai.
  */
 import type { Plugin, Connect } from 'vite'
-import { loadEnv } from 'vite'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import handler from './api/admin-ai'
+import { loadDevServerEnv } from './vite-plugin-env'
 
 function readBody(req: Connect.IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -19,10 +19,7 @@ export function adminAiDevPlugin(): Plugin {
   return {
     name: 'admin-ai-dev',
     configureServer(server) {
-      const env = loadEnv(server.config.mode, server.config.root, '')
-      for (const [k, v] of Object.entries(env)) {
-        if (v && !process.env[k]) process.env[k] = v
-      }
+      loadDevServerEnv(server.config.mode, server.config.root)
 
       server.middlewares.use(async (req, res, next) => {
         const url = req.url?.split('?')[0]

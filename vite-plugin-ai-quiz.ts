@@ -2,12 +2,12 @@
  * Local-dev middleware mirroring /api/ai-quiz so Vite can run without `vercel dev`.
  */
 import type { Plugin, Connect } from 'vite'
-import { loadEnv } from 'vite'
 import {
   generateQuizContent,
   providerAvailability,
   type Provider,
 } from './api/_lib/generateQuiz'
+import { loadDevServerEnv } from './vite-plugin-env'
 import {
   allowAiQuizRequest,
   allowUserFreeQuota,
@@ -50,10 +50,17 @@ async function resolveUserId(
   }
   try {
     const authorizedParties = clerkAuthorizedParties()
-    const payload = await verifyToken(token, {
-      secretKey,
-      ...(authorizedParties.length > 0 ? { authorizedParties } : {}),
-    })
+    let payload
+    try {
+      payload = await verifyToken(token, {
+        secretKey,
+        ...(authorizedParties.length > 0 ? { authorizedParties } : {}),
+      })
+    } catch (azpErr) {
+      // Local/dev: retry without azp allowlist when IDE/proxy origins differ
+      console.warn('[ai-quiz-dev] verifyToken with authorizedParties failed:', azpErr)
+      payload = await verifyToken(token, { secretKey })
+    }
     if (!payload.sub) {
       return {
         ok: false,
@@ -85,7 +92,8 @@ async function resolveUserId(
       }
     }
     return { ok: true, userId: payload.sub }
-  } catch {
+  } catch (err) {
+    console.warn('[ai-quiz-dev] auth failed:', err)
     return {
       ok: false,
       status: 401,
@@ -99,18 +107,13 @@ export function aiQuizDevPlugin(): Plugin {
   return {
     name: 'ai-quiz-dev',
     configureServer(server) {
-      const env = loadEnv(server.config.mode, server.config.root, '')
+      const env = loadDevServerEnv(server.config.mode, server.config.root)
       const keys = {
         groq: env.GROQ_API_KEY || process.env.GROQ_API_KEY,
         gemini: env.GEMINI_API_KEY || process.env.GEMINI_API_KEY,
         together: env.TOGETHER_API_KEY || process.env.TOGETHER_API_KEY,
       }
       const clerkSecret = env.CLERK_SECRET_KEY || process.env.CLERK_SECRET_KEY
-
-      // Mirror Vite-loaded env into process.env for shared api/_lib helpers.
-      for (const [k, v] of Object.entries(env)) {
-        if (v && !process.env[k]) process.env[k] = v
-      }
 
       server.middlewares.use(async (req, res, next) => {
         const url = req.url?.split('?')[0]

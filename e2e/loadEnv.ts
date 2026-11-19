@@ -1,0 +1,30 @@
+import fs from 'node:fs'
+import path from 'node:path'
+
+/** Minimal .env loader so Playwright workers see Clerk + Upstash keys. */
+export function loadRepoEnv(root = process.cwd()): void {
+  for (const name of ['.env', '.env.local']) {
+    const file = path.join(root, name)
+    if (!fs.existsSync(file)) continue
+    for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+      const trimmed = line.trim()
+      if (!trimmed || trimmed.startsWith('#')) continue
+      const eq = trimmed.indexOf('=')
+      if (eq <= 0) continue
+      const key = trimmed.slice(0, eq).trim()
+      let value = trimmed.slice(eq + 1).trim()
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1)
+      }
+      if (key && process.env[key] === undefined) process.env[key] = value
+      if (key && process.env[key] === '') process.env[key] = value
+    }
+  }
+
+  if (!process.env.CLERK_PUBLISHABLE_KEY && process.env.VITE_CLERK_PUBLISHABLE_KEY) {
+    process.env.CLERK_PUBLISHABLE_KEY = process.env.VITE_CLERK_PUBLISHABLE_KEY
+  }
+}

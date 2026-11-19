@@ -52,6 +52,30 @@ export function getWeek1Completion(maxDay = 7): {
   }
 }
 
+/**
+ * Weighted lab progress for the top bar:
+ * - Marked-complete day = 100
+ * - Otherwise quiz score contributes up to 80 (same rule as day hero)
+ */
+export function getWeightedProgressPercent(maxDay = 7): number {
+  if (maxDay <= 0) return 0
+  let sum = 0
+  for (let d = 1; d <= maxDay; d++) {
+    if (progressStorage.isDayCompleted(d)) {
+      sum += 100
+      continue
+    }
+    const score = progressStorage.getQuizScore(dayKey(d))
+    const scored =
+      typeof score === 'number' ? Math.min(80, Math.max(0, Math.round(score * 0.8))) : 0
+    const live = progressStorage.getLiveDayProgress(d) ?? 0
+    sum += Math.max(scored, live)
+  }
+  if (sum <= 0) return 0
+  // Avoid showing 0% when a day has started (e.g. 1–6% live ÷ 7 days rounds down)
+  return Math.max(1, Math.round(sum / maxDay))
+}
+
 /** Soft nudge when jumping more than 1 day ahead of suggested. */
 export function shouldNudgeDaySkip(targetDay: number): boolean {
   const suggested = getSuggestedDay()

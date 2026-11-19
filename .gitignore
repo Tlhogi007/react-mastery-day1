@@ -38,3 +38,9 @@ my_chat.json
 .env*
 *.tsbuildinfo
 scripts/last-stress-report.json
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

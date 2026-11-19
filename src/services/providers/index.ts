@@ -1,6 +1,7 @@
 /**
  * API Providers — fixed waterfall (no random).
- * Hosted auto (Groq→Gemini→Together) first, then free fallbacks.
+ * Hosted auto (Groq→Gemini→Together) first, then TriviaDB as last free fallback.
+ * Hugging Face client fallback removed — old api-inference.huggingface.co is gone.
  */
 
 import type { APIProvider } from './types'
@@ -9,7 +10,6 @@ import { hostedAutoProvider } from './hostedAuto'
 import { groqProvider } from './groq'
 import { geminiProvider } from './gemini'
 import { togetherAIProvider } from './togetherAI'
-import { huggingFaceProvider } from './huggingFace'
 import { triviaDBProvider } from './triviaDB'
 
 export {
@@ -17,7 +17,6 @@ export {
   groqProvider,
   geminiProvider,
   togetherAIProvider,
-  huggingFaceProvider,
   triviaDBProvider,
 }
 export type { APIProvider } from './types'
@@ -26,7 +25,6 @@ export async function getAvailableProviders(): Promise<APIProvider[]> {
   // Prefer single hosted auto call; keep individuals for availability UX if needed
   const providers = [
     hostedAutoProvider,
-    huggingFaceProvider,
     triviaDBProvider,
   ]
   const available: APIProvider[] = []

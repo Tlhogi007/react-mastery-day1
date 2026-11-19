@@ -1,4 +1,4 @@
-import { type JSX } from 'react'
+import { useEffect, useState, type CSSProperties, type JSX } from 'react'
 import { progressStorage } from '../services/progressStorage'
 import '../exercises/exerciseLayout.css'
 
@@ -15,18 +15,28 @@ function getDayProgress(day: number): number {
 
   const dayKey = `day${String(day).padStart(2, '0')}`
   const quizScore = progressStorage.getQuizScore(dayKey)
-  if (typeof quizScore === 'number') {
-    // Quiz score contributes up to 80% until the day is marked complete
-    return Math.min(80, Math.max(0, Math.round(quizScore * 0.8)))
-  }
-
-  return 0
+  const scored =
+    typeof quizScore === 'number'
+      ? Math.min(80, Math.max(0, Math.round(quizScore * 0.8)))
+      : 0
+  const live = progressStorage.getLiveDayProgress(day) ?? 0
+  // Live in-quiz progress or best saved quiz contribution
+  return Math.max(scored, live)
 }
 
 function HeroSection({ day, title, description, progress }: HeroSectionProps): JSX.Element {
-  const displayProgress = progress ?? getDayProgress(day)
+  const [storedProgress, setStoredProgress] = useState(() => getDayProgress(day))
 
-  const containerStyle: React.CSSProperties = {
+  useEffect(() => {
+    const refresh = () => setStoredProgress(getDayProgress(day))
+    refresh()
+    window.addEventListener('rm-progress-changed', refresh)
+    return () => window.removeEventListener('rm-progress-changed', refresh)
+  }, [day])
+
+  const displayProgress = progress ?? storedProgress
+
+  const containerStyle: CSSProperties = {
     background: 'linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-card) 100%)',
     padding: 'clamp(20px, 4vw, 60px) clamp(16px, 4vw, 40px)',
     borderRadius: '16px',
@@ -40,7 +50,7 @@ function HeroSection({ day, title, description, progress }: HeroSectionProps): J
     boxSizing: 'border-box',
   }
 
-  const dayBadgeStyle: React.CSSProperties = {
+  const dayBadgeStyle: CSSProperties = {
     width: 'clamp(44px, 8vw, 60px)',
     height: 'clamp(44px, 8vw, 60px)',
     borderRadius: '12px',
@@ -51,7 +61,7 @@ function HeroSection({ day, title, description, progress }: HeroSectionProps): J
     fontSize: 'clamp(1.1rem, 4vw, 1.5rem)',
     fontWeight: 'bold',
     color: 'var(--button-text)',
-    flexShrink: 0
+    flexShrink: 0,
   }
 
   return (
@@ -67,9 +77,7 @@ function HeroSection({ day, title, description, progress }: HeroSectionProps): J
           zIndex: 1,
         }}
       >
-        <div style={dayBadgeStyle}>
-          {day}
-        </div>
+        <div style={dayBadgeStyle}>{day}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <h1
             className="hero-section__title"
@@ -97,31 +105,37 @@ function HeroSection({ day, title, description, progress }: HeroSectionProps): J
       </div>
 
       <div className="hero-section__progress" style={{ position: 'relative', zIndex: 1 }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '8px',
-          fontSize: '14px',
-          color: 'var(--text-secondary)'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '8px',
+            fontSize: '14px',
+            color: 'var(--text-secondary)',
+          }}
+        >
           <span>Progress</span>
           <span>{displayProgress}%</span>
         </div>
-        <div style={{
-          height: '8px',
-          background: 'var(--bg-section)',
-          borderRadius: '4px',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            height: '100%',
-            width: `${displayProgress}%`,
-            background: 'linear-gradient(90deg, var(--button-primary), var(--link-color))',
-            transition: 'width 0.3s',
+        <div
+          style={{
+            height: '8px',
+            background: 'var(--bg-section)',
             borderRadius: '4px',
-            boxShadow: displayProgress > 0 ? '0 2px 8px rgba(33, 150, 243, 0.3)' : 'none'
-          }} />
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              height: '100%',
+              width: `${displayProgress}%`,
+              background: 'linear-gradient(90deg, var(--button-primary), var(--link-color))',
+              transition: 'width 0.3s',
+              borderRadius: '4px',
+              boxShadow: displayProgress > 0 ? '0 2px 8px rgba(33, 150, 243, 0.3)' : 'none',
+            }}
+          />
         </div>
       </div>
     </div>

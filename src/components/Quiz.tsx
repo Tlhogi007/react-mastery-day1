@@ -12,6 +12,7 @@ import { useQuiz } from '../hooks/useQuiz'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 import { formatTime } from '../utils/timeFormatter'
 import { tracking } from '../lib/googleAnalytics'
+import { progressStorage } from '../services/progressStorage'
 import QuizHeader from './quiz/QuizHeader'
 import QuizQuestionDisplay from './quiz/QuizQuestion'
 import QuizResults from './quiz/QuizResults'
@@ -85,6 +86,28 @@ function Quiz({
 
         return () => clearInterval(interval)
     }, [completed, quizStartTime])
+
+    // Drive day / overall progress bars while the quiz is in progress
+    useEffect(() => {
+        if (!day || allQuestions.length === 0) return
+        if (completed) {
+            progressStorage.setLiveDayProgress(day, null)
+            return
+        }
+        const answeredBias = selectedAnswer != null ? 1 : 0
+        const pct = Math.round(
+            ((currentQuestionIndex + answeredBias) / allQuestions.length) * 80,
+        )
+        progressStorage.setLiveDayProgress(day, Math.min(80, Math.max(1, pct)))
+    }, [day, completed, currentQuestionIndex, selectedAnswer, allQuestions.length])
+
+    // Clear live overlay only when leaving this quiz instance
+    useEffect(() => {
+        if (!day) return
+        return () => {
+            progressStorage.setLiveDayProgress(day, null)
+        }
+    }, [day])
 
     // Keyboard shortcuts for quiz
     useKeyboardShortcuts({

@@ -161,6 +161,15 @@
   font-weight: 600;
   font-size: 0.875rem;
   box-shadow: none;
+  margin-bottom: var(--space-3);
+}
+
+.community-header .contribute-hint,
+.community-header .contribute-hint p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 .contribute-button:hover {
