@@ -45,14 +45,15 @@ function TodoRow({
 
   const btn = (disabled: boolean): React.CSSProperties => ({
     padding: '6px 12px',
-    background: disabled ? 'var(--bg-tertiary)' : 'var(--button-primary)',
-    color: disabled ? 'var(--text-muted)' : 'var(--button-text)',
-    border: 'none',
-    borderRadius: 4,
+    background: disabled ? 'var(--bg-tertiary)' : 'var(--bg-card)',
+    color: disabled ? 'var(--text-muted)' : 'var(--text-primary)',
+    border: '1px solid var(--border-color)',
+    borderRadius: 8,
     cursor: disabled ? 'not-allowed' : 'pointer',
     fontSize: 14,
+    fontWeight: 600,
     opacity: disabled ? 0.5 : 1,
-    minHeight: 40,
+    minHeight: 36,
   })
 
   return (
@@ -126,19 +127,21 @@ function ReconciliationTodoDemo({
 }: ReconciliationTodoDemoProps): JSX.Element {
   return (
     <div style={{ width: '100%', maxWidth: '100%', minWidth: 0 }}>
-      <h3 style={{ marginTop: 0 }}>
+      <h3 style={{ margin: '0 0 12px', fontSize: '1.05rem', lineHeight: 1.3 }}>
         Todo list {useIndexKeys ? '(index keys — buggy)' : '(stable id keys — correct)'}
       </h3>
       <div
         style={{
           background: 'var(--bg-info)',
-          padding: 'clamp(12px, 3vw, 15px)',
+          color: 'var(--text-on-info)',
+          padding: '12px 14px',
           borderRadius: 8,
-          marginBottom: 20,
+          marginBottom: 16,
+          boxSizing: 'border-box',
         }}
       >
-        <h4 style={{ marginTop: 0 }}>Try this</h4>
-        <ol style={{ marginBottom: 0 }}>
+        <h4 style={{ margin: '0 0 8px', fontSize: 14 }}>Try this</h4>
+        <ol style={{ margin: 0, paddingLeft: 18, lineHeight: 1.45, fontSize: 13 }}>
           <li>Star a row and type a local note on “Learn React”.</li>
           <li>Move that row down with ↓.</li>
           <li>

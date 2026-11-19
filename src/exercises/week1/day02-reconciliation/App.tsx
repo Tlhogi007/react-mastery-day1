@@ -95,25 +95,56 @@ function Day02Reconciliation(): JSX.Element {
                   icon="💡"
                   style={{ marginBottom: '24px' }}
                 >
-                  <div style={{
-                    background: 'var(--bg-warning)',
-                    padding: '15px',
-                    borderRadius: '8px',
-                    marginBottom: '20px'
-                  }}>
-                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <div
+                    style={{
+                      background: 'var(--bg-warning)',
+                      color: 'var(--text-on-warning)',
+                      padding: '12px 14px',
+                      borderRadius: 8,
+                      marginBottom: 20,
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 10,
+                        cursor: 'pointer',
+                        margin: 0,
+                        lineHeight: 1.4,
+                      }}
+                    >
                       <input
                         type="checkbox"
                         checked={useIndexKeys}
                         onChange={(e) => setUseIndexKeys(e.target.checked)}
-                        style={{ marginRight: '8px', cursor: 'pointer' }}
+                        style={{
+                          width: 16,
+                          height: 16,
+                          margin: '2px 0 0',
+                          flexShrink: 0,
+                          cursor: 'pointer',
+                        }}
                       />
-                      <strong>Use Index Keys (BUG MODE)</strong> - Toggle to see the difference!
+                      <span style={{ minWidth: 0 }}>
+                        <strong>Use index keys (bug mode)</strong>
+                        <span style={{ fontWeight: 400 }}> — toggle to compare</span>
+                      </span>
                     </label>
-                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '8px', marginLeft: '24px' }}>
-                      {useIndexKeys 
-                        ? '⚠️ Using index keys - state will be preserved incorrectly when reordering'
-                        : '✅ Using proper keys - state will be preserved correctly'}
+                    <p
+                      style={{
+                        fontSize: 12,
+                        margin: '10px 0 0',
+                        paddingLeft: 26,
+                        lineHeight: 1.45,
+                        color: 'var(--text-on-warning)',
+                        opacity: 0.9,
+                      }}
+                    >
+                      {useIndexKeys
+                        ? 'Using index keys — local row state sticks to the slot when you reorder.'
+                        : 'Using stable id keys — local row state travels with the item.'}
                     </p>
                   </div>
 

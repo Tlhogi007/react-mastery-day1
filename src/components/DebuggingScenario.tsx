@@ -36,10 +36,10 @@ function DebuggingScenario({ scenario }: DebuggingScenarioProps): JSX.Element {
     <div
       className="lesson-prose"
       style={{
-        border: '1px solid var(--border-color)',
-        borderRadius: 10,
-        padding: 'clamp(12px, 3vw, 18px)',
-        background: 'var(--bg-card)',
+        border: 'none',
+        borderRadius: 0,
+        padding: 0,
+        background: 'transparent',
         marginTop: 0,
         width: '100%',
         maxWidth: '100%',

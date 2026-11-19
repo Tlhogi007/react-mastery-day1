@@ -74,7 +74,7 @@ function QuizQuestion({
                 <div className="quiz-actions">
                     <button
                         type="button"
-                        className="quiz-btn quiz-btn--ghost"
+                        className="quiz-btn quiz-btn--ghost quiz-skip-btn"
                         onClick={onSkip}
                         aria-label="Skip question"
                     >

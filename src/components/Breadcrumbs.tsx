@@ -9,38 +9,34 @@ interface BreadcrumbsProps {
 }
 
 function Breadcrumbs({
-  exercise,
   isDayCompleted = false,
   onMarkComplete,
 }: BreadcrumbsProps): JSX.Element {
-  return (
-    <div className="mark-complete-row">
-      <p className="mark-complete-row__desc">
-        {exercise.description || `Day ${exercise.day} practice`}
-      </p>
+  // Day description lives on HeroSection only — avoid repeating it here.
+  if (!onMarkComplete) return <></>
 
-      {onMarkComplete && (
-        <button
-          type="button"
-          className="mark-complete-btn"
-          data-tutorial="mark-complete"
-          onClick={onMarkComplete}
-          disabled={isDayCompleted}
-          title={
-            isDayCompleted
-              ? 'This day is already marked complete'
-              : 'Mark this day complete in your progress'
-          }
-          style={{
-            background: isDayCompleted ? 'var(--bg-success)' : 'var(--button-primary)',
-            color: isDayCompleted ? 'var(--text-on-success)' : 'var(--button-text)',
-            borderColor: isDayCompleted ? 'var(--border-color)' : 'transparent',
-            cursor: isDayCompleted ? 'default' : 'pointer',
-          }}
-        >
-          {isDayCompleted ? 'Completed' : 'Mark complete'}
-        </button>
-      )}
+  return (
+    <div className="mark-complete-row mark-complete-row--action-only">
+      <button
+        type="button"
+        className="mark-complete-btn"
+        data-tutorial="mark-complete"
+        onClick={onMarkComplete}
+        disabled={isDayCompleted}
+        title={
+          isDayCompleted
+            ? 'This day is already marked complete'
+            : 'Mark this day complete in your progress'
+        }
+        style={{
+          background: isDayCompleted ? 'var(--bg-success)' : 'var(--button-primary)',
+          color: isDayCompleted ? 'var(--text-on-success)' : 'var(--button-text)',
+          borderColor: isDayCompleted ? 'var(--border-color)' : 'transparent',
+          cursor: isDayCompleted ? 'default' : 'pointer',
+        }}
+      >
+        {isDayCompleted ? 'Completed' : 'Mark complete'}
+      </button>
     </div>
   )
 }

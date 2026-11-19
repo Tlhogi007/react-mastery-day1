@@ -14,6 +14,7 @@ import { formatTime } from '../utils/timeFormatter'
 import { tracking } from '../lib/googleAnalytics'
 import { progressStorage } from '../services/progressStorage'
 import QuizHeader from './quiz/QuizHeader'
+import QuizAiControls from './quiz/QuizAiControls'
 import QuizQuestionDisplay from './quiz/QuizQuestion'
 import QuizResults from './quiz/QuizResults'
 import QuizMessages from './quiz/QuizMessages'
@@ -223,18 +224,7 @@ function Quiz({
 
     return shell(
         <>
-            <QuizHeader
-                title={title}
-                currentQuestionIndex={currentQuestionIndex}
-                totalQuestions={allQuestions.length}
-                localQuestionsCount={localQuestionsCount}
-                enableAI={enableAI}
-                day={day}
-                aiEnabled={aiEnabled}
-                loadingAI={loadingAI}
-                aiQuestionsLoaded={aiQuestionsLoaded}
-                onToggleAI={toggleAI}
-            />
+            <QuizHeader title={title} />
 
             <QuizMessages
                 aiQuestionsLoaded={aiQuestionsLoaded}
@@ -243,18 +233,42 @@ function Quiz({
                 errorMessage={errorMessage}
             />
 
-            {/* Time indicator and AI section indicator */}
-            <div className="quiz-status-row">
-                {quizStartTime && !completed && (
-                    <div className="quiz-status-chip">
-                        ⏱️ {formatTime(currentTime)}
+            {/*
+              Mobile:  Question ········ timer
+                       [badge] ········ ☐ Add AI
+              Desktop: [Question · timer] ····· [badge] [☐ Add AI]
+                       Press 1-4… (quiet line)
+            */}
+            <div className="quiz-toolbar">
+                <div className="quiz-toolbar__left">
+                    <div className="quiz-toolbar__progress">
+                        Question {currentQuestionIndex + 1}/{allQuestions.length}
+                        {aiQuestionsLoaded && (
+                            <span className="quiz-header__progress-detail">
+                                ({localQuestionsCount} local + {allQuestions.length - localQuestionsCount} AI)
+                            </span>
+                        )}
                     </div>
-                )}
-                {isAISection && (
-                    <div className="quiz-status-chip quiz-status-chip--info">
-                        AI {currentQuestionIndex - localQuestionsCount + 1}/{allQuestions.length - localQuestionsCount}
-                    </div>
-                )}
+                    {quizStartTime && !completed && (
+                        <div className="quiz-status-chip">
+                            ⏱️ {formatTime(currentTime)}
+                        </div>
+                    )}
+                    {isAISection && (
+                        <div className="quiz-status-chip quiz-status-chip--info">
+                            AI {currentQuestionIndex - localQuestionsCount + 1}/{allQuestions.length - localQuestionsCount}
+                        </div>
+                    )}
+                </div>
+                <div className="quiz-toolbar__ai">
+                    <QuizAiControls
+                        enableAI={enableAI}
+                        day={day}
+                        aiEnabled={aiEnabled}
+                        loadingAI={loadingAI}
+                        onToggleAI={toggleAI}
+                    />
+                </div>
                 {!isAISection && !completed && (
                     <div className="quiz-input-hint">
                         <span className="quiz-input-hint__desktop">Press 1-4 to select, Space/Enter for next</span>

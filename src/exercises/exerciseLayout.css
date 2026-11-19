@@ -286,6 +286,11 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
   box-sizing: border-box;
 }
 
+/* Desktop: compact, right-aligned */
+.mark-complete-row--action-only {
+  justify-content: flex-end;
+}
+
 .mark-complete-row__desc {
   margin: 0;
   flex: 1 1 auto;
@@ -314,7 +319,7 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
 }
 
 @media (max-width: 768px) {
-  .mark-complete-row {
+  .mark-complete-row:not(.mark-complete-row--action-only) {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
@@ -324,9 +329,23 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
     flex: none;
   }
 
-  .mark-complete-btn {
+  .mark-complete-row:not(.mark-complete-row--action-only) .mark-complete-btn {
     display: block !important;
     width: 100% !important;
+    min-height: 44px;
+    padding: 10px 12px;
+    align-self: stretch !important;
+  }
+
+  /* Mobile: full-width Mark complete */
+  .mark-complete-row--action-only {
+    justify-content: stretch;
+  }
+
+  .mark-complete-row--action-only .mark-complete-btn {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
     min-height: 44px;
     padding: 10px 12px;
     align-self: stretch !important;
@@ -335,7 +354,7 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
 
 /* Narrow content column (e.g. preview pane) while viewport stays wide */
 @container mark-complete (max-width: 559px) {
-  .mark-complete-row {
+  .mark-complete-row:not(.mark-complete-row--action-only) {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
@@ -345,9 +364,22 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
     flex: none;
   }
 
-  .mark-complete-btn {
+  .mark-complete-row:not(.mark-complete-row--action-only) .mark-complete-btn {
     display: block !important;
     width: 100% !important;
+    min-height: 44px;
+    padding: 10px 12px;
+    align-self: stretch !important;
+  }
+
+  .mark-complete-row--action-only {
+    justify-content: stretch;
+  }
+
+  .mark-complete-row--action-only .mark-complete-btn {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
     min-height: 44px;
     padding: 10px 12px;
     align-self: stretch !important;
@@ -435,11 +467,11 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
 .visual-diagram-card {
   container-type: inline-size;
   container-name: visual-diagram;
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  padding: clamp(12px, 3vw, 20px);
-  background: var(--bg-card);
-  margin-top: 20px;
+  border: none;
+  border-radius: 0;
+  padding: clamp(8px, 2vw, 12px) 0 0;
+  background: transparent;
+  margin-top: 12px;
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -969,11 +1001,11 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
 
 /* ——— Quiz journey shared shell / panel / actions ——— */
 .quiz-shell {
-  border: 2px solid var(--border-primary);
+  border: none;
   border-radius: 12px;
-  padding: 16px;
-  background: var(--bg-card);
-  margin-top: 16px;
+  padding: 16px 0 0;
+  background: transparent;
+  margin-top: 8px;
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
@@ -1050,6 +1082,12 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
   background: var(--bg-card);
   color: var(--text-primary);
   font-weight: 500;
+}
+
+.quiz-btn.quiz-skip-btn {
+  border: 1px solid var(--border-primary) !important;
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
 }
 
 .quiz-btn--link {
@@ -1131,8 +1169,8 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
 
 @media (min-width: 769px) {
   .quiz-shell {
-    padding: 20px;
-    margin-top: 20px;
+    padding: 12px 0 0;
+    margin-top: 12px;
   }
 
   .quiz-panel {
@@ -1141,13 +1179,11 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
 }
 
 .quiz-header {
-  container-type: inline-size;
-  container-name: quiz-header;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 8px;
-  margin-bottom: 14px;
+  gap: 0;
+  margin-bottom: 10px;
   width: 100%;
 }
 
@@ -1163,7 +1199,11 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
+  justify-content: flex-end;
+  gap: 6px 8px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .quiz-header__badge {
@@ -1175,6 +1215,7 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
   color: var(--text-primary);
   width: fit-content;
   flex: 0 0 auto;
+  line-height: 1.2;
 }
 
 .quiz-header__ai-toggle {
@@ -1182,8 +1223,10 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  line-height: 1.25;
-  flex: 1 1 220px;
+  line-height: 1.2;
+  flex: 0 0 auto;
+  width: auto;
+  max-width: 100%;
   min-width: 0;
   margin: 0;
 }
@@ -1193,56 +1236,122 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
   height: 16px;
   margin: 0;
   flex-shrink: 0;
-  align-self: center;
 }
 
 .quiz-header__ai-toggle > span {
-  display: inline-flex;
-  align-items: center;
+  display: inline;
   min-width: 0;
 }
 
-.quiz-header__progress {
-  font-size: 13px;
-  color: var(--text-secondary);
-  flex: 0 0 auto;
-  margin-left: 0;
-}
-
 .quiz-header__progress-detail {
-  margin-left: 8px;
+  margin-left: 6px;
   font-size: 12px;
 }
 
-@container quiz-header (max-width: 520px) {
-  .quiz-header__meta {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .quiz-header__ai-toggle {
-    flex: none;
-    width: 100%;
-  }
+/* ——— Quiz toolbar ———
+   Mobile:
+     Question 1/5                 ⏱️ 10m
+     [0 free AI — add your key]   ☐ Add AI questions
+   Desktop:
+     [Question · ⏱️]              [badge] [☐ Add AI]
+     Press 1-4… (quiet, full width under)
+*/
+.quiz-toolbar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'left ai'
+    'hint hint';
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 10px;
+  width: 100%;
+  margin-bottom: 14px;
+  box-sizing: border-box;
 }
 
-.quiz-status-row {
-  container-type: inline-size;
-  container-name: quiz-status;
+.quiz-toolbar__left {
+  grid-area: left;
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  margin-bottom: 12px;
-  gap: 6px 12px;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
   width: 100%;
 }
 
+.quiz-toolbar__progress {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.2;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.quiz-toolbar__ai {
+  grid-area: ai;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Mobile: AI row spans full width under left */
+@media (max-width: 719px) {
+  .quiz-toolbar {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'left'
+      'ai'
+      'hint';
+  }
+
+  .quiz-toolbar__ai {
+    width: 100%;
+  }
+
+  .quiz-toolbar__ai .quiz-header__meta {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .quiz-toolbar__ai .quiz-header__ai-toggle {
+    margin-left: auto;
+  }
+}
+
+.quiz-toolbar__ai .quiz-header__meta {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.quiz-toolbar__ai .quiz-header__ai-toggle {
+  flex: 0 0 auto;
+}
+
 .quiz-status-chip {
-  padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
   background: transparent;
   border-radius: 4px;
   font-size: 13px;
+  line-height: 1.2;
   color: var(--text-secondary);
   border: none;
   box-sizing: border-box;
@@ -1250,6 +1359,7 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
   flex: 0 0 auto;
   text-align: left;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .quiz-status-chip--info {
@@ -1260,35 +1370,56 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
 }
 
 .quiz-input-hint {
+  grid-area: hint;
+  display: block;
   padding: 0;
   background: transparent;
   border-radius: 0;
   font-size: 12px;
   color: var(--text-secondary);
   border: none;
-  margin-left: 0;
-  line-height: 1.35;
+  margin: 0;
+  line-height: 1.2;
   box-sizing: border-box;
-  width: auto;
-  flex: 1 1 160px;
+  width: 100%;
   min-width: 0;
   text-align: left;
-  opacity: 0.85;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+@media (min-width: 720px) {
+  .quiz-toolbar {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'left ai'
+      'hint hint';
+    column-gap: 16px;
+    row-gap: 6px;
+  }
+
+  .quiz-toolbar__left {
+    justify-content: flex-start;
+    gap: 14px;
+    width: auto;
+  }
 }
 
 .quiz-question-card {
+  container-type: inline-size;
+  container-name: quiz-question;
   padding: clamp(12px, 3vw, 16px);
   background: var(--bg-section);
   border-radius: 8px;
   margin-bottom: 12px;
   font-size: clamp(1rem, 3.2vw, 1.125rem);
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .quiz-question-card__row {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: flex-start;
   gap: 10px;
 }
@@ -1296,19 +1427,35 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
 .quiz-question-card__text {
   flex: 1 1 auto;
   min-width: 0;
+  width: 100%;
   overflow-wrap: break-word;
   word-break: normal;
-  hyphens: auto;
+  hyphens: manual;
 }
 
 .quiz-difficulty {
+  order: -1;
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.02em;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+@container quiz-question (min-width: 420px) {
+  .quiz-question-card__row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .quiz-difficulty {
+    order: 0;
+  }
 }
 
 .quiz-difficulty--easy {
@@ -1403,12 +1550,6 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
 .quiz-next-btn {
   background: var(--button-primary) !important;
   color: var(--button-text) !important;
-}
-
-.quiz-skip-btn {
-  background: transparent !important;
-  color: var(--text-secondary) !important;
-  border: 1px solid var(--border-color) !important;
 }
 
 .quiz-explanation__actions {
@@ -2391,12 +2532,8 @@ body.quiz-sheet-open .floating-actions {
   margin-top: 14px;
 }
 
-/* On phones, keep the day progress bar; hide duplicate title (shell header has it). */
+/* On phones, keep the day card (title + description live here only). */
 @media (max-width: 768px) {
-  .hero-section__main {
-    display: none;
-  }
-
   .hero-section {
     padding: 12px 14px !important;
     margin-bottom: 12px !important;

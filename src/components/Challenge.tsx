@@ -13,10 +13,10 @@ function Challenge({ challenge }: ChallengeProps): JSX.Element {
   const [, setCode] = useState<string>(challenge.starterCode)
 
   const containerStyle: React.CSSProperties = {
-    border: '1px solid var(--border-color)',
-    borderRadius: 10,
-    padding: 'clamp(12px, 3vw, 18px)',
-    background: 'var(--bg-card)',
+    border: 'none',
+    borderRadius: 0,
+    padding: 0,
+    background: 'transparent',
     marginTop: 0,
     width: '100%',
     maxWidth: '100%',
@@ -33,25 +33,49 @@ function Challenge({ challenge }: ChallengeProps): JSX.Element {
 
   return (
     <div style={containerStyle}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 10, marginBottom: '15px', flexWrap: 'wrap' }}>
-        <div style={{ minWidth: 0, flex: '1 1 200px' }}>
-          <h3 style={{ margin: 0, fontSize: 'clamp(1rem, 3.2vw, 1.2rem)', lineHeight: 1.3 }}>
-            Practice Challenge: {challenge.title}
-          </h3>
-          <div style={{
+      <div
+        className="challenge-heading"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 12,
+          marginBottom: 15,
+          flexWrap: 'wrap',
+        }}
+      >
+        <h3
+          style={{
+            margin: 0,
+            fontSize: 'clamp(1rem, 3.2vw, 1.2rem)',
+            lineHeight: 1.3,
+            minWidth: 0,
+            flex: '1 1 200px',
+          }}
+        >
+          Practice Challenge: {challenge.title}
+        </h3>
+        <div
+          className="challenge-difficulty"
+          style={{
             display: 'inline-block',
             padding: '4px 8px',
             background: difficultyColors[challenge.difficulty],
-            borderRadius: '4px',
-            fontSize: '12px',
-            marginTop: '5px',
+            borderRadius: 4,
+            fontSize: 12,
+            fontWeight: 600,
             textTransform: 'capitalize',
-            color: challenge.difficulty === 'easy' ? 'var(--text-on-success)' : 
-                   challenge.difficulty === 'medium' ? 'var(--text-on-warning)' : 
-                   'var(--text-on-error)'
-          }}>
-            {challenge.difficulty}
-          </div>
+            flex: '0 0 auto',
+            marginLeft: 'auto',
+            color:
+              challenge.difficulty === 'easy'
+                ? 'var(--text-on-success)'
+                : challenge.difficulty === 'medium'
+                  ? 'var(--text-on-warning)'
+                  : 'var(--text-on-error)',
+          }}
+        >
+          {challenge.difficulty}
         </div>
       </div>
 

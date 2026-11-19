@@ -45,9 +45,12 @@ const badgeBase: CSSProperties = {
   alignItems: 'center',
   alignSelf: 'center',
   minHeight: 24,
-  lineHeight: 1.25,
+  lineHeight: 1.2,
   boxSizing: 'border-box',
   whiteSpace: 'nowrap',
+  width: 'fit-content',
+  maxWidth: '100%',
+  flexShrink: 0,
 }
 
 /** Shows remaining free hosted AI generations for the signed-in user. */
@@ -160,7 +163,7 @@ export function AiQuotaBadge(): JSX.Element {
       {empty
         ? '0 free AI — add your key'
         : low
-          ? `${quota.remaining} free AI left · Settings for your key`
+          ? `${quota.remaining} free AI left · add your key`
           : `${quota.remaining}/${quota.limit} free AI left`}
     </span>
   )

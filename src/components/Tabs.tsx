@@ -146,6 +146,7 @@ function Tabs({ tabs, defaultTab }: TabsProps): JSX.Element {
     borderRadius: 0,
     whiteSpace: 'nowrap',
     scrollSnapAlign: 'start',
+    letterSpacing: '0.01em',
   })
 
   const moreMenu =
