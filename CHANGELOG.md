@@ -1,3 +1,10 @@
+## [1.13.4](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.13.3...v1.13.4) (2026-11-19)
+
+
+### Bug Fixes
+
+* exclude unit tests from production TypeScript build ([9ffc9f1](https://github.com/Tlhogi007/react-mastery-day1/commit/9ffc9f1d4b3d6f6a476e418243af69070adcd317))
+
 ## [1.13.3](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.13.2...v1.13.3) (2026-11-19)
 
 
