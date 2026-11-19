@@ -1,3 +1,10 @@
+## [1.12.1](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.12.0...v1.12.1) (2026-11-19)
+
+
+### Bug Fixes
+
+* polish chrome spacing, code scroll, and accent hierarchy ([caf7c85](https://github.com/Tlhogi007/react-mastery-day1/commit/caf7c859240d8cbdbd2ef5792b17948049d22aeb))
+
 # [1.12.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.11.0...v1.12.0) (2026-11-19)
 
 
