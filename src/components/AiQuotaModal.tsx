@@ -24,6 +24,7 @@ export function AiQuotaModal({
     <div
       role="dialog"
       aria-modal="true"
+      aria-labelledby="ai-quota-title"
       style={{
         position: 'fixed',
         inset: 0,
@@ -38,6 +39,7 @@ export function AiQuotaModal({
     >
       <div
         style={{
+          position: 'relative',
           width: '100%',
           maxWidth: 420,
           background: 'var(--bg-card)',
@@ -48,17 +50,47 @@ export function AiQuotaModal({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 style={{ margin: '0 0 8px', fontSize: 18 }}>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          style={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            width: 36,
+            height: 36,
+            border: 'none',
+            borderRadius: 8,
+            background: 'transparent',
+            color: 'var(--text-muted)',
+            fontSize: 22,
+            lineHeight: 1,
+            cursor: 'pointer',
+          }}
+        >
+          ×
+        </button>
+
+        <h3 id="ai-quota-title" style={{ margin: '0 36px 8px 0', fontSize: 18 }}>
           {mode === 'auth' ? 'Sign in for hosted AI' : 'Free AI limit reached'}
         </h3>
         <p style={{ margin: '0 0 12px', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
           {message}
         </p>
         {mode === 'quota' && (
-          <ol style={{ margin: '0 0 16px', paddingLeft: 18, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+          <ol
+            style={{
+              margin: '0 0 16px',
+              paddingLeft: 18,
+              fontSize: 13,
+              color: 'var(--text-secondary)',
+              lineHeight: 1.5,
+            }}
+          >
             <li>Add a Groq / Gemini / Together key in Settings (browser-only).</li>
             <li>Or wait until tomorrow UTC for free hosted AI to reset.</li>
-            <li>Local quiz questions always stay free — no key needed.</li>
+            <li>You can close this and review your quiz results anytime.</li>
           </ol>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -95,7 +127,8 @@ export function AiQuotaModal({
             {mode === 'quota' ? 'Add your API key in Settings' : 'Or use your own API key'}
           </button>
           <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.45 }}>
-            Your own key stays in this browser only — never uploaded to React Mastery. Works whether you are signed in or not.
+            Your own key stays in this browser only — never uploaded to React Mastery. Works whether
+            you are signed in or not.
           </p>
           <button
             type="button"
@@ -107,9 +140,10 @@ export function AiQuotaModal({
               background: 'transparent',
               color: 'var(--text-muted)',
               cursor: 'pointer',
+              fontWeight: 500,
             }}
           >
-            Keep using local questions
+            Continue without AI
           </button>
         </div>
       </div>

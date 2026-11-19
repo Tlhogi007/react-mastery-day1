@@ -46,10 +46,12 @@ export function AiAuthBridge({ onGate, onSignInReady }: AiAuthBridgeProps): JSX.
 
   useEffect(() => {
     return subscribeAiGate((event) => {
-      if (event.mode === 'clear') {
+      if (event.mode === 'clear' || event.mode === 'dismiss-local') {
         onGate(null)
         return
       }
+
+      if (event.mode !== 'auth' && event.mode !== 'quota') return
 
       // Already signed in — ignore auth noise from token race after OAuth
       if (event.mode === 'auth' && isSignedIn) {

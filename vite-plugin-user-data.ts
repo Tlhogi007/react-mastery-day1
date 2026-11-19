@@ -17,6 +17,12 @@ import {
 
 const OAUTH_PROVIDERS = new Set(['oauth_google', 'oauth_github', 'google', 'github'])
 const MAX_BYTES = 200_000
+const LONG_POLL_MS = 12_000
+const LONG_POLL_STEP_MS = 1_500
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
 function readBody(req: Connect.IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -125,15 +131,36 @@ export function userDataDevPlugin(): Plugin {
 
         try {
           const key = userCloudKey(auth.userId)
-          const quota = await getUserFreeQuotaStatus(auth.userId)
 
           if (req.method === 'GET') {
+            const qs = new URL(req.url || '', 'http://local.invalid').searchParams
+            const wait = qs.get('wait') === '1' || qs.get('wait') === 'true'
+            const since = qs.get('since') || ''
+
+            if (wait && since) {
+              const deadline = Date.now() + LONG_POLL_MS
+              let cloud = parseSnapshot(await redisGet(key)) || emptySnapshot()
+              while (cloud.updatedAt === since && Date.now() < deadline) {
+                const remaining = deadline - Date.now()
+                if (remaining <= 0) break
+                await sleep(Math.min(LONG_POLL_STEP_MS, remaining))
+                cloud = parseSnapshot(await redisGet(key)) || emptySnapshot()
+              }
+              const changed = Boolean(cloud.updatedAt && cloud.updatedAt !== since)
+              const quota = await getUserFreeQuotaStatus(auth.userId)
+              res.statusCode = 200
+              res.end(JSON.stringify({ cloud, quota, changed }))
+              return
+            }
+
             const cloud = parseSnapshot(await redisGet(key)) || emptySnapshot()
+            const quota = await getUserFreeQuotaStatus(auth.userId)
             res.statusCode = 200
-            res.end(JSON.stringify({ cloud, quota }))
+            res.end(JSON.stringify({ cloud, quota, changed: true }))
             return
           }
 
+          const quota = await getUserFreeQuotaStatus(auth.userId)
           const raw = await readBody(req)
           let body: unknown
           try {

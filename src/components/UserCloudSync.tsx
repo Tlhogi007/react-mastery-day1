@@ -2,15 +2,19 @@ import { useEffect, useRef, type JSX } from 'react'
 import { useAuth } from '@clerk/react'
 import {
   buildLocalSnapshot,
+  progressSyncFingerprint,
   pullAndMergeUserCloud,
   pushUserCloud,
   syncUserCloudOnSignIn,
+  type UserCloudSnapshot,
 } from '../services/userCloudSync'
 import { normalizeLabView, type AuthReturnView } from '../services/authReturnTo'
 import { tracking } from '../lib/googleAnalytics'
 
-/** How often idle devices pull cloud progress for live cross-device updates. */
-const PULL_INTERVAL_MS = 2_000
+/** Wait until progress settles before uploading (quiz ticks are chatty). */
+const PUSH_DEBOUNCE_MS = 20_000
+/** Don’t re-pull on every focus flap — once per window is enough for low-data. */
+const PULL_THROTTLE_MS = 5 * 60_000
 
 interface UserCloudSyncProps {
   exercise: string
@@ -27,7 +31,16 @@ interface UserCloudSyncProps {
   }) => void
 }
 
-/** Pull/push signed-in learner data; debounce saves after local progress changes. */
+function syncFingerprint(snapshot: UserCloudSnapshot): string {
+  // Lab/tab alone must not upload — only meaningful progress (see progressSyncFingerprint).
+  return progressSyncFingerprint(snapshot)
+}
+
+/**
+ * Low-data cloud sync: no idle polling.
+ * Push only when progress actually changed (debounced) or when leaving the tab.
+ * Pull only on sign-in and throttled return-to-tab / online.
+ */
 export function UserCloudSync({
   exercise,
   view,
@@ -41,11 +54,14 @@ export function UserCloudSync({
   const saveTimer = useRef<number | null>(null)
   const labRef = useRef({ exercise, view, tools, tab })
   labRef.current = { exercise, view, tools, tab }
+  const lastPushedFp = useRef<string>('')
+  const lastPullAt = useRef(0)
 
   useEffect(() => {
     if (!isLoaded) return
     if (!isSignedIn || !userId) {
       syncedForUser.current = null
+      lastPushedFp.current = ''
       return
     }
     if (syncedForUser.current === userId) return
@@ -58,7 +74,6 @@ export function UserCloudSync({
       const { exercise: ex, view: v, tools: t, tab: tb } = labRef.current
       const result = await syncUserCloudOnSignIn({ exercise: ex, view: v, tools: t, tab: tb })
       if (cancelled) return
-      // Token bridge can lag behind Clerk on landing — retry until one sync succeeds
       if (!result) {
         attempts += 1
         if (attempts < 12) {
@@ -69,6 +84,10 @@ export function UserCloudSync({
         return
       }
       syncedForUser.current = userId
+      lastPullAt.current = Date.now()
+      if (result.cloud) {
+        lastPushedFp.current = syncFingerprint(result.cloud as UserCloudSnapshot)
+      }
       if (userId) tracking.identifyUser(userId)
       if (result.cloud.lab && onRestoredLab) {
         onRestoredLab({
@@ -86,63 +105,100 @@ export function UserCloudSync({
       cancelled = true
       if (retryTimer) window.clearTimeout(retryTimer)
     }
-    // Initial sign-in sync once per userId (with retries on token lag)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, isSignedIn, userId])
 
+  // Progress-only pushes (not every Learn/Quiz tab switch). Skip if nothing meaningful changed.
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return
-    if (saveTimer.current) window.clearTimeout(saveTimer.current)
-    // Short debounce so mid-quiz live % reaches other devices quickly
-    saveTimer.current = window.setTimeout(() => {
-      const { exercise: ex, view: v, tools: t, tab: tb } = labRef.current
-      void pushUserCloud(buildLocalSnapshot({ exercise: ex, view: v, tools: t, tab: tb }))
-    }, 600)
+
+    const schedulePush = (immediate: boolean) => {
+      if (saveTimer.current) window.clearTimeout(saveTimer.current)
+      const run = () => {
+        saveTimer.current = null
+        const { exercise: ex, view: v, tools: t, tab: tb } = labRef.current
+        const snapshot = buildLocalSnapshot({ exercise: ex, view: v, tools: t, tab: tb })
+        const fp = syncFingerprint(snapshot)
+        if (fp === lastPushedFp.current) return
+        void pushUserCloud(snapshot).then((res) => {
+          if (res?.cloud) {
+            lastPushedFp.current = syncFingerprint(res.cloud as UserCloudSnapshot)
+          } else {
+            lastPushedFp.current = fp
+          }
+        })
+      }
+      if (immediate) run()
+      else saveTimer.current = window.setTimeout(run, PUSH_DEBOUNCE_MS)
+    }
+
+    schedulePush(false)
+
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') schedulePush(true)
+    }
+    const onPageHide = () => schedulePush(true)
+
+    document.addEventListener('visibilitychange', onHide)
+    window.addEventListener('pagehide', onPageHide)
+
     return () => {
       if (saveTimer.current) window.clearTimeout(saveTimer.current)
+      document.removeEventListener('visibilitychange', onHide)
+      window.removeEventListener('pagehide', onPageHide)
     }
-  }, [isLoaded, isSignedIn, exercise, view, tools, tab, progressEpoch])
+  }, [isLoaded, isSignedIn, progressEpoch])
 
-  // Live cross-device: idle tabs pull + merge on an interval (and on tab focus)
+  // Throttled pull when returning to the tab / coming online (not on every focus blip)
   useEffect(() => {
     if (!isLoaded || !isSignedIn || !userId) return
 
     let cancelled = false
     let inFlight = false
 
-    const pull = async () => {
+    const isVisible = () =>
+      typeof document === 'undefined' || document.visibilityState === 'visible'
+
+    const pull = async (force: boolean): Promise<void> => {
       if (cancelled || inFlight) return
-      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return
+      if (!isVisible()) return
+      const now = Date.now()
+      if (!force && now - lastPullAt.current < PULL_THROTTLE_MS) return
       inFlight = true
       try {
         const { exercise: ex, view: v, tools: t, tab: tb } = labRef.current
         await pullAndMergeUserCloud({ exercise: ex, view: v, tools: t, tab: tb })
+        lastPullAt.current = Date.now()
+        // Avoid push-back loop after merge
+        lastPushedFp.current = syncFingerprint(
+          buildLocalSnapshot({ exercise: ex, view: v, tools: t, tab: tb }),
+        )
+      } catch {
+        // Offline / transient
       } finally {
         inFlight = false
       }
     }
 
-    const intervalId = window.setInterval(() => {
-      void pull()
-    }, PULL_INTERVAL_MS)
-
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') void pull()
+    const onVisibility = () => {
+      if (isVisible()) void pull(false)
     }
-    document.addEventListener('visibilitychange', onVisible)
-    window.addEventListener('focus', onVisible)
+    const onFocus = () => {
+      if (isVisible()) void pull(false)
+    }
+    const onOnline = () => {
+      if (isVisible()) void pull(true)
+    }
 
-    // First pull shortly after mount so a second device catches up without waiting a full interval
-    const kickoff = window.setTimeout(() => {
-      void pull()
-    }, 400)
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('focus', onFocus)
+    window.addEventListener('online', onOnline)
 
     return () => {
       cancelled = true
-      window.clearInterval(intervalId)
-      window.clearTimeout(kickoff)
-      document.removeEventListener('visibilitychange', onVisible)
-      window.removeEventListener('focus', onVisible)
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('online', onOnline)
     }
   }, [isLoaded, isSignedIn, userId])
 

@@ -12,7 +12,14 @@ import { questionHistory } from '../services/questionHistory'
 import { analytics } from '../services/analytics'
 import { captureWarning, setAppContext } from '../lib/sentry'
 import { QUIZ_THRESHOLDS } from '../constants'
-import { getAiAuthToken } from '../services/aiAuthBridge'
+import {
+  aiGateBlocksProviderFallback,
+  allowAiGate,
+  clearAiGate,
+  getAiAuthToken,
+  subscribeAiGate,
+  suppressAiGate,
+} from '../services/aiAuthBridge'
 import {
   clearQuizProgress,
   consumeAiResumePending,
@@ -112,6 +119,8 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
   const [questionPromptType, setQuestionPromptType] = useState<'local' | 'ai' | null>(null)
   /** Mid-quiz “want more?” only once per attempt (index 2 → 3). */
   const midQuizPromptShownRef = useRef(false)
+  /** Bumped to ignore in-flight AI fetches after “keep using local”. */
+  const aiGenEpochRef = useRef(0)
   const [usedLocalQuestionIds, setUsedLocalQuestionIds] = useState<Set<string>>(
     () => new Set(boot?.usedLocalQuestionIds ?? []),
   )
@@ -318,6 +327,7 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
 
   const handleAnswerSelect = useCallback((index: number): void => {
     if (completed || !currentQuestion) return
+    setErrorMessage(null)
     setSelectedAnswer(index)
     const isCorrect = index === currentQuestion.correctAnswer
     if (isCorrect) {
@@ -349,6 +359,9 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
   }, [completed, currentQuestion])
 
   const handleFinishQuiz = useCallback((): void => {
+    suppressAiGate()
+    clearAiGate()
+    setErrorMessage(null)
     setCompleted(true)
     // Save progress when quiz is completed
     if (day) {
@@ -487,9 +500,9 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
         .map(asLocal)
 
       if (newQuestions.length === 0) {
-        setErrorMessage(
-          'No new local questions left for this day — you have already seen them all. Try AI-generated questions instead.',
-        )
+        // Don't leave a dead-end on the local count screen — offer AI instead
+        setQuestionPromptType('ai')
+        setErrorMessage('No new local questions left. Choose an AI count, or Back to continue the quiz.')
         return
       }
 
@@ -540,6 +553,8 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
       return
     }
 
+    const epoch = ++aiGenEpochRef.current
+    allowAiGate()
     setAiQuestionCount(count)
     setGeneratingAI(true)
     setErrorMessage(null)
@@ -549,7 +564,8 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
       const topic = getTopicForDay(day)
       // Skip local questions - we only want NEW AI-generated questions
       const aiQuestions = await quizQuestionService.getQuestions(day, topic, count, true)
-      
+      if (epoch !== aiGenEpochRef.current) return
+
       if (aiQuestions.length > 0) {
         consumeAiResumePending(day)
         const taggedAi = aiQuestions.map(asAi)
@@ -570,9 +586,14 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
         
       } else {
         console.warn(`⚠️ [Quiz] No AI questions were generated. APIs may be unavailable or parsing failed.`)
-        setErrorMessage('No additional questions could be loaded. Please try again or continue with remaining questions.')
+        setErrorMessage(
+          aiGateBlocksProviderFallback()
+            ? 'Hosted AI isn’t available (limit or sign-in). Finish the quiz, or add your own API key in Settings.'
+            : 'No additional questions could be loaded. Finish the quiz, or try again later.',
+        )
       }
     } catch (error) {
+      if (epoch !== aiGenEpochRef.current) return
       console.error('❌ [Quiz] Failed to load AI questions:', error)
       captureWarning(error, {
         day,
@@ -585,15 +606,40 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
       })
       setErrorMessage(`Failed to load additional questions: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`)
     } finally {
-      setGeneratingAI(false)
+      if (epoch === aiGenEpochRef.current) setGeneratingAI(false)
     }
   }, [day, allQuestions, currentQuestionIndex, score])
 
+  // “Keep using local questions” on the AI auth/quota gate
+  useEffect(() => {
+    return subscribeAiGate((event) => {
+      if (event.mode !== 'dismiss-local') return
+      aiGenEpochRef.current += 1
+      suppressAiGate()
+      clearAiGate()
+      setGeneratingAI(false)
+      setLoadingAI(false)
+      setErrorMessage(null)
+      setShowQuestionPrompt(false)
+      setQuestionPromptType(null)
+      if (day != null) consumeAiResumePending(day)
+      setCompleted(true)
+      if (day) {
+        const percentage = Math.round((score / Math.max(allQuestions.length, 1)) * 100)
+        const passed = percentage >= QUIZ_THRESHOLDS.PASSING_SCORE
+        const dayKey = `day${day.toString().padStart(2, '0')}`
+        progressStorage.markQuizCompleted(dayKey, percentage, passed)
+      }
+    })
+  }, [day, score, allQuestions.length])
+
   const handleSelectPromptType = useCallback((type: 'local' | 'ai' | null): void => {
+    setErrorMessage(null)
     setQuestionPromptType(type)
   }, [])
 
   const handleCancelPrompt = useCallback((): void => {
+    setErrorMessage(null)
     setShowQuestionPrompt(false)
     setQuestionPromptType(null)
     // Advance past question 3 so we don't sit on the same index

@@ -74,9 +74,14 @@ function StudyMode({ isActive, onToggle, children }: StudyModeProps): JSX.Elemen
   const studyingBadge = (
     <div
       style={{
-        padding: isDesktop ? '5px 10px' : '8px 12px',
-        background: 'var(--bg-info)',
-        color: 'var(--text-on-info)',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        padding: isDesktop ? '6px 12px' : '8px 14px',
+        background: 'var(--bg-section)',
+        color: 'var(--text-secondary)',
+        border: '1px solid var(--border-color)',
         borderRadius: 8,
         fontSize: isDesktop ? 12 : 13,
         fontWeight: 600,
@@ -87,6 +92,16 @@ function StudyMode({ isActive, onToggle, children }: StudyModeProps): JSX.Elemen
         flexShrink: 0,
       }}
     >
+      <span
+        aria-hidden="true"
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: '50%',
+          background: 'var(--button-primary)',
+          flexShrink: 0,
+        }}
+      />
       Studying
     </div>
   )
@@ -98,8 +113,12 @@ function StudyMode({ isActive, onToggle, children }: StudyModeProps): JSX.Elemen
       style={{
         ...barBtn,
         width: isDesktop ? 'auto' : '100%',
-        background: isRunning ? 'var(--bg-section)' : 'var(--button-primary)',
-        color: isRunning ? 'var(--text-primary)' : 'var(--button-text)',
+        flexShrink: 0,
+        background: isRunning ? 'var(--bg-section)' : 'transparent',
+        border: isRunning
+          ? '1px solid transparent'
+          : '1px solid var(--button-primary)',
+        color: isRunning ? 'var(--text-primary)' : 'var(--button-primary)',
       }}
     >
       {isRunning ? 'Pause' : 'Start'}
@@ -129,14 +148,48 @@ function StudyMode({ isActive, onToggle, children }: StudyModeProps): JSX.Elemen
       type="button"
       onClick={() => setTimer(0)}
       style={{
-        ...barBtn,
-        width: isDesktop ? 'auto' : '100%',
-        background: isDesktop ? 'transparent' : 'var(--bg-section)',
-        color: isDesktop ? 'var(--text-secondary)' : 'var(--text-primary)',
+        padding: 0,
+        border: 'none',
+        background: 'transparent',
+        color: 'var(--text-muted)',
+        fontSize: 11,
+        fontWeight: 500,
+        cursor: 'pointer',
+        lineHeight: 1.2,
+        letterSpacing: '0.01em',
       }}
     >
       Reset
     </button>
+  )
+
+  const resetBtnMobile = (
+    <button
+      type="button"
+      onClick={() => setTimer(0)}
+      style={{
+        ...barBtn,
+        width: '100%',
+        background: 'var(--bg-section)',
+        color: 'var(--text-primary)',
+      }}
+    >
+      Reset
+    </button>
+  )
+
+  const timerCluster = (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 2,
+      }}
+    >
+      {timerDisplay}
+      {resetBtn}
+    </div>
   )
 
   const goalField = (
@@ -208,8 +261,8 @@ function StudyMode({ isActive, onToggle, children }: StudyModeProps): JSX.Elemen
           backdropFilter: 'saturate(180%) blur(20px)',
           WebkitBackdropFilter: 'saturate(180%) blur(20px)',
           borderBottom: '1px solid var(--border-color)',
-          padding: isDesktop ? '10px 16px' : '12px',
-          paddingTop: `max(${isDesktop ? 10 : 12}px, env(safe-area-inset-top, 0px))`,
+          padding: isDesktop ? '12px 20px' : '14px 16px',
+          paddingTop: `max(${isDesktop ? 12 : 14}px, env(safe-area-inset-top, 0px))`,
           zIndex: 100,
         }}
       >
@@ -221,51 +274,66 @@ function StudyMode({ isActive, onToggle, children }: StudyModeProps): JSX.Elemen
           }}
         >
           {isDesktop ? (
-            /* Layout 4 — split bar */
+            /* Layout 4 — Studying/Start | Timer/Reset | Goal/Done */
             <div
               style={{
-                display: 'flex',
+                display: 'grid',
+                gridTemplateColumns: '1fr auto 1fr',
                 alignItems: 'center',
-                justifyContent: 'space-between',
                 gap: 16,
                 width: '100%',
-                flexWrap: 'wrap',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  justifyContent: 'flex-start',
+                  minWidth: 0,
+                  flexWrap: 'wrap',
+                }}
+              >
                 {studyingBadge}
                 {startBtn}
-                {timerDisplay}
-                {resetBtn}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>{timerCluster}</div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 14,
+                  justifyContent: 'flex-end',
+                  flexWrap: 'wrap',
+                }}
+              >
                 {goalField}
                 {doneBtn}
               </div>
             </div>
           ) : (
-            /* Layout 2 — mobile stack */
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
+            /* Mobile — dense stack: Studying, then Start | Timer | Reset, then Goal | Done */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
               {studyingBadge}
               <div
                 style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr auto 1fr',
                   alignItems: 'center',
-                  gap: 8,
+                  gap: 12,
                   width: '100%',
                 }}
               >
-                {startBtn}
+                <div style={{ justifySelf: 'stretch' }}>{startBtn}</div>
                 {timerDisplay}
-                {resetBtn}
+                <div style={{ justifySelf: 'stretch' }}>{resetBtnMobile}</div>
               </div>
               <div
                 style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr auto',
                   alignItems: 'center',
-                  gap: 10,
+                  gap: 12,
                   width: '100%',
                 }}
               >
@@ -277,13 +345,13 @@ function StudyMode({ isActive, onToggle, children }: StudyModeProps): JSX.Elemen
         </div>
       </div>
 
+      {/* No extra horizontal padding — match header/progress width in the parent main */}
       <div
         style={{
-          padding: 'clamp(20px, 4vw, 40px)',
-          paddingBottom: 'calc(clamp(20px, 4vw, 40px) + 72px)',
-          maxWidth: 1040,
-          margin: '0 auto',
+          padding: 0,
+          paddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))',
           width: '100%',
+          maxWidth: '100%',
           boxSizing: 'border-box',
         }}
       >
@@ -319,8 +387,8 @@ function StudyMode({ isActive, onToggle, children }: StudyModeProps): JSX.Elemen
               textAlign: 'center',
             }}
           >
-            Focus
-          </div>
+              Studying
+            </div>
           <div
             style={{
               width: '100%',

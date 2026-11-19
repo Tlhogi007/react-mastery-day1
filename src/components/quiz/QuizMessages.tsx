@@ -34,14 +34,15 @@ function QuizMessages({
             )}
 
             {errorMessage && (
-                <div style={{
-                    ...warningMessageStyle,
-                    marginBottom: '15px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                }}>
-                    ⚠️ {errorMessage}
+                <div
+                    className="quiz-banner quiz-banner--warn"
+                    style={{
+                        ...warningMessageStyle,
+                        marginBottom: '15px',
+                    }}
+                    role="status"
+                >
+                    {errorMessage}
                 </div>
             )}
         </>

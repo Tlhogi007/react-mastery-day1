@@ -102,13 +102,8 @@ function Quiz({
         progressStorage.setLiveDayProgress(day, Math.min(80, Math.max(1, pct)))
     }, [day, completed, currentQuestionIndex, selectedAnswer, allQuestions.length])
 
-    // Clear live overlay only when leaving this quiz instance
-    useEffect(() => {
-        if (!day) return
-        return () => {
-            progressStorage.setLiveDayProgress(day, null)
-        }
-    }, [day])
+    // Keep live % when switching Learn/Practice/Quiz so the day bar stays true.
+    // Cleared only when the quiz completes (above).
 
     // Keyboard shortcuts for quiz
     useKeyboardShortcuts({
@@ -122,13 +117,11 @@ function Quiz({
         enabled: !completed && !generatingAI && !showQuestionPrompt
     })
 
-    const containerStyle: React.CSSProperties = {
-        border: '2px solid var(--border-primary)',
-        borderRadius: '8px',
-        padding: '20px',
-        background: 'var(--bg-card)',
-        marginTop: '20px'
-    }
+    const shell = (body: JSX.Element): JSX.Element => (
+        <div className="quiz-shell">
+            {body}
+        </div>
+    )
 
     // Show final results
     if (completed) {
@@ -136,10 +129,10 @@ function Quiz({
         if (day) {
             tracking.quizCompleted(day, percentage)
         }
-        
-        return (
-            <div style={containerStyle}>
-                <h3>{title}</h3>
+
+        return shell(
+            <>
+                <h3 className="quiz-shell__title">{title}</h3>
                 <QuizResults
                     score={score}
                     totalQuestions={allQuestions.length}
@@ -154,15 +147,15 @@ function Quiz({
                     onRetake={reset}
                     onRetakeIncorrectOnly={resetWithIncorrectOnly}
                 />
-            </div>
+            </>,
         )
     }
 
     // Show question prompt after 3 questions
     if (showQuestionPrompt && !completed && !generatingAI) {
-        return (
-            <div style={containerStyle}>
-                <h3>{title}</h3>
+        return shell(
+            <>
+                <h3 className="quiz-shell__title">{title}</h3>
                 <QuestionPrompt
                     onSelectType={handleSelectPromptType}
                     onCancel={handleCancelPrompt}
@@ -177,15 +170,15 @@ function Quiz({
                     generating={generatingAI}
                     errorMessage={errorMessage}
                 />
-            </div>
+            </>,
         )
     }
 
     // Show AI generation prompt after local questions are done (legacy flow)
     if (localQuestionsCompleted && !aiQuestionsLoaded && !generatingAI && !showQuestionPrompt) {
-        return (
-            <div style={containerStyle}>
-                <h3>{title}</h3>
+        return shell(
+            <>
+                <h3 className="quiz-shell__title">{title}</h3>
                 <AIGenerationPrompt
                     localScore={score}
                     localQuestionsCount={localQuestionsCount}
@@ -193,51 +186,43 @@ function Quiz({
                     generating={generatingAI}
                     errorMessage={errorMessage}
                 />
-            </div>
+            </>,
         )
     }
 
     // Show loading while generating AI questions
     if (generatingAI) {
-        return (
-            <div style={containerStyle}>
-                <h3>{title}</h3>
-                <div style={{
-                    textAlign: 'center',
-                    padding: '40px',
-                    background: 'var(--bg-card)',
-                    borderRadius: '12px'
-                }}>
-                    <div style={{ fontSize: '48px', marginBottom: '20px' }}>🔄</div>
-                    <h3>Generating AI Questions...</h3>
-                    <p style={{ color: 'var(--text-secondary)', marginTop: '10px' }}>
-                        Please wait while we create {aiQuestionCount} additional questions for you.
+        return shell(
+            <>
+                <h3 className="quiz-shell__title">{title}</h3>
+                <div className="quiz-panel quiz-loading">
+                    <p className="quiz-loading__title">Generating AI questions…</p>
+                    <p className="quiz-loading__lead">
+                        Creating {aiQuestionCount} additional questions. This usually takes a few seconds.
                     </p>
-                    <div style={{ marginTop: '20px' }}>
-                        <LoadingSkeleton width="100%" height="60px" borderRadius="8px" />
-                        <div style={{ marginTop: '12px' }}>
-                            <LoadingSkeleton width="100%" height="50px" borderRadius="6px" />
-                        </div>
-                        <div style={{ marginTop: '12px' }}>
-                            <LoadingSkeleton width="100%" height="50px" borderRadius="6px" />
-                        </div>
+                    <LoadingSkeleton width="100%" height="60px" borderRadius="8px" />
+                    <div style={{ marginTop: 12 }}>
+                        <LoadingSkeleton width="100%" height="50px" borderRadius="8px" />
+                    </div>
+                    <div style={{ marginTop: 12 }}>
+                        <LoadingSkeleton width="100%" height="50px" borderRadius="8px" />
                     </div>
                 </div>
-            </div>
+            </>,
         )
     }
 
     if (!currentQuestion) {
-        return (
-            <div style={containerStyle}>
-                <h3>{title}</h3>
-                <p>Loading questions...</p>
-            </div>
+        return shell(
+            <>
+                <h3 className="quiz-shell__title">{title}</h3>
+                <p className="quiz-panel__lead">Loading questions…</p>
+            </>,
         )
     }
 
-    return (
-        <div style={containerStyle}>
+    return shell(
+        <>
             <QuizHeader
                 title={title}
                 currentQuestionIndex={currentQuestionIndex}
@@ -267,7 +252,7 @@ function Quiz({
                 )}
                 {isAISection && (
                     <div className="quiz-status-chip quiz-status-chip--info">
-                        ✨ AI Question {currentQuestionIndex - localQuestionsCount + 1} of {allQuestions.length - localQuestionsCount}
+                        AI {currentQuestionIndex - localQuestionsCount + 1}/{allQuestions.length - localQuestionsCount}
                     </div>
                 )}
                 {!isAISection && !completed && (
@@ -290,7 +275,7 @@ function Quiz({
                 day={day}
                 topic={topic}
             />
-        </div>
+        </>,
     )
 }
 

@@ -76,12 +76,17 @@ class ProgressStorage {
    */
   setLiveDayProgress(day: number, percent: number | null): void {
     try {
+      const nextPercent =
+        percent == null || !Number.isFinite(percent)
+          ? null
+          : Math.min(80, Math.max(0, Math.round(percent)))
+      // Skip no-op writes — quiz effects can re-fire with the same % and were spamming sync
+      const prev = this.getLiveDayProgressState()
+      if (prev && prev.day === day && prev.percent === nextPercent) return
+
       const payload: LiveDayProgress = {
         day,
-        percent:
-          percent == null || !Number.isFinite(percent)
-            ? null
-            : Math.min(80, Math.max(0, Math.round(percent))),
+        percent: nextPercent,
         updatedAt: new Date().toISOString(),
       }
       localStorage.setItem(LIVE_PROGRESS_KEY, JSON.stringify(payload))

@@ -17,6 +17,23 @@ import {
 } from './_lib/userCloud.js'
 
 const MAX_BYTES = 200_000
+/** Stay under vercel.json maxDuration (20s) for user-data. */
+const LONG_POLL_MS = 12_000
+const LONG_POLL_STEP_MS = 1_500
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function queryFlag(value: string | string[] | undefined): boolean {
+  const v = Array.isArray(value) ? value[0] : value
+  return v === '1' || v === 'true'
+}
+
+function queryString(value: string | string[] | undefined): string {
+  const v = Array.isArray(value) ? value[0] : value
+  return typeof v === 'string' ? v : ''
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   res.setHeader('Cache-Control', 'no-store')
@@ -41,14 +58,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
 
   const key = userCloudKey(auth.user.userId)
-  const quota = await getUserFreeQuotaStatus(auth.user.userId)
 
   if (req.method === 'GET') {
+    const wait = queryFlag(req.query.wait)
+    const since = queryString(req.query.since)
+
+    // Long-poll: hold until cloud.updatedAt changes (or timeout). Cuts client chatter vs 2s polling.
+    if (wait && since) {
+      const deadline = Date.now() + LONG_POLL_MS
+      let raw = await redisGet(key)
+      let cloud = parseSnapshot(raw) || emptySnapshot()
+      while (cloud.updatedAt === since && Date.now() < deadline) {
+        const remaining = deadline - Date.now()
+        if (remaining <= 0) break
+        await sleep(Math.min(LONG_POLL_STEP_MS, remaining))
+        raw = await redisGet(key)
+        cloud = parseSnapshot(raw) || emptySnapshot()
+      }
+      const changed = Boolean(cloud.updatedAt && cloud.updatedAt !== since)
+      const quota = await getUserFreeQuotaStatus(auth.user.userId)
+      res.status(200).json({ cloud, quota, changed })
+      return
+    }
+
     const raw = await redisGet(key)
     const cloud = parseSnapshot(raw) || emptySnapshot()
-    res.status(200).json({ cloud, quota })
+    const quota = await getUserFreeQuotaStatus(auth.user.userId)
+    res.status(200).json({ cloud, quota, changed: true })
     return
   }
+
+  const quota = await getUserFreeQuotaStatus(auth.user.userId)
 
   let body: unknown = req.body
   try {

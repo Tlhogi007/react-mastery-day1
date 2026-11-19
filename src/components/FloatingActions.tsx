@@ -56,6 +56,7 @@ function FloatingActions({
 
   return (
     <div
+      className="floating-actions"
       style={{
         position: 'fixed',
         bottom: 24,

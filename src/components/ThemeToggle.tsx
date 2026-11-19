@@ -9,9 +9,11 @@ import { tracking } from '../lib/googleAnalytics'
 
 interface ThemeToggleProps {
   className?: string
+  /** Square icon control for tight mobile headers */
+  compact?: boolean
 }
 
-function ThemeToggle({ className }: ThemeToggleProps): JSX.Element {
+function ThemeToggle({ className, compact }: ThemeToggleProps): JSX.Element {
   const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>(() => {
     return settingsStorage.getTheme()
   })
@@ -95,22 +97,31 @@ function ThemeToggle({ className }: ThemeToggleProps): JSX.Element {
     <button
       onClick={toggleTheme}
       className={className}
-      title={getTitle()}
       aria-label={getTitle()}
       style={{
-        padding: '8px 12px',
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border-color)',
-        borderRadius: 10,
+        padding: 0,
+        width: compact ? 40 : 36,
+        height: compact ? 40 : 36,
+        minWidth: compact ? 40 : 36,
+        background: 'transparent',
+        border: '1px solid transparent',
+        borderRadius: 8,
         cursor: 'pointer',
-        fontSize: 16,
+        fontSize: compact ? 15 : 15,
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
         transition: 'background 0.15s ease',
-        minWidth: 40,
-        height: 38,
-        boxShadow: 'var(--shadow-sm)',
+        color: 'var(--text-secondary)',
+        flexShrink: 0,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'var(--bg-section)'
+        e.currentTarget.style.color = 'var(--text-primary)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'transparent'
+        e.currentTarget.style.color = 'var(--text-secondary)'
       }}
     >
       {getIcon()}

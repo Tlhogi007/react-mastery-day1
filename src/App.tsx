@@ -11,6 +11,8 @@ import { AuthButton } from './components/AuthButton'
 import { AiAuthBridge } from './components/AiAuthBridge'
 import { AiQuotaModal } from './components/AiQuotaModal'
 import { ShareDayButton } from './components/ShareDayButton'
+import { ScrollToTopButton } from './components/ScrollToTopButton'
+import { Tip } from './components/ui/Tip'
 import { SignedInGreeting } from './components/SignedInGreeting'
 import { UserCloudSync } from './components/UserCloudSync'
 import { Week1Certificate } from './components/Week1Certificate'
@@ -25,7 +27,7 @@ import {
   type AuthReturnView,
 } from './services/authReturnTo'
 import { clearQuizProgress } from './services/quizResume'
-import { USER_CLOUD_SYNCED_EVENT } from './services/userCloudSync'
+import { emitAiGateDismissLocal } from './services/aiAuthBridge'
 import { SignOutLandingRedirect } from './components/SignOutLandingRedirect'
 import AnalyticsPanel from './components/AnalyticsPanel'
 import KeyboardShortcutsHelp from './components/KeyboardShortcutsHelp'
@@ -34,7 +36,7 @@ import StudyMode from './components/StudyMode'
 import ToastContainer from './components/ui/ToastContainer'
 import Confetti from './components/ui/Confetti'
 import PageTransition from './components/animations/PageTransition'
-import GuidedTutorial, { onboardingTutorial } from './components/GuidedTutorial'
+import GuidedTutorial, { onboardingTutorial, type TutorialStep } from './components/GuidedTutorial'
 import { CardSkeleton } from './components/ui/LoadingSkeleton'
 import { settingsStorage } from './services/settingsStorage'
 import { analytics } from './services/analytics'
@@ -170,14 +172,33 @@ function App(): JSX.Element {
   }, [savedReturn])
 
   useEffect(() => {
+    // Local progress UI only — cloud pull already merges; don't bump on USER_CLOUD_SYNCED
+    // (that was re-triggering uploads in a loop).
     const bump = () => setDayCompleteTick((n) => n + 1)
-    window.addEventListener(USER_CLOUD_SYNCED_EVENT, bump)
     window.addEventListener('rm-progress-changed', bump)
     return () => {
-      window.removeEventListener(USER_CLOUD_SYNCED_EVENT, bump)
       window.removeEventListener('rm-progress-changed', bump)
     }
   }, [])
+
+  useEffect(() => {
+    const openSettings = () => setShowSettings(true)
+    const openSignIn = () => {
+      if (!clerkEnabled) {
+        setShowSettings(true)
+        return
+      }
+      tracking.signInOpened('ai_gate')
+      setAiGate(null)
+      aiSignInRef.current?.()
+    }
+    window.addEventListener('rm-open-settings', openSettings)
+    window.addEventListener('rm-open-ai-sign-in', openSignIn)
+    return () => {
+      window.removeEventListener('rm-open-settings', openSettings)
+      window.removeEventListener('rm-open-ai-sign-in', openSignIn)
+    }
+  }, [clerkEnabled])
 
   // Initialize Google Analytics
   useEffect(() => {
@@ -358,6 +379,14 @@ function App(): JSX.Element {
     handleExerciseSelect(entry[0])
   }, [exercises, handleExerciseSelect])
 
+  const prepareTutorialStep = useCallback(
+    (step: TutorialStep) => {
+      if (!isMobile) return
+      setShowSidebar(Boolean(step.needsSidebar))
+    },
+    [isMobile],
+  )
+
   // Get exercise keys in order
   const exerciseKeys = useMemo(() => Object.keys(exercises) as ExerciseKey[], [exercises])
   const currentIndex = useMemo(() => exerciseKeys.indexOf(currentExercise), [exerciseKeys, currentExercise])
@@ -523,7 +552,7 @@ function App(): JSX.Element {
   }
 
   const headerBtnStyle: React.CSSProperties = {
-    padding: isMobile ? '8px 12px' : '8px 14px',
+    padding: isMobile ? 0 : '8px 14px',
     background: 'var(--bg-card)',
     border: '1px solid var(--border-color)',
     borderRadius: 10,
@@ -537,6 +566,8 @@ function App(): JSX.Element {
     whiteSpace: 'nowrap',
     flexShrink: 0,
     minHeight: 40,
+    minWidth: isMobile ? 40 : undefined,
+    width: isMobile ? 40 : undefined,
     height: isMobile ? 40 : 38,
     color: 'var(--text-primary)',
     boxShadow: 'var(--shadow-sm)',
@@ -624,7 +655,7 @@ function App(): JSX.Element {
         />
       ) : (
         <div style={appContainerStyle} className={isMobile ? 'app-shell-mobile' : undefined}>
-          {isMobile && showSidebar && (
+          {isMobile && showSidebar && !showTutorial && (
             <button
               type="button"
               aria-label="Close menu"
@@ -713,52 +744,79 @@ function App(): JSX.Element {
                   title={showSidebar ? 'Close menu' : 'Open menu'}
                   aria-expanded={showSidebar}
                 >
-                  {isMobile ? (showSidebar ? 'Close' : 'Menu') : showSidebar ? '◀ Menu' : '▶ Menu'}
+                  {isMobile ? (
+                    showSidebar ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path
+                          d="M6 6l12 12M18 6L6 18"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path
+                          d="M4 7h16M4 12h16M4 17h16"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    )
+                  ) : showSidebar ? (
+                    '◀ Menu'
+                  ) : (
+                    '▶ Menu'
+                  )}
                 </button>
 
-                <div
-                  style={{
-                    minWidth: 0,
-                    flex: '1 1 0',
-                  }}
-                >
-                  <h1
+                {/* Title in hero on mobile; hide on desktop when sidebar already names the day */}
+                {!isMobile && !showSidebar && (
+                  <div
                     style={{
-                      margin: 0,
-                      fontFamily: 'var(--font-display)',
-                      fontSize: isMobile ? 16 : 18,
-                      fontWeight: 700,
-                      letterSpacing: '-0.02em',
-                      lineHeight: 1.2,
-                      color: 'var(--text-primary)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
+                      minWidth: 0,
+                      flex: '1 1 0',
                     }}
                   >
-                    {headerTitle}
-                  </h1>
-                  <p
-                    style={{
-                      margin: '3px 0 0',
-                      fontSize: 12,
-                      color: 'var(--text-muted)',
-                      lineHeight: 1.4,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {headerSubtitle}
-                  </p>
-                </div>
+                    <h1
+                      style={{
+                        margin: 0,
+                        fontFamily: 'var(--font-display)',
+                        fontSize: 18,
+                        fontWeight: 700,
+                        letterSpacing: '-0.02em',
+                        lineHeight: 1.2,
+                        color: 'var(--text-primary)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {headerTitle}
+                    </h1>
+                    <p
+                      style={{
+                        margin: '3px 0 0',
+                        fontSize: 12,
+                        color: 'var(--text-muted)',
+                        lineHeight: 1.4,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {headerSubtitle}
+                    </p>
+                  </div>
+                )}
 
                 <div
                   style={{
                     flex: isMobile ? '1 1 100%' : '1 1 200px',
                     minWidth: isMobile ? 0 : 180,
                     maxWidth: isMobile ? '100%' : 280,
-                    // Phones: search on its own row under Menu/title/actions
+                    // Phones: search on its own row under Menu/actions
                     order: isMobile ? 3 : undefined,
                   }}
                 >
@@ -784,45 +842,94 @@ function App(): JSX.Element {
                     marginLeft: 'auto',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: isMobile ? 6 : 10,
+                    gap: isMobile ? 2 : 2,
                     // Keep actions on the first row (right) when search wraps
                     order: isMobile ? 2 : undefined,
                   }}
                 >
-                  <ThemeToggle />
+                  <Tip label="Theme">
+                    <ThemeToggle compact={isMobile} />
+                  </Tip>
                   {showFocusControl && currentExerciseData && (
-                    <ShareDayButton
-                      compact={isMobile}
-                      info={{
-                        key: currentExercise,
-                        day: currentExerciseData.day,
-                        week: currentExerciseData.week,
-                        title: currentExerciseData.title.replace(/^Day \d+:\s*/i, ''),
-                        description: currentExerciseData.description,
-                      }}
-                    />
+                    <Tip label="Share day">
+                      <ShareDayButton
+                        compact={isMobile}
+                        info={{
+                          key: currentExercise,
+                          day: currentExerciseData.day,
+                          week: currentExerciseData.week,
+                          title: currentExerciseData.title.replace(/^Day \d+:\s*/i, ''),
+                          description: currentExerciseData.description,
+                        }}
+                      />
+                    </Tip>
                   )}
                   {showFocusControl && (
-                    <button
-                      type="button"
-                      data-tutorial="focus"
-                      onClick={() => {
-                        const newStudyMode = !studyMode
-                        setStudyMode(newStudyMode)
-                        analytics.trackFeatureUsage('study_mode', { enabled: newStudyMode })
-                        tracking.studyModeToggled(newStudyMode)
-                      }}
-                      title="Toggle focus mode"
-                      style={{
-                        ...headerBtnStyle,
-                        borderColor: studyMode ? 'var(--button-primary)' : 'var(--border-color)',
-                        background: studyMode ? 'var(--button-primary)' : 'var(--bg-card)',
-                        color: studyMode ? 'var(--button-text)' : 'var(--text-primary)',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {studyMode ? 'Exit focus' : 'Focus'}
-                    </button>
+                    <Tip label={studyMode ? 'Exit focus' : 'Focus'}>
+                      <button
+                        type="button"
+                        data-tutorial="focus"
+                        onClick={() => {
+                          const newStudyMode = !studyMode
+                          setStudyMode(newStudyMode)
+                          analytics.trackFeatureUsage('study_mode', { enabled: newStudyMode })
+                          tracking.studyModeToggled(newStudyMode)
+                        }}
+                        aria-label={studyMode ? 'Exit focus mode' : 'Enter focus mode'}
+                        aria-pressed={studyMode}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: 0,
+                          width: isMobile ? 40 : 36,
+                          height: isMobile ? 40 : 36,
+                          minWidth: isMobile ? 40 : 36,
+                          borderRadius: 8,
+                          border: studyMode
+                            ? '1px solid var(--button-primary)'
+                            : '1px solid transparent',
+                          background: studyMode ? 'var(--button-primary)' : 'transparent',
+                          color: studyMode ? 'var(--button-text)' : 'var(--text-secondary)',
+                          cursor: 'pointer',
+                          flexShrink: 0,
+                          transition:
+                            'background 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (studyMode) return
+                          e.currentTarget.style.background = 'var(--bg-section)'
+                          e.currentTarget.style.color = 'var(--text-primary)'
+                        }}
+                        onMouseLeave={(e) => {
+                          if (studyMode) return
+                          e.currentTarget.style.background = 'transparent'
+                          e.currentTarget.style.color = 'var(--text-secondary)'
+                        }}
+                      >
+                        {studyMode ? (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path
+                              d="M9 4H5v4M15 4h4v4M9 20H5v-4M15 20h4v-4"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        ) : (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path
+                              d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        )}
+                      </button>
+                    </Tip>
                   )}
                   {clerkEnabled && (
                     <div
@@ -830,15 +937,18 @@ function App(): JSX.Element {
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 10,
+                        marginLeft: isMobile ? 4 : 8,
                       }}
                     >
-                      {!isMobile && <SignedInGreeting />}
                       <AuthButton />
                     </div>
                   )}
                 </div>
               </header>
+
+              {clerkEnabled && !showTools && currentView === 'exercises' && (
+                <SignedInGreeting />
+              )}
 
               {!showTools && currentView === 'exercises' && (
                 <MemoizedProgressDashboard
@@ -902,7 +1012,11 @@ function App(): JSX.Element {
             open={Boolean(aiGate)}
             mode={aiGate?.mode || 'quota'}
             message={aiGate?.message || ''}
-            onClose={() => setAiGate(null)}
+            onClose={() => {
+              // Close UI first; dismiss-local cancels in-flight AI / finishes if needed
+              setAiGate(null)
+              emitAiGateDismissLocal()
+            }}
             onSignIn={
               clerkEnabled
                 ? () => {
@@ -950,19 +1064,24 @@ function App(): JSX.Element {
               tutorialId="onboarding"
               title="How this lab works"
               steps={onboardingTutorial}
+              isMobile={isMobile}
+              onPrepareStep={prepareTutorialStep}
               onComplete={() => {
                 settingsStorage.setOnboardingComplete(true)
                 setShowTutorial(false)
+                if (isMobile) setShowSidebar(false)
               }}
               onSkip={() => {
                 settingsStorage.setOnboardingComplete(true)
                 setShowTutorial(false)
+                if (isMobile) setShowSidebar(false)
               }}
             />
           )}
 
           {/* Toast Container */}
           <ToastContainer />
+          <ScrollToTopButton />
           {showCertificate && (
             <Week1Certificate onClose={() => setShowCertificate(false)} />
           )}

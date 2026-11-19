@@ -71,10 +71,10 @@ function QuizQuestion({
             </div>
 
             {selectedAnswer === null && onSkip && (
-                <div className="quiz-explanation__actions" style={{ marginTop: 16 }}>
+                <div className="quiz-actions">
                     <button
                         type="button"
-                        className="lesson-full-btn quiz-skip-btn"
+                        className="quiz-btn quiz-btn--ghost"
                         onClick={onSkip}
                         aria-label="Skip question"
                     >
@@ -99,11 +99,29 @@ function QuizQuestion({
                             <p>{question.explanation}</p>
                         </>
                     )}
-                    <div className="quiz-explanation__actions">
+                    <div className="quiz-actions">
+                        <button
+                            type="button"
+                            className="quiz-btn quiz-btn--primary"
+                            onClick={onNext}
+                            aria-label={
+                                !isLastQuestion
+                                    ? 'Next question'
+                                    : isAISection
+                                        ? 'Finish quiz'
+                                        : 'Complete local questions'
+                            }
+                        >
+                            {!isLastQuestion
+                                ? 'Next question'
+                                : isAISection
+                                    ? 'Finish quiz'
+                                    : 'Complete local questions'}
+                        </button>
                         {isWrong && (
                             <button
                                 type="button"
-                                className="lesson-full-btn quiz-skip-btn"
+                                className="quiz-btn quiz-btn--ghost"
                                 disabled={savedCard}
                                 onClick={() => {
                                     flashcardStorage.createFromQuizQuestion(
@@ -123,24 +141,6 @@ function QuizQuestion({
                                 {savedCard ? 'Saved to flashcards' : 'Save as flashcard'}
                             </button>
                         )}
-                        <button
-                            type="button"
-                            className="lesson-full-btn quiz-next-btn"
-                            onClick={onNext}
-                            aria-label={
-                                !isLastQuestion
-                                    ? 'Next question'
-                                    : isAISection
-                                        ? 'Finish quiz'
-                                        : 'Complete local questions'
-                            }
-                        >
-                            {!isLastQuestion
-                                ? 'Next Question →'
-                                : isAISection
-                                    ? 'Finish Quiz'
-                                    : 'Complete Local Questions'}
-                        </button>
                     </div>
                 </div>
             )}

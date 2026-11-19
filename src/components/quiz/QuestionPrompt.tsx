@@ -1,216 +1,132 @@
 /**
- * Question Prompt Component
- * Shows after 3 questions to let user choose between local or AI questions
+ * Question Prompt — after the first 3 questions, choose local/AI and count
  */
 
 import { useState, type JSX } from 'react'
 import SlideUp from '../animations/SlideUp'
+import '../../exercises/exerciseLayout.css'
 
 interface QuestionPromptProps {
-    onSelectType: (type: 'local' | 'ai' | null) => void
-    onCancel: () => void
-    selectedType: 'local' | 'ai' | null
-    onSelectCount: (type: 'local' | 'ai', count: number) => void
-    generating: boolean
-    errorMessage: string | null
+  onSelectType: (type: 'local' | 'ai' | null) => void
+  onCancel: () => void
+  selectedType: 'local' | 'ai' | null
+  onSelectCount: (type: 'local' | 'ai', count: number) => void
+  generating: boolean
+  errorMessage: string | null
 }
 
+const COUNT_OPTIONS = [5, 10, 15, 20] as const
+
 function QuestionPrompt({
-    onSelectType,
-    onCancel,
-    selectedType,
-    onSelectCount,
-    generating,
-    errorMessage
+  onSelectType,
+  onCancel,
+  selectedType,
+  onSelectCount,
+  generating,
+  errorMessage,
 }: QuestionPromptProps): JSX.Element {
-    const [selectedCount, setSelectedCount] = useState<number>(5)
-    const counts = [5, 10, 15, 20]
+  const [selectedCount, setSelectedCount] = useState(5)
 
-    // Show type selection
-    if (!selectedType) {
-        return (
-            <SlideUp>
-                <div style={{
-                    textAlign: 'center',
-                    padding: '40px',
-                    background: 'var(--bg-card)',
-                    borderRadius: '12px',
-                    border: '2px solid var(--border-primary)',
-                    marginTop: '20px'
-                }}>
-                    <h2 style={{ marginBottom: '20px' }}>📚 Want More Questions?</h2>
-                    <p style={{ marginBottom: '30px', color: 'var(--text-secondary)' }}>
-                        You've completed 3 questions. Would you like to continue with more questions?
-                    </p>
-
-                    <div style={{
-                        display: 'flex',
-                        gap: '20px',
-                        justifyContent: 'center',
-                        flexWrap: 'wrap'
-                    }}>
-                        <button
-                            onClick={() => onSelectType('local')}
-                            disabled={generating}
-                            style={{
-                                padding: '20px 40px',
-                                background: 'var(--button-primary)',
-                                color: 'var(--button-text)',
-                                border: 'none',
-                                borderRadius: '8px',
-                                cursor: generating ? 'not-allowed' : 'pointer',
-                                fontSize: '18px',
-                                fontWeight: '600',
-                                transition: 'all 0.2s',
-                                opacity: generating ? 0.6 : 1,
-                                minWidth: '200px'
-                            }}
-                        >
-                            📖 More Local Questions
-                        </button>
-
-                        <button
-                            onClick={() => onSelectType('ai')}
-                            disabled={generating}
-                            style={{
-                                padding: '20px 40px',
-                                background: 'var(--button-secondary)',
-                                color: 'var(--button-text)',
-                                border: 'none',
-                                borderRadius: '8px',
-                                cursor: generating ? 'not-allowed' : 'pointer',
-                                fontSize: '18px',
-                                fontWeight: '600',
-                                transition: 'all 0.2s',
-                                opacity: generating ? 0.6 : 1,
-                                minWidth: '200px'
-                            }}
-                        >
-                            🤖 AI-Generated Questions
-                        </button>
-                    </div>
-
-                    <button
-                        onClick={onCancel}
-                        disabled={generating}
-                        style={{
-                            marginTop: '20px',
-                            padding: '10px 20px',
-                            background: 'transparent',
-                            color: 'var(--text-secondary)',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '6px',
-                            cursor: generating ? 'not-allowed' : 'pointer',
-                            fontSize: '14px'
-                        }}
-                    >
-                        Continue with remaining questions
-                    </button>
-                </div>
-            </SlideUp>
-        )
-    }
-
-    // Show count selection
+  if (!selectedType) {
     return (
-        <SlideUp>
-            <div style={{
-                textAlign: 'center',
-                padding: '40px',
-                background: 'var(--bg-card)',
-                borderRadius: '12px',
-                border: '2px solid var(--border-primary)',
-                marginTop: '20px'
-            }}>
-                <h2 style={{ marginBottom: '10px' }}>
-                    {selectedType === 'local' ? '📖 Local Questions' : '🤖 AI Questions'}
-                </h2>
-                <p style={{ marginBottom: '30px', color: 'var(--text-secondary)' }}>
-                    How many {selectedType === 'local' ? 'local' : 'AI-generated'} questions would you like?
-                </p>
+      <SlideUp>
+        <div className="quiz-panel" role="region" aria-label="More questions">
+          <h2 className="quiz-panel__title">Want more questions?</h2>
+          <p className="quiz-panel__lead">
+            You’ve finished 3. Keep going with local or AI-generated questions.
+          </p>
 
-                {errorMessage && (
-                    <div style={{
-                        padding: '12px',
-                        background: 'var(--bg-warning)',
-                        color: 'var(--text-on-warning)',
-                        borderRadius: '6px',
-                        marginBottom: '20px',
-                        fontSize: '14px'
-                    }}>
-                        ⚠️ {errorMessage}
-                    </div>
-                )}
-
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    gap: '12px',
-                    flexWrap: 'wrap',
-                    marginBottom: '30px'
-                }}>
-                    {counts.map((count) => (
-                        <button
-                            key={count}
-                            onClick={() => setSelectedCount(count)}
-                            disabled={generating}
-                            style={{
-                                padding: '12px 24px',
-                                background: selectedCount === count ? 'var(--button-primary)' : 'var(--bg-section)',
-                                color: selectedCount === count ? 'var(--button-text)' : 'var(--text-primary)',
-                                border: `2px solid ${selectedCount === count ? 'var(--button-primary)' : 'var(--border-color)'}`,
-                                borderRadius: '8px',
-                                cursor: generating ? 'not-allowed' : 'pointer',
-                                fontSize: '16px',
-                                fontWeight: '500',
-                                transition: 'all 0.2s',
-                                opacity: generating ? 0.6 : 1
-                            }}
-                        >
-                            {count} Questions
-                        </button>
-                    ))}
-                </div>
-
-                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                    <button
-                        onClick={() => onSelectCount(selectedType, selectedCount)}
-                        disabled={generating}
-                        style={{
-                            padding: '12px 32px',
-                            background: generating ? 'var(--bg-section)' : 'var(--button-primary)',
-                            color: 'var(--button-text)',
-                            border: 'none',
-                            borderRadius: '8px',
-                            cursor: generating ? 'not-allowed' : 'pointer',
-                            fontSize: '18px',
-                            fontWeight: '600',
-                            transition: 'all 0.2s',
-                            opacity: generating ? 0.6 : 1
-                        }}
-                    >
-                        {generating ? '🔄 Loading...' : 'Continue'}
-                    </button>
-
-                    <button
-                        onClick={() => onSelectType(null)}
-                        disabled={generating}
-                        style={{
-                            padding: '12px 24px',
-                            background: 'transparent',
-                            color: 'var(--text-secondary)',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '8px',
-                            cursor: generating ? 'not-allowed' : 'pointer',
-                            fontSize: '14px'
-                        }}
-                    >
-                        Back
-                    </button>
-                </div>
-            </div>
-        </SlideUp>
+          <div className="quiz-actions">
+            <button
+              type="button"
+              className="quiz-btn quiz-btn--primary"
+              onClick={() => onSelectType('local')}
+              disabled={generating}
+            >
+              Local questions
+            </button>
+            <button
+              type="button"
+              className="quiz-btn quiz-btn--ghost"
+              onClick={() => onSelectType('ai')}
+              disabled={generating}
+            >
+              AI questions
+            </button>
+            <button
+              type="button"
+              className="quiz-btn quiz-btn--link"
+              onClick={onCancel}
+              disabled={generating}
+            >
+              Skip — finish remaining
+            </button>
+          </div>
+        </div>
+      </SlideUp>
     )
+  }
+
+  const title = selectedType === 'local' ? 'Local questions' : 'AI questions'
+  const primaryLabel = generating
+    ? 'Loading…'
+    : `Continue with ${selectedCount}`
+
+  return (
+    <SlideUp>
+      <div className="quiz-panel" role="region" aria-label={title}>
+        <h2 className="quiz-panel__title">{title}</h2>
+        <p className="quiz-panel__lead">
+          How many {selectedType === 'local' ? 'local' : 'AI'} questions would you like?
+        </p>
+
+        {errorMessage && (
+          <p className="quiz-count-prompt__error" role="alert">
+            {errorMessage}
+          </p>
+        )}
+
+        <div
+          className="quiz-segment"
+          role="radiogroup"
+          aria-label="Number of questions"
+        >
+          {COUNT_OPTIONS.map((count) => (
+            <button
+              key={count}
+              type="button"
+              role="radio"
+              aria-checked={selectedCount === count}
+              className={`quiz-segment__opt${selectedCount === count ? ' quiz-segment__opt--active' : ''}`}
+              onClick={() => setSelectedCount(count)}
+              disabled={generating}
+            >
+              {count}
+            </button>
+          ))}
+        </div>
+
+        <div className="quiz-actions">
+          <button
+            type="button"
+            className="quiz-btn quiz-btn--primary"
+            onClick={() => onSelectCount(selectedType, selectedCount)}
+            disabled={generating}
+          >
+            {primaryLabel}
+          </button>
+          <button
+            type="button"
+            className="quiz-btn quiz-btn--ghost"
+            onClick={() => onSelectType(null)}
+            disabled={generating}
+          >
+            Back
+          </button>
+        </div>
+      </div>
+    </SlideUp>
+  )
 }
 
 export default QuestionPrompt

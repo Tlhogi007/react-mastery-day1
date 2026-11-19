@@ -6,6 +6,7 @@
 
 import type { APIProvider } from './types'
 import type { QuizQuestion } from '../../types/challenges'
+import { aiGateBlocksProviderFallback } from '../aiAuthBridge'
 import { hostedAutoProvider } from './hostedAuto'
 import { groqProvider } from './groq'
 import { geminiProvider } from './gemini'
@@ -59,8 +60,14 @@ export async function fetchFromProviders(
     try {
       const questions = await provider.fetch(topic, count)
       if (questions.length > 0) return questions
+      // Auth/quota gate already shown — don't hammer OpenTDB as a silent fallback
+      if (aiGateBlocksProviderFallback()) {
+        console.warn(`[API] Stopping provider waterfall after AI gate (${provider.name})`)
+        return []
+      }
     } catch (error) {
       console.warn(`[API] ❌ ${provider.name} fetch failed:`, error)
+      if (aiGateBlocksProviderFallback()) return []
     }
   }
 

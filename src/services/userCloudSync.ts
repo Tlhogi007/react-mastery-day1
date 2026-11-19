@@ -155,17 +155,52 @@ async function authHeaders(): Promise<HeadersInit | null> {
   }
 }
 
-export async function fetchUserCloud(): Promise<UserDataResponse | null> {
+export async function fetchUserCloud(
+  signal?: AbortSignal,
+): Promise<UserDataResponse | null> {
   const headers = await authHeaders()
   if (!headers) return null
   try {
-    const res = await fetch('/api/user-data', { method: 'GET', headers, cache: 'no-store' })
+    const res = await fetch('/api/user-data', {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+      signal,
+    })
     if (!res.ok) return null
     const data = (await res.json()) as UserDataResponse
     if (data.quota) emitAiQuota(data.quota)
     return data
   } catch {
     // Offline / Vite restart / transient network — local progress still works
+    return null
+  }
+}
+
+/**
+ * Long-poll until cloud.updatedAt differs from `since` (or server times out ~12s).
+ * Unused by the low-data client (event-driven pull only); kept for a future mode.
+ */
+export async function fetchUserCloudWait(
+  since: string,
+  signal?: AbortSignal,
+): Promise<(UserDataResponse & { changed?: boolean }) | null> {
+  if (!since) return fetchUserCloud(signal)
+  const headers = await authHeaders()
+  if (!headers) return null
+  try {
+    const q = new URLSearchParams({ wait: '1', since })
+    const res = await fetch(`/api/user-data?${q}`, {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+      signal,
+    })
+    if (!res.ok) return null
+    const data = (await res.json()) as UserDataResponse & { changed?: boolean }
+    if (data.quota) emitAiQuota(data.quota)
+    return data
+  } catch {
     return null
   }
 }
@@ -184,7 +219,7 @@ export async function pushUserCloud(
     })
     if (!res.ok) return null
     const data = (await res.json()) as UserDataResponse
-    if (data.cloud) applySnapshotLocally(data.cloud)
+    // Do not re-apply cloud locally — that re-emitted sync events and looped PUTs.
     if (data.quota) emitAiQuota(data.quota)
     return data
   } catch {
@@ -204,29 +239,39 @@ export function progressSyncFingerprint(snapshot: UserCloudSnapshot): string {
         .filter(Boolean)
         .sort()
     : []
+  // Omit liveProgress.updatedAt — it changes every tick and was burning uploads on Quiz.
+  const live = snapshot.liveProgress
   return JSON.stringify({
     progress: snapshot.progress,
-    liveProgress: snapshot.liveProgress ?? null,
+    live:
+      live == null
+        ? null
+        : { day: live.day, percent: live.percent },
     historyIds,
   })
 }
 
 /**
  * Pull cloud and merge into local without PUT.
- * Used by the idle-device poll so phone updates appear on laptop live.
+ * Used by the idle-device live sync so phone updates appear on laptop.
  */
 export async function pullAndMergeUserCloud(
   lab?: Partial<LabCloudState>,
-): Promise<{ changed: boolean; data: UserDataResponse | null }> {
-  const remote = await fetchUserCloud()
-  if (!remote?.cloud) return { changed: false, data: null }
+  options?: { since?: string; signal?: AbortSignal },
+): Promise<{ changed: boolean; data: UserDataResponse | null; updatedAt: string }> {
+  const remote = options?.since
+    ? await fetchUserCloudWait(options.since, options.signal)
+    : await fetchUserCloud(options?.signal)
+  if (!remote?.cloud) return { changed: false, data: null, updatedAt: options?.since ?? '' }
+  const updatedAt =
+    typeof remote.cloud.updatedAt === 'string' ? remote.cloud.updatedAt : options?.since ?? ''
   const local = buildLocalSnapshot(lab)
   const merged = mergeSnapshots(local, remote.cloud) as UserCloudSnapshot
   if (progressSyncFingerprint(local) === progressSyncFingerprint(merged)) {
-    return { changed: false, data: remote }
+    return { changed: false, data: remote, updatedAt }
   }
   applySnapshotLocally(merged)
-  return { changed: true, data: { ...remote, cloud: merged } }
+  return { changed: true, data: { ...remote, cloud: merged }, updatedAt }
 }
 
 /**

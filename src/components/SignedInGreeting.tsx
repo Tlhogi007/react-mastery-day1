@@ -1,7 +1,7 @@
 import { type JSX } from 'react'
 import { Show, useUser } from '@clerk/react'
 
-/** Compact hello next to the auth control when signed in. */
+/** Quiet “Hi, Name” above the progress card (right-aligned). */
 export function SignedInGreeting(): JSX.Element {
   const { user, isLoaded } = useUser()
   if (!isLoaded || !user) return <></>
@@ -14,20 +14,27 @@ export function SignedInGreeting(): JSX.Element {
 
   return (
     <Show when="signed-in">
-      <span
+      <p
+        className="signed-in-greeting"
         style={{
-          fontSize: 13,
-          fontWeight: 600,
-          color: 'var(--text-secondary)',
-          maxWidth: 140,
+          margin: '0 0 8px',
+          padding: '0 2px',
+          textAlign: 'right',
+          fontSize: 12,
+          fontWeight: 500,
+          fontFamily: 'var(--font-ui)',
+          color: 'var(--text-muted)',
+          letterSpacing: '-0.01em',
+          lineHeight: 1.3,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
         }}
         title={user.primaryEmailAddress?.emailAddress || name}
       >
-        Hi, {name}
-      </span>
+        Hi,{' '}
+        <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{name}</span>
+      </p>
     </Show>
   )
 }

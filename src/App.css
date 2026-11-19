@@ -84,6 +84,41 @@
   overflow-x: hidden;
 }
 
+/* Header icon tooltips (desktop hover) */
+.ui-tip::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%) translateY(4px);
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 90;
+}
+
+.ui-tip:hover::after,
+.ui-tip:focus-within::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (hover: none) {
+  .ui-tip::after {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   .app-main {
     padding: var(--space-3) var(--space-4) var(--space-7);

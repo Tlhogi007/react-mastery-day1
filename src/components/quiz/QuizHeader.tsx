@@ -50,7 +50,7 @@ function QuizHeader({
         <div className="quiz-header">
             <h3 className="quiz-header__title">{title}</h3>
             <div className="quiz-header__progress">
-                Question {currentQuestionIndex + 1} of {totalQuestions}
+                Question {currentQuestionIndex + 1}/{totalQuestions}
                 {aiQuestionsLoaded && (
                     <span className="quiz-header__progress-detail">
                         ({localQuestionsCount} local + {totalQuestions - localQuestionsCount} AI)
