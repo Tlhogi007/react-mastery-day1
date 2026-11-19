@@ -17,11 +17,19 @@ export type LabCloudState = {
   tab?: string
 }
 
+/** In-progress day bar (mid-quiz). percent null = cleared. */
+export type LiveProgressState = {
+  day: number
+  percent: number | null
+  updatedAt: string
+}
+
 export type UserCloudSnapshot = {
   version: 1
   updatedAt: string
   progress: ProgressData
   lab?: LabCloudState | null
+  liveProgress?: LiveProgressState | null
   notes?: unknown
   annotations?: unknown
   reflections?: unknown
@@ -51,12 +59,43 @@ export function emptySnapshot(): UserCloudSnapshot {
     updatedAt: new Date(0).toISOString(),
     progress: emptyProgress(),
     lab: null,
+    liveProgress: null,
     notes: [],
     annotations: [],
     reflections: [],
     flashcards: [],
     snippets: [],
   }
+}
+
+export function normalizeLiveProgress(raw: unknown): LiveProgressState | null {
+  if (!raw || typeof raw !== 'object') return null
+  const o = raw as Record<string, unknown>
+  const day = Number(o.day)
+  if (!Number.isFinite(day) || day < 1) return null
+  const updatedAt = typeof o.updatedAt === 'string' ? o.updatedAt : ''
+  if (!updatedAt) return null
+  if (o.percent == null) {
+    return { day, percent: null, updatedAt }
+  }
+  const percent = Number(o.percent)
+  if (!Number.isFinite(percent)) return null
+  return {
+    day,
+    percent: Math.min(80, Math.max(0, Math.round(percent))),
+    updatedAt,
+  }
+}
+
+export function mergeLiveProgress(
+  a: LiveProgressState | null | undefined,
+  b: LiveProgressState | null | undefined,
+): LiveProgressState | null {
+  const left = a ?? null
+  const right = b ?? null
+  if (!left) return right
+  if (!right) return left
+  return (left.updatedAt || '') >= (right.updatedAt || '') ? left : right
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -150,11 +189,16 @@ export function mergeSnapshots(
   )
   const localNewer = (l.updatedAt || '') > (c.updatedAt || '')
   const lab = localNewer ? (l.lab ?? c.lab ?? null) : (c.lab ?? l.lab ?? null)
+  const liveProgress = mergeLiveProgress(
+    normalizeLiveProgress(l.liveProgress),
+    normalizeLiveProgress(c.liveProgress),
+  )
   return {
     version: 1,
     updatedAt: new Date().toISOString(),
     progress,
     lab: lab || null,
+    liveProgress,
     notes: mergeById(l.notes, c.notes),
     annotations: mergeById(l.annotations, c.annotations),
     reflections: mergeById(l.reflections, c.reflections),
@@ -173,6 +217,7 @@ export function parseSnapshot(raw: string | null): UserCloudSnapshot | null {
       updatedAt: typeof parsed.updatedAt === 'string' ? parsed.updatedAt : new Date(0).toISOString(),
       progress: normalizeProgress(parsed.progress),
       lab: parsed.lab ?? null,
+      liveProgress: normalizeLiveProgress(parsed.liveProgress),
       notes: parsed.notes ?? [],
       annotations: parsed.annotations ?? [],
       reflections: parsed.reflections ?? [],
@@ -196,6 +241,7 @@ export function sanitizeIncomingSnapshot(body: unknown): UserCloudSnapshot | nul
     updatedAt: typeof o.updatedAt === 'string' ? o.updatedAt : new Date().toISOString(),
     progress: normalizeProgress(o.progress),
     lab: o.lab ?? null,
+    liveProgress: normalizeLiveProgress(o.liveProgress),
     notes: cappedArray(o.notes, 500),
     annotations: cappedArray(o.annotations, 500),
     reflections: cappedArray(o.reflections, 500),

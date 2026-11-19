@@ -1,7 +1,7 @@
 /**
  * Sync learner progress / notes / tools data to /api/user-data when signed in.
  */
-import { progressStorage, type ProgressData } from './progressStorage'
+import { progressStorage, type LiveDayProgress, type ProgressData } from './progressStorage'
 import { getActiveTab, normalizeLabView, writeLabSession } from './authReturnTo'
 import { waitForAiAuthToken } from './aiAuthBridge'
 import { mergeSnapshots } from '../../api/_lib/userCloud'
@@ -29,6 +29,8 @@ export type UserCloudSnapshot = {
   updatedAt: string
   progress: ProgressData
   lab?: LabCloudState | null
+  /** Mid-quiz day bar — syncs across signed-in devices */
+  liveProgress?: LiveDayProgress | null
   notes?: unknown
   annotations?: unknown
   reflections?: unknown
@@ -94,6 +96,7 @@ export function buildLocalSnapshot(
     updatedAt: new Date().toISOString(),
     progress: progressStorage.getProgress(),
     lab,
+    liveProgress: progressStorage.getLiveDayProgressState(),
     notes: readJsonKey('react-mastery-notes'),
     annotations: readJsonKey('react-mastery-annotations'),
     reflections: readJsonKey('react-mastery-reflections'),
@@ -104,6 +107,11 @@ export function buildLocalSnapshot(
 
 function applySnapshotLocally(cloud: UserCloudSnapshot): void {
   progressStorage.saveProgress(cloud.progress)
+  // Concrete state only (active % or tombstone). Skip null/absent so empty cloud
+  // does not wipe a device that has not pushed live progress yet.
+  if (cloud.liveProgress != null) {
+    progressStorage.applyLiveDayProgressState(cloud.liveProgress)
+  }
   if (Array.isArray(cloud.notes)) writeJsonKey('react-mastery-notes', cloud.notes)
   if (Array.isArray(cloud.annotations)) writeJsonKey('react-mastery-annotations', cloud.annotations)
   if (Array.isArray(cloud.reflections)) writeJsonKey('react-mastery-reflections', cloud.reflections)

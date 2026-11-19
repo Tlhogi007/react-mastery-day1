@@ -20,7 +20,12 @@ const DEFAULT_PROGRESS: ProgressData = {
   quizScores: {}
 }
 
-type LiveDayProgress = { day: number; percent: number }
+/** Persisted + cloud-synced mid-quiz day bar. percent null = cleared. */
+export type LiveDayProgress = {
+  day: number
+  percent: number | null
+  updatedAt: string
+}
 
 function emitProgressChanged(): void {
   if (typeof window !== 'undefined') {
@@ -65,19 +70,26 @@ class ProgressStorage {
   }
 
   /**
-   * In-progress quiz overlay for the current day (session only).
+   * In-progress quiz overlay for the current day.
+   * Stored in localStorage so it can sync across signed-in devices.
    * Cleared when the quiz finishes or the learner leaves the quiz.
    */
   setLiveDayProgress(day: number, percent: number | null): void {
     try {
-      if (percent == null || !Number.isFinite(percent)) {
+      const payload: LiveDayProgress = {
+        day,
+        percent:
+          percent == null || !Number.isFinite(percent)
+            ? null
+            : Math.min(80, Math.max(0, Math.round(percent))),
+        updatedAt: new Date().toISOString(),
+      }
+      localStorage.setItem(LIVE_PROGRESS_KEY, JSON.stringify(payload))
+      // Drop legacy session-only copy if present
+      try {
         sessionStorage.removeItem(LIVE_PROGRESS_KEY)
-      } else {
-        const payload: LiveDayProgress = {
-          day,
-          percent: Math.min(80, Math.max(0, Math.round(percent))),
-        }
-        sessionStorage.setItem(LIVE_PROGRESS_KEY, JSON.stringify(payload))
+      } catch {
+        /* ignore */
       }
       emitProgressChanged()
     } catch {
@@ -85,15 +97,55 @@ class ProgressStorage {
     }
   }
 
-  getLiveDayProgress(day: number): number | null {
+  /** Full live payload for cloud sync (includes clears). */
+  getLiveDayProgressState(): LiveDayProgress | null {
     try {
-      const raw = sessionStorage.getItem(LIVE_PROGRESS_KEY)
+      const raw = localStorage.getItem(LIVE_PROGRESS_KEY) || sessionStorage.getItem(LIVE_PROGRESS_KEY)
       if (!raw) return null
-      const parsed = JSON.parse(raw) as LiveDayProgress
-      if (parsed?.day !== day || typeof parsed.percent !== 'number') return null
-      return parsed.percent
+      const parsed = JSON.parse(raw) as Partial<LiveDayProgress>
+      const day = Number(parsed.day)
+      if (!Number.isFinite(day) || day < 1) return null
+      const updatedAt =
+        typeof parsed.updatedAt === 'string' && parsed.updatedAt
+          ? parsed.updatedAt
+          : new Date(0).toISOString()
+      if (parsed.percent == null) {
+        return { day, percent: null, updatedAt }
+      }
+      const percent = Number(parsed.percent)
+      if (!Number.isFinite(percent)) return null
+      return {
+        day,
+        percent: Math.min(80, Math.max(0, Math.round(percent))),
+        updatedAt,
+      }
     } catch {
       return null
+    }
+  }
+
+  getLiveDayProgress(day: number): number | null {
+    const state = this.getLiveDayProgressState()
+    if (!state || state.day !== day || state.percent == null) return null
+    return state.percent
+  }
+
+  /** Apply cloud live progress onto this device. */
+  applyLiveDayProgressState(state: LiveDayProgress | null): void {
+    try {
+      if (!state) {
+        localStorage.removeItem(LIVE_PROGRESS_KEY)
+      } else {
+        localStorage.setItem(LIVE_PROGRESS_KEY, JSON.stringify(state))
+      }
+      try {
+        sessionStorage.removeItem(LIVE_PROGRESS_KEY)
+      } catch {
+        /* ignore */
+      }
+      emitProgressChanged()
+    } catch {
+      /* ignore */
     }
   }
 
@@ -208,6 +260,7 @@ class ProgressStorage {
   clearProgress(): void {
     try {
       localStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem(LIVE_PROGRESS_KEY)
       sessionStorage.removeItem(LIVE_PROGRESS_KEY)
       emitProgressChanged()
     } catch (error) {

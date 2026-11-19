@@ -86,9 +86,10 @@ export function UserCloudSync({
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return
     if (saveTimer.current) window.clearTimeout(saveTimer.current)
+    // Short debounce so mid-quiz live % reaches other devices quickly
     saveTimer.current = window.setTimeout(() => {
       void pushUserCloud(buildLocalSnapshot({ exercise, view, tools, tab }))
-    }, 1200)
+    }, 600)
     return () => {
       if (saveTimer.current) window.clearTimeout(saveTimer.current)
     }
