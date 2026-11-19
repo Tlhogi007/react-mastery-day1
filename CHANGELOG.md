@@ -1,3 +1,10 @@
+## [1.13.3](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.13.2...v1.13.3) (2026-11-19)
+
+
+### Bug Fixes
+
+* tidy community byline and article meta wrapping ([bb70164](https://github.com/Tlhogi007/react-mastery-day1/commit/bb7016452124461cacc709992929744d89c675d7))
+
 ## [1.13.2](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.13.1...v1.13.2) (2026-11-19)
 
 
