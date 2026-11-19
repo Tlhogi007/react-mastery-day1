@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.8.0...v1.8.1) (2026-11-19)
+
+
+### Bug Fixes
+
+* harden cloud progress restore and add Playwright e2e ([3d7c379](https://github.com/Tlhogi007/react-mastery-day1/commit/3d7c3799d372321bff76e23dceeeda473f8d65b3))
+
 # [1.8.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.7.0...v1.8.0) (2026-11-19)
 
 
