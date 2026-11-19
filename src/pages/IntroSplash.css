@@ -12,7 +12,7 @@
     radial-gradient(ellipse 70% 50% at 50% 35%, rgba(226, 61, 43, 0.1), transparent 60%),
     var(--bg-primary);
   color: var(--text-primary);
-  cursor: pointer;
+  cursor: default;
 }
 
 .intro-splash__inner {

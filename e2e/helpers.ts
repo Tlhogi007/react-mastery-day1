@@ -25,25 +25,14 @@ export async function seedOnboarding(page: Page): Promise<void> {
   })
 }
 
-/** Intro splash auto-unlocks after ~5s (Strict Mode may remount once). */
+/** Intro splash stays until Continue (or Enter/Space). */
 export async function dismissIntroIfPresent(page: Page): Promise<void> {
   const dialog = page.getByRole('dialog', { name: /Welcome/i })
   if (!(await dialog.isVisible({ timeout: 2_000 }).catch(() => false))) return
 
   const continueBtn = dialog.getByRole('button', { name: /^Continue$/i })
-  // Prefer waiting for auto-dismiss; fall back to Continue once unlocked.
-  try {
-    await Promise.race([
-      dialog.waitFor({ state: 'hidden', timeout: 14_000 }),
-      (async () => {
-        await expect(continueBtn).toBeEnabled({ timeout: 14_000 })
-        await continueBtn.click({ timeout: 3_000 })
-      })(),
-    ])
-  } catch {
-    // Last resort: keyboard unlock path
-    await page.keyboard.press('Escape')
-  }
+  await expect(continueBtn).toBeVisible({ timeout: 5_000 })
+  await continueBtn.click()
   await expect(dialog).toBeHidden({ timeout: 5_000 })
 }
 

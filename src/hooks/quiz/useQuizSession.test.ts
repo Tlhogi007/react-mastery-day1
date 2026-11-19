@@ -90,4 +90,51 @@ describe('useQuizSession (composer)', () => {
     expect(tracked.setAiQuestionsLoaded).toHaveBeenCalledWith(false)
     expect(result.current.score).toBe(0)
   })
+
+  it('cancel prompt finishes when no local questions remain after mid-quiz gate', () => {
+    const short = [q('a'), q('b'), q('c')]
+    const { result } = renderHook(() =>
+      useQuizSession({
+        questions: short,
+        day: 1,
+        boot: null,
+        aiQuestionsLoaded: false,
+        ...aiSetters(),
+      }),
+    )
+
+    for (let i = 0; i < 3; i++) {
+      act(() => result.current.handleAnswerSelect(0))
+      act(() => result.current.handleNext())
+    }
+    expect(result.current.showQuestionPrompt).toBe(true)
+    expect(result.current.currentQuestionIndex).toBe(2)
+
+    act(() => result.current.handleCancelPrompt())
+    expect(result.current.showQuestionPrompt).toBe(false)
+    expect(result.current.completed).toBe(true)
+    expect(progressStorage.markQuizCompleted).toHaveBeenCalled()
+  })
+
+  it('surfaces exhausted banner after cloud sync when unseen locals are gone', () => {
+    const pick = vi.spyOn(questionHistory, 'pickUnseenQuestions')
+    pick.mockImplementation((qs) => [...qs])
+
+    const { result } = renderHook(() =>
+      useQuizSession({
+        questions: bank,
+        day: 1,
+        boot: null,
+        aiQuestionsLoaded: false,
+        ...aiSetters(),
+      }),
+    )
+    expect(result.current.errorMessage).toBeNull()
+
+    pick.mockReturnValue([])
+    act(() => {
+      window.dispatchEvent(new CustomEvent('rm-user-cloud-synced'))
+    })
+    expect(result.current.errorMessage).toMatch(/already completed/i)
+  })
 })

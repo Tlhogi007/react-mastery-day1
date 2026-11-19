@@ -87,7 +87,7 @@ export function clearLabNavigationState(): void {
  */
 export function prepareLandingAfterSignOut(): void {
   safeSet(FORCE_LANDING_KEY, '1')
-  // Sign-out → marketing landing, not the 5s intro splash.
+  // Sign-out → marketing landing, not the intro splash.
   markSkipIntroAfterAuth()
   safeRemove(LAB_SESSION_KEY)
   safeRemove(ACTIVE_TAB_KEY)
@@ -217,7 +217,7 @@ export function markSkipIntroAfterAuth(): void {
 export function prepareAuthReturnUrl(overrides?: Partial<AuthReturnTo>): string {
   const state = snapshotFromStorage(overrides)
   persistSnapshot(state)
-  // Post-OAuth remount should land on home/lab — not replay the 5s intro.
+  // Post-OAuth remount should land on home/lab — not replay the intro.
   markSkipIntroAfterAuth()
   if (typeof window === 'undefined') return '/'
   const pathSearch = `${window.location.pathname}${window.location.search}` || '/'

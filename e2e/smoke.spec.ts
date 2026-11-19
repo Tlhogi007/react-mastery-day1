@@ -31,7 +31,7 @@ test.describe('Launch smoke', () => {
   test.describe.configure({ mode: 'serial' })
 
   test('intro → lab → sign-in → complete → theme → restore', async ({ page }) => {
-    // 1) Fresh landing + intro brand beat
+    // 1) Fresh landing + intro (stays until Continue)
     await page.goto('/')
     await page.evaluate(() => {
       localStorage.clear()
@@ -42,7 +42,9 @@ test.describe('Launch smoke', () => {
     const intro = page.getByRole('dialog', { name: /Welcome/i })
     await expect(intro).toBeVisible({ timeout: 15_000 })
     await expect(intro.getByText(/React Mastery/i)).toBeVisible()
+    await expect(intro.getByRole('button', { name: /^Continue$/i })).toBeVisible()
     await dismissIntroIfPresent(page)
+    await expect(intro).toBeHidden()
 
     // 2) Landing CTAs
     await expect(page.getByRole('button', { name: /Start Day 1/i }).first()).toBeVisible({
