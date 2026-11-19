@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.10.0...v1.10.1) (2026-11-19)
+
+
+### Bug Fixes
+
+* **quiz:** stop repeating completed local questions ([c318d66](https://github.com/Tlhogi007/react-mastery-day1/commit/c318d66e7e49f468ad58cf67c275753077ef8238))
+
 # [1.10.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.9.0...v1.10.0) (2026-11-19)
 
 
