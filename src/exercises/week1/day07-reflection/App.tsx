@@ -1,17 +1,17 @@
 import { type JSX } from 'react'
 import Quiz from '../../../components/Quiz'
-import Challenge from '../../../components/Challenge'
 import DebuggingScenario from '../../../components/DebuggingScenario'
 import RealWorldScenarios from '../../../components/RealWorldScenarios'
 import CrossDayConnections from '../../../components/CrossDayConnections'
 import HeroSection from '../../../components/HeroSection'
 import Tabs from '../../../components/Tabs'
 import Card from '../../../components/Card'
-import CodePlaygroundPresets, { dayPresets } from '../../../components/CodePlaygroundPresets'
+import { dayPresets } from '../../../components/CodePlaygroundPresets'
 import PersonalNotes from '../../../components/PersonalNotes'
 import DailyReflection from '../../../components/DailyReflection'
 import VisualDiagram from '../../../components/VisualDiagram'
-import ReactDevToolsGuide from '../../../components/ReactDevToolsGuide'
+import { Accordion, CollapsibleSection } from '../../../components/ui/CollapsibleSection'
+import { PracticeExtras } from '../../../components/PracticeExtras'
 import { day07Quiz, day07Challenges, day07Debugging, day07RealWorld } from './challenges'
 
 function Day07Reflection(): JSX.Element {
@@ -65,14 +65,20 @@ function Day07Reflection(): JSX.Element {
                   </ol>
                 </Card>
 
-                <Card
-                  title="Key Concepts Summary"
-                  icon="🔑"
-                  style={{ marginBottom: '24px' }}
+                <p
+                  style={{
+                    margin: '0 0 16px',
+                    fontSize: 13,
+                    color: 'var(--text-secondary)',
+                    lineHeight: 1.45,
+                  }}
                 >
-                  <div style={{ marginBottom: '20px' }}>
-                    <h4>Week 1 Core Concepts</h4>
-                    <ul>
+                  Expand each topic when you want a quick refresher before the quiz and practice.
+                </p>
+
+                <Accordion style={{ marginBottom: 20 }}>
+                  <CollapsibleSection title="Week 1 core concepts" defaultOpen>
+                    <ul className="lesson-task-list" style={{ margin: 0 }}>
                       <li><strong>Day 1 - Rendering Pipeline:</strong> Render phase (interruptible) vs Commit phase (synchronous). Virtual DOM enables efficient updates.</li>
                       <li><strong>Day 2 - Reconciliation:</strong> React compares element types and uses keys for lists. Index keys cause bugs when items reorder.</li>
                       <li><strong>Day 3 - Fiber:</strong> Unit of work model enables interruptible rendering. Current vs WorkInProgress trees.</li>
@@ -80,20 +86,20 @@ function Day07Reflection(): JSX.Element {
                       <li><strong>Day 5 - Effects:</strong> useEffect runs in commit phase after DOM updates. Stale closures occur with missing dependencies.</li>
                       <li><strong>Day 6 - Context:</strong> All consumers re-render when value changes. Split contexts and memoize values to optimize.</li>
                     </ul>
-                  </div>
+                  </CollapsibleSection>
 
-                  <div>
-                    <h4>Common Patterns</h4>
-                    <ul>
+                  <CollapsibleSection title="Common patterns">
+                    <ul className="lesson-task-list" style={{ margin: 0 }}>
                       <li><strong>Optimization Pattern:</strong> React.memo + useMemo + useCallback for expensive components</li>
                       <li><strong>Context Pattern:</strong> Split by concern + memoize values + memoize consumers</li>
                       <li><strong>Effect Pattern:</strong> Include all dependencies + use updater functions for state</li>
                       <li><strong>Key Pattern:</strong> Always use stable, unique IDs from data, never index</li>
                     </ul>
-                  </div>
-                </Card>
+                  </CollapsibleSection>
+                
 
-                <VisualDiagram
+                <CollapsibleSection title="Week 1 concepts flow diagram">
+                  <VisualDiagram
                   title="Week 1 Concepts Flow"
                   steps={[
                     {
@@ -140,7 +146,9 @@ Render phase begins`
   - Context memoized (Day 6)`
                     }
                   ]}
-                />
+                  />
+                </CollapsibleSection>
+                </Accordion>
               </div>
             )
           },
@@ -150,29 +158,8 @@ Render phase begins`
             icon: '💻',
             content: (
               <div>
-                <div style={{ marginBottom: '24px' }}>
-                  <h2 style={{ marginBottom: '20px' }}>Try Code Examples</h2>
-                  <CodePlaygroundPresets presets={dayPresets[7] || []} />
-                </div>
-
-                {day07Challenges.length > 0 && (
-                  <div style={{ marginBottom: '24px' }}>
-                    <h2 style={{ marginBottom: '20px' }}>Practice Challenges</h2>
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-                      gap: '20px'
-                    }}>
-                      {day07Challenges.map((challenge) => (
-                        <Challenge key={challenge.id} challenge={challenge} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {day07Debugging.length > 0 && (
-                  <div style={{ marginBottom: '24px' }}>
-                    <h2 style={{ marginBottom: '20px' }}>Debugging Scenarios</h2>
+                  <CollapsibleSection title="Debugging scenarios" defaultOpen style={{ marginBottom: 24 }}>
                     <div style={{
                       display: 'grid',
                       gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
@@ -182,18 +169,20 @@ Render phase begins`
                         <DebuggingScenario key={scenario.id} scenario={scenario} />
                       ))}
                     </div>
-                  </div>
+                  </CollapsibleSection>
                 )}
 
-                <ReactDevToolsGuide 
-                  day={7} 
+                <PracticeExtras
+                  challenges={day07Challenges}
+                  presets={dayPresets[7] || []}
+                  day={7}
                   focusAreas={[
                     'Use Profiler to review Week 1 concepts',
                     'See render phase vs commit phase',
                     'Observe memoization preventing re-renders',
                     'Watch Context re-render propagation',
-                    'Measure performance improvements'
-                  ]} 
+                    'Measure performance improvements',
+                  ]}
                 />
               </div>
             )

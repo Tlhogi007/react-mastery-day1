@@ -1,17 +1,16 @@
 import { useState, useEffect, type JSX } from 'react'
-import Challenge from '../../../components/Challenge'
 import Quiz from '../../../components/Quiz'
 import DebuggingScenario from '../../../components/DebuggingScenario'
 import RealWorldScenarios from '../../../components/RealWorldScenarios'
-import ReactDevToolsGuide from '../../../components/ReactDevToolsGuide'
 import VisualDiagram from '../../../components/VisualDiagram'
 import CrossDayConnections from '../../../components/CrossDayConnections'
-import PerformanceMonitor from '../../../components/PerformanceMonitor'
 import HeroSection from '../../../components/HeroSection'
 import Tabs from '../../../components/Tabs'
 import Card from '../../../components/Card'
-import CodePlaygroundPresets, { dayPresets } from '../../../components/CodePlaygroundPresets'
+import { dayPresets } from '../../../components/CodePlaygroundPresets'
 import VisualDiagrams from '../../../components/VisualDiagrams'
+import { Accordion, CollapsibleSection } from '../../../components/ui/CollapsibleSection'
+import { PracticeExtras } from '../../../components/PracticeExtras'
 import PersonalNotes from '../../../components/PersonalNotes'
 import DailyReflection from '../../../components/DailyReflection'
 import { day01Challenges, day01Quiz, day01Debugging, day01RealWorld } from './challenges'
@@ -221,13 +220,19 @@ function Day01RenderingPipeline(): JSX.Element {
                                     </div>
                                 </Card>
 
-                                <Card
-                                    title="Key Concepts Explained"
-                                    icon="🔑"
-                                    style={{ marginBottom: '24px' }}
+                                <p
+                                    style={{
+                                        margin: '0 0 16px',
+                                        fontSize: 13,
+                                        color: 'var(--text-secondary)',
+                                        lineHeight: 1.45,
+                                    }}
                                 >
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <h4>🔵 Render Phase (Interruptible)</h4>
+                                    Use the interactive counter above first — open Key Concepts below when you want the deep dive.
+                                </p>
+
+                                <Accordion style={{ marginBottom: 20 }}>
+                                    <CollapsibleSection title="Render Phase (Interruptible)" defaultOpen>
                                         <p>The render phase is where React determines what needs to change:</p>
                                         <ul>
                                             <li><strong>Component Execution:</strong> React calls your component functions</li>
@@ -236,10 +241,9 @@ function Day01RenderingPipeline(): JSX.Element {
                                             <li><strong>Work Scheduling:</strong> React marks which parts need updates, but doesn't apply them yet</li>
                                         </ul>
                                         <p><strong>Why Interruptible?</strong> In React 18+, React can pause rendering to handle urgent user input (like typing or clicking). This keeps the UI responsive even during heavy rendering work.</p>
-                                    </div>
+                                    </CollapsibleSection>
 
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <h4>🟢 Commit Phase (Synchronous)</h4>
+                                    <CollapsibleSection title="Commit Phase (Synchronous)">
                                         <p>The commit phase is where React actually applies changes:</p>
                                         <ul>
                                             <li><strong>DOM Updates:</strong> React updates the real browser DOM with the changes identified in render phase</li>
@@ -248,10 +252,9 @@ function Day01RenderingPipeline(): JSX.Element {
                                             <li><strong>Ref Updates:</strong> React updates refs to point to new DOM nodes</li>
                                         </ul>
                                         <p><strong>Why Synchronous?</strong> DOM updates must be atomic. If interrupted, you'd see partial updates causing visual glitches. Effects must run in order (cleanup before setup).</p>
-                                    </div>
+                                    </CollapsibleSection>
 
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <h4>🌳 Virtual DOM</h4>
+                                    <CollapsibleSection title="Virtual DOM">
                                         <p>The Virtual DOM is a JavaScript representation of the real DOM:</p>
                                         <ul>
                                             <li><strong>Structure:</strong> A tree of JavaScript objects representing elements, props, and children</li>
@@ -259,10 +262,9 @@ function Day01RenderingPipeline(): JSX.Element {
                                             <li><strong>Batching:</strong> React can batch multiple updates and apply them together</li>
                                             <li><strong>Optimization:</strong> React only updates the parts that actually changed</li>
                                         </ul>
-                                    </div>
+                                    </CollapsibleSection>
 
-                                    <div>
-                                        <h4>🔍 Diffing Basics</h4>
+                                    <CollapsibleSection title="Diffing Basics">
                                         <p>Diffing is the process of comparing two Virtual DOM trees:</p>
                                         <ul>
                                             <li><strong>Element Type:</strong> If element type changes (div → span), React unmounts old and mounts new</li>
@@ -270,41 +272,38 @@ function Day01RenderingPipeline(): JSX.Element {
                                             <li><strong>Children:</strong> React recursively diffs children, using keys to identify which items are the same</li>
                                             <li><strong>Minimal Updates:</strong> React only updates what changed, not the entire tree</li>
                                         </ul>
-                                    </div>
-                                </Card>
+                                    </CollapsibleSection>
+                                
 
-                                <VisualDiagram
-                                    title="Rendering Pipeline Flow"
-                                    steps={[
-                                        {
-                                            title: 'User Interaction',
-                                            content: 'User clicks button, triggering event handler',
-                                            visual: `User clicks button\n    ↓\nonClick handler fires`
-                                        },
-                                        {
-                                            title: 'State Update',
-                                            content: 'setState schedules a state update in React\'s queue',
-                                            visual: `setState() called\n    ↓\nReact schedules update\n    ↓\nUpdate added to queue`
-                                        },
-                                        {
-                                            title: 'Render Phase',
-                                            content: 'React calls component functions and creates Virtual DOM',
-                                            visual: `┌─────────────────────────┐\n│   RENDER PHASE          │\n│   (Interruptible)       │\n│   - Call component      │\n│   - Create Virtual DOM  │\n│   - Diff changes        │\n└─────────────────────────┘`
-                                        },
-                                        {
-                                            title: 'Commit Phase',
-                                            content: 'React updates DOM and runs effects',
-                                            visual: `┌─────────────────────────┐\n│   COMMIT PHASE         │\n│   (Synchronous)        │\n│   - Update DOM         │\n│   - Run effects        │\n│   - Browser paints     │\n└─────────────────────────┘`
-                                        }
-                                    ]}
-                                />
+                                <CollapsibleSection title="Rendering pipeline flow diagram" style={{ marginBottom: 12 }}>
+                                    <VisualDiagram
+                                        title="Rendering Pipeline Flow"
+                                        steps={[
+                                            {
+                                                title: 'User Interaction',
+                                                content: 'User clicks button, triggering event handler',
+                                                visual: `User clicks button\n    ↓\nonClick handler fires`
+                                            },
+                                            {
+                                                title: 'State Update',
+                                                content: 'setState schedules a state update in React\'s queue',
+                                                visual: `setState() called\n    ↓\nReact schedules update\n    ↓\nUpdate added to queue`
+                                            },
+                                            {
+                                                title: 'Render Phase',
+                                                content: 'React calls component functions and creates Virtual DOM',
+                                                visual: `┌─────────────────────────┐\n│   RENDER PHASE          │\n│   (Interruptible)       │\n│   - Call component      │\n│   - Create Virtual DOM  │\n│   - Diff changes        │\n└─────────────────────────┘`
+                                            },
+                                            {
+                                                title: 'Commit Phase',
+                                                content: 'React updates DOM and runs effects',
+                                                visual: `┌─────────────────────────┐\n│   COMMIT PHASE         │\n│   (Synchronous)        │\n│   - Update DOM         │\n│   - Run effects        │\n│   - Browser paints     │\n└─────────────────────────┘`
+                                            }
+                                        ]}
+                                    />
+                                </CollapsibleSection>
 
-                                <Card
-                                    title="Complete Flow Explanation"
-                                    icon="📚"
-                                    style={{ marginBottom: '24px' }}
-                                >
-                                    <p><strong>What happens from setState to DOM mutation:</strong></p>
+                                <CollapsibleSection title="Complete flow: setState to DOM mutation">
                                     <ol>
                                         <li><strong>User Action:</strong> You click the button, triggering onClick handler</li>
                                         <li><strong>State Update:</strong> setCount schedules a state update in React's queue</li>
@@ -318,12 +317,9 @@ function Day01RenderingPipeline(): JSX.Element {
                                         <li><strong>Effect Execution:</strong> React runs your useEffect callback</li>
                                         <li><strong>Browser Paint:</strong> Browser renders the visual change</li>
                                     </ol>
-                                </Card>
+                                </CollapsibleSection>
 
-                                <Card
-                                    title="Why This Matters"
-                                    icon="💡"
-                                >
+                                <CollapsibleSection title="Why this matters">
                                     <p>Understanding the rendering pipeline helps you:</p>
                                     <ul>
                                         <li><strong>Debug Performance Issues:</strong> Know when expensive operations run (render vs commit)</li>
@@ -331,7 +327,8 @@ function Day01RenderingPipeline(): JSX.Element {
                                         <li><strong>Fix Timing Bugs:</strong> Know when effects run relative to DOM updates</li>
                                         <li><strong>Write Better Code:</strong> Structure components to minimize unnecessary renders</li>
                                     </ul>
-                                </Card>
+                                </CollapsibleSection>
+                </Accordion>
                             </div>
                         )
                     },
@@ -341,38 +338,21 @@ function Day01RenderingPipeline(): JSX.Element {
                         icon: '💻',
                         content: (
                             <div>
-                                <div style={{ marginBottom: '24px' }}>
-                                    <h2 style={{ marginBottom: '20px' }}>Visual Diagrams</h2>
-                                    <VisualDiagrams type="virtual-dom-diff" />
-                                </div>
-
-                                <div style={{ marginBottom: '24px' }}>
-                                    <h2 style={{ marginBottom: '20px' }}>Try Code Examples</h2>
-                                    <CodePlaygroundPresets presets={dayPresets[1] || []} />
-                                </div>
-
-                                {day01Challenges.length > 0 && (
-                                    <div style={{ marginBottom: '24px' }}>
-                                        <h2 style={{ marginBottom: '20px' }}>Practice Challenges</h2>
-                                        <div style={{
-                                            display: 'grid',
-                                            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-                                            gap: '20px'
-                                        }}>
-                                            {day01Challenges.map((challenge) => (
-                                                <Challenge key={challenge.id} challenge={challenge} />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                <PerformanceMonitor componentName="Day01RenderingPipeline" />
-                                <ReactDevToolsGuide
+                                <PracticeExtras
+                                    lead={(
+                                        <CollapsibleSection title="Visual diagrams" style={{ marginBottom: 12 }}>
+                                            <VisualDiagrams type="virtual-dom-diff" />
+                                        </CollapsibleSection>
+                                    )}
+                                    challenges={day01Challenges}
+                                    presets={dayPresets[1] || []}
                                     day={1}
                                     focusAreas={[
                                         'Observe render vs commit phases in Profiler',
                                         'See component re-render on state updates',
-                                        'Measure render times for the counter component'
+                                        'Measure render times for the counter component',
                                     ]}
+                                    performanceMonitorName="Day01RenderingPipeline"
                                 />
                             </div>
                         )

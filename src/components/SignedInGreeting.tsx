@@ -1,7 +1,7 @@
 import { type JSX } from 'react'
 import { Show, useUser } from '@clerk/react'
 
-/** Quiet “Hi, Name” above the progress card (right-aligned). */
+/** Quiet “Hi, Name” above the progress card. */
 export function SignedInGreeting(): JSX.Element {
   const { user, isLoaded } = useUser()
   if (!isLoaded || !user) return <></>
@@ -19,7 +19,7 @@ export function SignedInGreeting(): JSX.Element {
         style={{
           margin: '0 0 8px',
           padding: '0 2px',
-          textAlign: 'right',
+          textAlign: 'left',
           fontSize: 12,
           fontWeight: 500,
           fontFamily: 'var(--font-ui)',

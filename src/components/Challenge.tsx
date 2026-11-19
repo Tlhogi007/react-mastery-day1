@@ -13,11 +13,11 @@ function Challenge({ challenge }: ChallengeProps): JSX.Element {
   const [, setCode] = useState<string>(challenge.starterCode)
 
   const containerStyle: React.CSSProperties = {
-    border: '2px solid var(--border-primary)',
-    borderRadius: '8px',
-    padding: 'clamp(12px, 3vw, 20px)',
+    border: '1px solid var(--border-color)',
+    borderRadius: 10,
+    padding: 'clamp(12px, 3vw, 18px)',
     background: 'var(--bg-card)',
-    marginTop: '20px',
+    marginTop: 0,
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,

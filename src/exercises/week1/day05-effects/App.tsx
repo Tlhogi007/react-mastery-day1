@@ -1,18 +1,18 @@
 import { useState, type JSX } from 'react'
-import Challenge from '../../../components/Challenge'
 import Quiz from '../../../components/Quiz'
 import DebuggingScenario from '../../../components/DebuggingScenario'
 import RealWorldScenarios from '../../../components/RealWorldScenarios'
-import ReactDevToolsGuide from '../../../components/ReactDevToolsGuide'
 import CrossDayConnections from '../../../components/CrossDayConnections'
 import HeroSection from '../../../components/HeroSection'
 import Tabs from '../../../components/Tabs'
 import Card from '../../../components/Card'
-import CodePlaygroundPresets, { dayPresets } from '../../../components/CodePlaygroundPresets'
+import { dayPresets } from '../../../components/CodePlaygroundPresets'
 import PersonalNotes from '../../../components/PersonalNotes'
 import DailyReflection from '../../../components/DailyReflection'
 import VisualDiagram from '../../../components/VisualDiagram'
 import VisualDiagrams from '../../../components/VisualDiagrams'
+import { Accordion, CollapsibleSection } from '../../../components/ui/CollapsibleSection'
+import { PracticeExtras } from '../../../components/PracticeExtras'
 import { day05Challenges, day05Quiz, day05Debugging, day05RealWorld } from './challenges'
 import '../../exerciseLayout.css'
 
@@ -106,13 +106,19 @@ function Day05Effects(): JSX.Element {
                                     </div>
                                 </Card>
 
-                                <Card
-                                    title="Key Concepts Explained"
-                                    icon="🔑"
-                                    style={{ marginBottom: '24px' }}
+                                <p
+                                    style={{
+                                        margin: '0 0 16px',
+                                        fontSize: 13,
+                                        color: 'var(--text-secondary)',
+                                        lineHeight: 1.45,
+                                    }}
                                 >
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <h4>⏰ useEffect Timing</h4>
+                                    Use the effect timing demo above first — open Key Concepts below when you want the deep dive.
+                                </p>
+
+                                <Accordion style={{ marginBottom: 20 }}>
+                                    <CollapsibleSection title="useEffect Timing" defaultOpen>
                                         <p>useEffect runs in the commit phase, after DOM updates:</p>
                                         <div className="lesson-points">
                                             <div className="lesson-points__item"><span><strong>Render Phase:</strong> Component function executes, returns JSX</span></div>
@@ -125,10 +131,9 @@ function Day05Effects(): JSX.Element {
 2. Commit: DOM updated
 3. Cleanup: previous effect cleanup (if any)
 4. Effect: new effect runs`}</pre>
-                                    </div>
+                                    </CollapsibleSection>
 
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <h4>🧹 Cleanup Functions</h4>
+                                    <CollapsibleSection title="Cleanup Functions">
                                         <p>Cleanup functions run before the next effect or on unmount:</p>
                                         <div className="lesson-points">
                                             <div className="lesson-points__item"><span><strong>When:</strong> Before next effect with same deps, or on unmount</span></div>
@@ -145,10 +150,9 @@ function Day05Effects(): JSX.Element {
   // Cleanup before next effect / unmount
   return () => clearInterval(id)
 }, [deps])`}</pre>
-                                    </div>
+                                    </CollapsibleSection>
 
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <h4>🔒 Stale Closures</h4>
+                                    <CollapsibleSection title="Stale Closures">
                                         <p>Stale closures occur when effects capture old state/props values:</p>
                                         <div className="lesson-points">
                                             <div className="lesson-points__item"><span><strong>Cause:</strong> Missing or incomplete dependency array</span></div>
@@ -175,10 +179,9 @@ useEffect(() => {
   }, 1000)
   return () => clearInterval(id)
 }, [])`}</pre>
-                                    </div>
+                                    </CollapsibleSection>
 
-                                    <div>
-                                        <h4>📋 Dependency Array Rules</h4>
+                                    <CollapsibleSection title="Dependency Array Rules">
                                         <p>Dependency array determines when effect runs:</p>
                                         <div className="lesson-points">
                                             <div className="lesson-points__item"><span><strong>Empty []:</strong> Once on mount, cleanup on unmount</span></div>
@@ -187,10 +190,11 @@ useEffect(() => {
                                             <div className="lesson-points__item"><span><strong>Rule:</strong> Include every value from scope used in the effect</span></div>
                                         </div>
                                         <p><strong>ESLint Rule:</strong> Use exhaustive-deps to catch missing dependencies</p>
-                                    </div>
-                                </Card>
+                                    </CollapsibleSection>
+                                
 
-                                <VisualDiagram
+                                <CollapsibleSection title="useEffect lifecycle diagram">
+                                    <VisualDiagram
                                     title="useEffect Lifecycle"
                                     steps={[
                                         {
@@ -228,6 +232,8 @@ useEffect(() => {
                                         }
                                     ]}
                                 />
+                                </CollapsibleSection>
+                </Accordion>
                             </div>
                         )
                     },
@@ -237,36 +243,19 @@ useEffect(() => {
                         icon: '💻',
                         content: (
                             <div>
-                                <div style={{ marginBottom: '24px' }}>
-                                    <h2 style={{ marginBottom: '20px' }}>Effect Timing Visualization</h2>
-                                    <VisualDiagrams type="virtual-dom-diff" />
-                                </div>
-
-                                <div style={{ marginBottom: '24px' }}>
-                                    <h2 style={{ marginBottom: '20px' }}>Try Code Examples</h2>
-                                    <CodePlaygroundPresets presets={dayPresets[5] || []} />
-                                </div>
-
-                                {day05Challenges.length > 0 && (
-                                    <div style={{ marginBottom: '24px' }}>
-                                        <h2 style={{ marginBottom: '20px' }}>Practice Challenges</h2>
-                                        <div style={{
-                                            display: 'grid',
-                                            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-                                            gap: '20px'
-                                        }}>
-                                            {day05Challenges.map((challenge) => (
-                                                <Challenge key={challenge.id} challenge={challenge} />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                <ReactDevToolsGuide
+                                <PracticeExtras
+                                    lead={(
+                                        <CollapsibleSection title="Visual diagrams" style={{ marginBottom: 12 }}>
+                                            <VisualDiagrams type="virtual-dom-diff" />
+                                        </CollapsibleSection>
+                                    )}
+                                    challenges={day05Challenges}
+                                    presets={dayPresets[5] || []}
                                     day={5}
                                     focusAreas={[
                                         'Observe effect timing in Profiler',
                                         'See when cleanup functions run',
-                                        'Debug stale closure issues'
+                                        'Debug stale closure issues',
                                     ]}
                                 />
                             </div>

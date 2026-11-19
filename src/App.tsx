@@ -811,29 +811,31 @@ function App(): JSX.Element {
                   </div>
                 )}
 
-                <div
-                  style={{
-                    flex: isMobile ? '1 1 100%' : '1 1 200px',
-                    minWidth: isMobile ? 0 : 180,
-                    maxWidth: isMobile ? '100%' : 280,
-                    // Phones: search on its own row under Menu/actions
-                    order: isMobile ? 3 : undefined,
-                  }}
-                >
-                  <SearchBar
-                    ref={searchInputRef}
-                    onSearch={handleSearch}
-                    results={searchResults}
-                    onResultClick={(day) => {
-                      const exerciseKey = Object.entries(exercises).find(
-                        ([, exercise]) => exercise.day === day
-                      )?.[0] as ExerciseKey | undefined
-                      if (exerciseKey) {
-                        handleExerciseSelect(exerciseKey)
-                      }
+                {!studyMode && (
+                  <div
+                    style={{
+                      flex: isMobile ? '1 1 100%' : '1 1 200px',
+                      minWidth: isMobile ? 0 : 180,
+                      maxWidth: isMobile ? '100%' : 280,
+                      // Phones: search on its own row under Menu/actions
+                      order: isMobile ? 3 : undefined,
                     }}
-                  />
-                </div>
+                  >
+                    <SearchBar
+                      ref={searchInputRef}
+                      onSearch={handleSearch}
+                      results={searchResults}
+                      onResultClick={(day) => {
+                        const exerciseKey = Object.entries(exercises).find(
+                          ([, exercise]) => exercise.day === day
+                        )?.[0] as ExerciseKey | undefined
+                        if (exerciseKey) {
+                          handleExerciseSelect(exerciseKey)
+                        }
+                      }}
+                    />
+                  </div>
+                )}
 
                 <div
                   className="app-header-actions"
@@ -848,20 +850,24 @@ function App(): JSX.Element {
                   }}
                 >
                   <Tip label="Theme">
-                    <ThemeToggle compact={isMobile} />
+                    <span data-tutorial="theme" style={{ display: 'inline-flex' }}>
+                      <ThemeToggle compact={isMobile} />
+                    </span>
                   </Tip>
                   {showFocusControl && currentExerciseData && (
                     <Tip label="Share day">
-                      <ShareDayButton
-                        compact={isMobile}
-                        info={{
-                          key: currentExercise,
-                          day: currentExerciseData.day,
-                          week: currentExerciseData.week,
-                          title: currentExerciseData.title.replace(/^Day \d+:\s*/i, ''),
-                          description: currentExerciseData.description,
-                        }}
-                      />
+                      <span data-tutorial="share" style={{ display: 'inline-flex' }}>
+                        <ShareDayButton
+                          compact={isMobile}
+                          info={{
+                            key: currentExercise,
+                            day: currentExerciseData.day,
+                            week: currentExerciseData.week,
+                            title: currentExerciseData.title.replace(/^Day \d+:\s*/i, ''),
+                            description: currentExerciseData.description,
+                          }}
+                        />
+                      </span>
                     </Tip>
                   )}
                   {showFocusControl && (
@@ -946,11 +952,12 @@ function App(): JSX.Element {
                 </div>
               </header>
 
-              {clerkEnabled && !showTools && currentView === 'exercises' && (
+              {/* Focus mode strips first-fold chrome so Studying + content own the screen */}
+              {!studyMode && clerkEnabled && !showTools && currentView === 'exercises' && (
                 <SignedInGreeting />
               )}
 
-              {!showTools && currentView === 'exercises' && (
+              {!studyMode && !showTools && currentView === 'exercises' && (
                 <MemoizedProgressDashboard
                   key={dayCompleteTick}
                   exercises={exercises}
@@ -959,7 +966,8 @@ function App(): JSX.Element {
                 />
               )}
 
-              {!showTools &&
+              {!studyMode &&
+                !showTools &&
                 currentView === 'exercises' &&
                 currentExerciseData && (
                 <MemoizedBreadcrumbs

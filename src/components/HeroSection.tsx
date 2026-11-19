@@ -37,12 +37,12 @@ function HeroSection({ day, title, description, progress }: HeroSectionProps): J
   const displayProgress = progress ?? storedProgress
 
   const containerStyle: CSSProperties = {
-    background: 'linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-card) 100%)',
-    padding: 'clamp(20px, 4vw, 60px) clamp(16px, 4vw, 40px)',
-    borderRadius: '16px',
-    marginBottom: 'clamp(16px, 3vw, 40px)',
-    border: '2px solid var(--border-primary)',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+    background: 'var(--bg-card)',
+    padding: 'clamp(14px, 3vw, 28px) clamp(14px, 3vw, 24px)',
+    borderRadius: 12,
+    marginBottom: 'clamp(12px, 2.5vw, 24px)',
+    border: '1px solid var(--border-color)',
+    boxShadow: 'none',
     position: 'relative',
     overflow: 'hidden',
     width: '100%',
@@ -51,14 +51,14 @@ function HeroSection({ day, title, description, progress }: HeroSectionProps): J
   }
 
   const dayBadgeStyle: CSSProperties = {
-    width: 'clamp(44px, 8vw, 60px)',
-    height: 'clamp(44px, 8vw, 60px)',
-    borderRadius: '12px',
+    width: 'clamp(36px, 7vw, 48px)',
+    height: 'clamp(36px, 7vw, 48px)',
+    borderRadius: 10,
     background: 'var(--button-primary)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: 'clamp(1.1rem, 4vw, 1.5rem)',
+    fontSize: 'clamp(1rem, 3.5vw, 1.25rem)',
     fontWeight: 'bold',
     color: 'var(--button-text)',
     flexShrink: 0,
@@ -71,8 +71,8 @@ function HeroSection({ day, title, description, progress }: HeroSectionProps): J
         style={{
           display: 'flex',
           alignItems: 'flex-start',
-          gap: 'clamp(12px, 3vw, 20px)',
-          marginBottom: '20px',
+          gap: 'clamp(10px, 2.5vw, 16px)',
+          marginBottom: 12,
           position: 'relative',
           zIndex: 1,
         }}
@@ -83,9 +83,11 @@ function HeroSection({ day, title, description, progress }: HeroSectionProps): J
             className="hero-section__title"
             style={{
               margin: 0,
-              fontSize: 'clamp(1.35rem, 4.5vw, 2rem)',
-              fontWeight: 'bold',
-              lineHeight: '1.2',
+              fontSize: 'clamp(1.2rem, 4vw, 1.65rem)',
+              fontWeight: 700,
+              lineHeight: 1.2,
+              fontFamily: 'var(--font-display)',
+              letterSpacing: '-0.02em',
             }}
           >
             {title}
@@ -93,10 +95,14 @@ function HeroSection({ day, title, description, progress }: HeroSectionProps): J
           <p
             className="hero-section__description"
             style={{
-              margin: '12px 0 0',
-              fontSize: 'clamp(0.95rem, 2.8vw, 1.125rem)',
+              margin: '6px 0 0',
+              fontSize: 'clamp(0.85rem, 2.5vw, 0.98rem)',
               color: 'var(--text-secondary)',
-              lineHeight: '1.5',
+              lineHeight: 1.4,
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
             }}
           >
             {description}
@@ -110,19 +116,19 @@ function HeroSection({ day, title, description, progress }: HeroSectionProps): J
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '8px',
-            fontSize: '14px',
-            color: 'var(--text-secondary)',
+            marginBottom: 6,
+            fontSize: 12,
+            color: 'var(--text-muted)',
           }}
         >
-          <span>Progress</span>
+          <span>Day progress</span>
           <span>{displayProgress}%</span>
         </div>
         <div
           style={{
-            height: '8px',
+            height: 4,
             background: 'var(--bg-section)',
-            borderRadius: '4px',
+            borderRadius: 2,
             overflow: 'hidden',
           }}
         >
@@ -130,10 +136,9 @@ function HeroSection({ day, title, description, progress }: HeroSectionProps): J
             style={{
               height: '100%',
               width: `${displayProgress}%`,
-              background: 'linear-gradient(90deg, var(--button-primary), var(--link-color))',
+              background: 'var(--button-primary)',
               transition: 'width 0.3s',
-              borderRadius: '4px',
-              boxShadow: displayProgress > 0 ? '0 2px 8px rgba(33, 150, 243, 0.3)' : 'none',
+              borderRadius: 2,
             }}
           />
         </div>

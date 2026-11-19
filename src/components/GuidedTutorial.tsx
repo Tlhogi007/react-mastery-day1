@@ -440,7 +440,9 @@ export const onboardingTutorial: TutorialStep[] = [
     id: 'use-tabs',
     title: '3 · Study with tabs',
     content:
-      'Inside each day: Learn, Practice, Quiz, Debug, Real World, Notes, Reflection. That’s the core loop buyers will use every session.',
+      'Inside each day: Learn, Practice, Quiz — plus Debug, Real World, Notes, and Reflection.',
+    mobileContent:
+      'Learn, Practice, and Quiz stay on the bar. Tap More for Debug, Real World, Notes, and Reflection.',
     target: '[data-tutorial="tabs"]',
     position: 'bottom',
   },
@@ -461,8 +463,24 @@ export const onboardingTutorial: TutorialStep[] = [
     position: 'bottom',
   },
   {
+    id: 'theme',
+    title: '6 · Theme',
+    content:
+      'Cycle light, dark, or system theme from the header. Your choice sticks on this device.',
+    target: '[data-tutorial="theme"]',
+    position: 'bottom',
+  },
+  {
+    id: 'share',
+    title: '7 · Share a day',
+    content:
+      'Share copies a link to this day — useful for posting progress or sending a topic to a friend.',
+    target: '[data-tutorial="share"]',
+    position: 'bottom',
+  },
+  {
     id: 'focus',
-    title: '6 · Focus mode',
+    title: '8 · Focus mode',
     content:
       'Focus hides chrome so you can practice distraction-free. Exit anytime with the same button.',
     target: '[data-tutorial="focus"]',
@@ -470,7 +488,7 @@ export const onboardingTutorial: TutorialStep[] = [
   },
   {
     id: 'tools-community',
-    title: '7 · Tools & Community',
+    title: '9 · Tools & Community',
     content:
       'Tools = flashcards, snippets, concept map, interview prep, code review. Community = shared notes from contributors.',
     mobileContent:
@@ -481,11 +499,11 @@ export const onboardingTutorial: TutorialStep[] = [
   },
   {
     id: 'help-footer',
-    title: '8 · Analytics, Settings, Keys',
+    title: '10 · Analytics, Settings, Keys',
     content:
-      'Analytics shows usage stats. Settings has theme + Replay tour. Keys lists keyboard shortcuts. You’re set — start Day 01.',
+      'Analytics shows usage stats. Settings has Replay tour. Keys lists keyboard shortcuts. You’re set — start Day 01.',
     mobileContent:
-      'In the Menu footer: Analytics, Settings (theme + Replay tour), and Keys. You’re set — start Day 01.',
+      'In the Menu footer: Analytics, Settings (Replay tour), and Keys. You’re set — start Day 01.',
     target: '[data-tutorial="help-links"]',
     position: 'right',
     needsSidebar: true,

@@ -7,21 +7,20 @@ import {
   type JSX,
 } from 'react'
 import '../../exerciseLayout.css'
-import Challenge from '../../../components/Challenge'
 import Quiz from '../../../components/Quiz'
 import DebuggingScenario from '../../../components/DebuggingScenario'
 import RealWorldScenarios from '../../../components/RealWorldScenarios'
-import ReactDevToolsGuide from '../../../components/ReactDevToolsGuide'
 import CrossDayConnections from '../../../components/CrossDayConnections'
 import HeroSection from '../../../components/HeroSection'
 import Tabs from '../../../components/Tabs'
 import Card from '../../../components/Card'
-import CodePlaygroundPresets, { dayPresets } from '../../../components/CodePlaygroundPresets'
+import { dayPresets } from '../../../components/CodePlaygroundPresets'
 import PersonalNotes from '../../../components/PersonalNotes'
 import DailyReflection from '../../../components/DailyReflection'
 import VisualDiagrams from '../../../components/VisualDiagrams'
 import VisualDiagram from '../../../components/VisualDiagram'
-import PerformanceMonitor from '../../../components/PerformanceMonitor'
+import { Accordion, CollapsibleSection } from '../../../components/ui/CollapsibleSection'
+import { PracticeExtras } from '../../../components/PracticeExtras'
 import { day06Challenges, day06Quiz, day06Debugging, day06RealWorld } from './challenges'
 
 type User = { name: string; id: number }
@@ -309,13 +308,19 @@ function Day06Context(): JSX.Element {
                   </div>
                 </Card>
 
-                <Card
-                  title="Key Concepts Explained"
-                  icon="🔑"
-                  style={{ marginBottom: '24px' }}
+                <p
+                  style={{
+                    margin: '0 0 16px',
+                    fontSize: 13,
+                    color: 'var(--text-secondary)',
+                    lineHeight: 1.45,
+                  }}
                 >
-                  <div style={{ marginBottom: '20px' }}>
-                    <h4>🌐 Why All Consumers Re-render</h4>
+                  The demo above is live — open Key Concepts below when you want the deep dive.
+                </p>
+
+                <Accordion style={{ marginBottom: 20 }}>
+                  <CollapsibleSection title="Why all consumers re-render" defaultOpen>
                     <p>When Context value changes, React re-renders ALL consumers:</p>
                     <div className="lesson-points">
                       <div className="lesson-points__item"><span><strong>No Selective Updates:</strong> React doesn&apos;t track which values each consumer uses</span></div>
@@ -343,10 +348,9 @@ function Day06Context(): JSX.Element {
   </ThemeContext.Provider>
 </UserContext.Provider>`}
                     </pre>
-                  </div>
+                  </CollapsibleSection>
 
-                  <div style={{ marginBottom: '20px' }}>
-                    <h4>✂️ Splitting Contexts</h4>
+                  <CollapsibleSection title="Splitting contexts">
                     <p>Split contexts by concern to reduce blast radius:</p>
                     <div className="lesson-points">
                       <div className="lesson-points__item"><span><strong>By Concern:</strong> UserContext, ThemeContext, CartContext</span></div>
@@ -354,10 +358,9 @@ function Day06Context(): JSX.Element {
                       <div className="lesson-points__item"><span><strong>By Scope:</strong> Global vs feature context</span></div>
                       <div className="lesson-points__item"><span><strong>Rule:</strong> If values change independently, split them</span></div>
                     </div>
-                  </div>
+                  </CollapsibleSection>
 
-                  <div style={{ marginBottom: '20px' }}>
-                    <h4>💾 Memoizing Provider Values</h4>
+                  <CollapsibleSection title="Memoizing provider values">
                     <p>Memoize context values to prevent unnecessary re-renders:</p>
                     <div className="lesson-points">
                       <div className="lesson-points__item"><span><strong>Problem:</strong> New object every render → all consumers re-render</span></div>
@@ -378,10 +381,9 @@ const value = useMemo(
 )
 <Context.Provider value={value} />`}
                     </pre>
-                  </div>
+                  </CollapsibleSection>
 
-                  <div>
-                    <h4>🎯 Blast Radius Concept</h4>
+                  <CollapsibleSection title="Blast radius">
                     <p>Blast radius = how many components re-render when context updates:</p>
                     <div className="lesson-points">
                       <div className="lesson-points__item"><span><strong>Large:</strong> One fat context → many re-renders</span></div>
@@ -389,10 +391,11 @@ const value = useMemo(
                       <div className="lesson-points__item"><span><strong>Zero:</strong> Memoized consumers → no waste</span></div>
                       <div className="lesson-points__item"><span><strong>Goal:</strong> Minimize blast radius for better performance</span></div>
                     </div>
-                  </div>
-                </Card>
+                  </CollapsibleSection>
+                
 
-                <VisualDiagram
+                <CollapsibleSection title="Context re-render propagation diagram">
+                  <VisualDiagram
                   title="Context Re-render Propagation"
                   steps={[
                     {
@@ -432,7 +435,9 @@ Content & Footer don't re-render!`
 })`
                     }
                   ]}
-                />
+                  />
+                </CollapsibleSection>
+                </Accordion>
               </div>
             )
           },
@@ -441,42 +446,22 @@ Content & Footer don't re-render!`
             label: 'Practice',
             icon: '💻',
             content: (
-              <div>
-                <div style={{ marginBottom: '24px' }}>
-                  <h2 style={{ marginBottom: '20px' }}>Context Propagation Visualization</h2>
-                  <VisualDiagrams type="context-propagation" />
-                </div>
-
-                <div style={{ marginBottom: '24px' }}>
-                  <h2 style={{ marginBottom: '20px' }}>Try Code Examples</h2>
-                  <CodePlaygroundPresets presets={dayPresets[6] || []} />
-                </div>
-
-                <PerformanceMonitor componentName="Day06Context" />
-
-                {day06Challenges.length > 0 && (
-                  <div style={{ marginBottom: '24px' }}>
-                    <h2 style={{ marginBottom: '20px' }}>Practice Challenges</h2>
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-                      gap: '20px'
-                    }}>
-                      {day06Challenges.map((challenge) => (
-                        <Challenge key={challenge.id} challenge={challenge} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <ReactDevToolsGuide 
-                  day={6} 
-                  focusAreas={[
-                    'Use Profiler to see Context re-render propagation',
-                    'Measure re-render difference with and without optimization',
-                    'Identify which consumers re-render unnecessarily'
-                  ]} 
-                />
-              </div>
+              <PracticeExtras
+                lead={
+                  <CollapsibleSection title="Context propagation visualization" style={{ marginBottom: 12 }}>
+                    <VisualDiagrams type="context-propagation" />
+                  </CollapsibleSection>
+                }
+                challenges={day06Challenges}
+                presets={dayPresets[6] || []}
+                day={6}
+                performanceMonitorName="Day06Context"
+                focusAreas={[
+                  'Use Profiler to see Context re-render propagation',
+                  'Measure re-render difference with and without optimization',
+                  'Identify which consumers re-render unnecessarily',
+                ]}
+              />
             )
           },
           {

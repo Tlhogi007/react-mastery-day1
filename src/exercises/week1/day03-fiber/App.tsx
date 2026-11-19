@@ -1,19 +1,19 @@
 import { useState, useRef, type JSX } from 'react'
 import '../../exerciseLayout.css'
-import Challenge from '../../../components/Challenge'
 import Quiz from '../../../components/Quiz'
 import DebuggingScenario from '../../../components/DebuggingScenario'
 import RealWorldScenarios from '../../../components/RealWorldScenarios'
-import ReactDevToolsGuide from '../../../components/ReactDevToolsGuide'
 import VisualDiagram from '../../../components/VisualDiagram'
 import CrossDayConnections from '../../../components/CrossDayConnections'
 import HeroSection from '../../../components/HeroSection'
 import Tabs from '../../../components/Tabs'
 import Card from '../../../components/Card'
 import VisualDiagrams from '../../../components/VisualDiagrams'
-import CodePlaygroundPresets, { dayPresets } from '../../../components/CodePlaygroundPresets'
+import { dayPresets } from '../../../components/CodePlaygroundPresets'
 import PersonalNotes from '../../../components/PersonalNotes'
 import DailyReflection from '../../../components/DailyReflection'
+import { Accordion, CollapsibleSection } from '../../../components/ui/CollapsibleSection'
+import { PracticeExtras } from '../../../components/PracticeExtras'
 import FiberDemoApp from './components/FiberDemoApp'
 import FiberControls from './components/FiberControls'
 import FiberTraversalPath from './components/FiberTraversalPath'
@@ -178,16 +178,22 @@ function Day03Fiber(): JSX.Element {
                         icon: '🔑',
                         content: (
                             <div>
-                                <Card
-                                    title="Key Concepts Explained"
-                                    icon="🔑"
-                                    style={{ marginBottom: '24px' }}
+                                <p
+                                    style={{
+                                        margin: '0 0 16px',
+                                        fontSize: 13,
+                                        color: 'var(--text-secondary)',
+                                        lineHeight: 1.45,
+                                    }}
                                 >
+                                    Learn tab has the live demo — open sections below for the deep dive. Live status updates as you process fibers.
+                                </p>
 
-                                    <div className="lesson-prose" style={{ marginBottom: '20px' }}>
-                                        <h4>🌳 Fiber Node Structure</h4>
-                                        <p>Each Fiber node represents a component or DOM element and contains:</p>
-                                        <pre className="lesson-code">{`interface FiberNode {
+                                <Accordion style={{ marginBottom: 20 }}>
+                                    <CollapsibleSection title="Fiber node structure" defaultOpen>
+                                        <div className="lesson-prose">
+                                            <p>Each Fiber node represents a component or DOM element and contains:</p>
+                                            <pre className="lesson-code">{`interface FiberNode {
   type: string | Function
   props: object
   stateNode: unknown
@@ -198,181 +204,215 @@ function Day03Fiber(): JSX.Element {
   effectTag: string
   lanes: number
 }`}</pre>
-                                        <p><strong>Tree Structure:</strong> Fiber uses a linked list instead of a tree, so traversal can pause between nodes.</p>
-                                    </div>
+                                            <p><strong>Tree Structure:</strong> Fiber uses a linked list instead of a tree, so traversal can pause between nodes.</p>
+                                        </div>
+                                    </CollapsibleSection>
 
-                                    <div className="lesson-prose" style={{ marginBottom: '20px' }}>
-                                        <h4>🔄 Current vs WorkInProgress Tree</h4>
-                                        <p>React maintains <strong>two trees</strong> during rendering:</p>
-                                        <div className="lesson-points">
-                                            <div className="lesson-points__item"><span><strong>Current Tree:</strong> committed to the DOM (what users see)</span></div>
-                                            <div className="lesson-points__item"><span><strong>WorkInProgress Tree:</strong> built during render (not committed yet)</span></div>
+                                    <CollapsibleSection title="Current vs WorkInProgress tree">
+                                        <div className="lesson-prose">
+                                            <p>React maintains <strong>two trees</strong> during rendering:</p>
+                                            <div className="lesson-points">
+                                                <div className="lesson-points__item"><span><strong>Current Tree:</strong> committed to the DOM (what users see)</span></div>
+                                                <div className="lesson-points__item"><span><strong>WorkInProgress Tree:</strong> built during render (not committed yet)</span></div>
+                                            </div>
+                                            <p><strong>How they work together:</strong></p>
+                                            <div className="lesson-points">
+                                                <div className="lesson-points__item"><span>Render phase builds the WorkInProgress tree</span></div>
+                                                <div className="lesson-points__item"><span>Each WIP node has an <code>alternate</code> pointer to Current</span></div>
+                                                <div className="lesson-points__item"><span>Commit swaps trees (WIP becomes Current)</span></div>
+                                                <div className="lesson-points__item"><span>Next render reuses old Current as the new WIP base</span></div>
+                                            </div>
                                         </div>
-                                        <p><strong>How they work together:</strong></p>
-                                        <div className="lesson-points">
-                                            <div className="lesson-points__item"><span>Render phase builds the WorkInProgress tree</span></div>
-                                            <div className="lesson-points__item"><span>Each WIP node has an <code>alternate</code> pointer to Current</span></div>
-                                            <div className="lesson-points__item"><span>Commit swaps trees (WIP becomes Current)</span></div>
-                                            <div className="lesson-points__item"><span>Next render reuses old Current as the new WIP base</span></div>
-                                        </div>
-                                    </div>
+                                    </CollapsibleSection>
 
-                                    <div className="lesson-prose" style={{ marginBottom: '20px' }}>
-                                        <h4>⚙️ Unit of Work Model</h4>
-                                        <p>Fiber breaks rendering into small, interruptible units:</p>
-                                        <div className="lesson-points">
-                                            <div className="lesson-points__item"><span><strong>One Fiber = One Unit of Work</strong></span></div>
-                                            <div className="lesson-points__item"><span>React processes one Fiber node at a time</span></div>
-                                            <div className="lesson-points__item"><span>After each unit: should I yield to the browser?</span></div>
-                                            <div className="lesson-points__item"><span>Urgent work → pause; otherwise continue</span></div>
-                                            <div className="lesson-points__item"><span>Resume exactly where it left off</span></div>
-                                        </div>
-                                        <p><strong>Work Loop:</strong></p>
-                                        <pre className="lesson-code">
-                                            {`function workLoop() {
+                                    <CollapsibleSection title="Unit of work model">
+                                        <div className="lesson-prose">
+                                            <p>Fiber breaks rendering into small, interruptible units:</p>
+                                            <div className="lesson-points">
+                                                <div className="lesson-points__item"><span><strong>One Fiber = One Unit of Work</strong></span></div>
+                                                <div className="lesson-points__item"><span>React processes one Fiber node at a time</span></div>
+                                                <div className="lesson-points__item"><span>After each unit: should I yield to the browser?</span></div>
+                                                <div className="lesson-points__item"><span>Urgent work → pause; otherwise continue</span></div>
+                                                <div className="lesson-points__item"><span>Resume exactly where it left off</span></div>
+                                            </div>
+                                            <p><strong>Work Loop:</strong></p>
+                                            <pre className="lesson-code">
+                                                {`function workLoop() {
   while (fiber && !shouldYield()) {
     fiber = performUnitOfWork(fiber)
   }
   if (fiber) scheduleCallback(workLoop)
   else commitRoot()
 }`}
-                                        </pre>
-                                    </div>
-
-                                    <div>
-                                        <h4>❓ Why was Fiber Introduced?</h4>
-                                        <p><strong>Problems with the old Stack Reconciler:</strong></p>
-                                        <div className="lesson-points">
-                                            <div className="lesson-points__item"><span>❌ <strong>Synchronous:</strong> Had to render entire tree in one go</span></div>
-                                            <div className="lesson-points__item"><span>❌ <strong>Uninterruptible:</strong> Couldn&apos;t pause for urgent user input</span></div>
-                                            <div className="lesson-points__item"><span>❌ <strong>Blocking:</strong> Long renders blocked the browser</span></div>
-                                            <div className="lesson-points__item"><span>❌ <strong>No Priority:</strong> All updates treated equally</span></div>
-                                            <div className="lesson-points__item"><span>❌ <strong>Poor UX:</strong> UI felt laggy during heavy rendering</span></div>
+                                            </pre>
                                         </div>
-                                        <p><strong>Solutions Fiber Provides:</strong></p>
-                                        <div className="lesson-points">
-                                            <div className="lesson-points__item"><span>✅ <strong>Interruptible:</strong> Can pause and resume rendering</span></div>
-                                            <div className="lesson-points__item"><span>✅ <strong>Prioritized:</strong> Urgent updates (clicks, typing) processed first</span></div>
-                                            <div className="lesson-points__item"><span>✅ <strong>Time Slicing:</strong> Yields to browser every 5ms</span></div>
-                                            <div className="lesson-points__item"><span>✅ <strong>Concurrent:</strong> Multiple work trees can exist</span></div>
-                                            <div className="lesson-points__item"><span>✅ <strong>Better UX:</strong> UI stays responsive during heavy work</span></div>
-                                        </div>
-                                    </div>
+                                    </CollapsibleSection>
 
-                                    <div style={{
-                                        marginTop: '20px',
-                                        background: 'var(--bg-info)',
-                                        padding: '15px',
-                                        borderRadius: '8px'
-                                    }}>
-                                        <h4>⚖️ Fiber vs Stack Reconciler Comparison</h4>
-                                        <div style={{ overflowX: 'auto', marginTop: '10px' }}>
-                                            <table style={{
-                                                width: '100%',
-                                                borderCollapse: 'collapse',
-                                                fontSize: '14px'
-                                            }}>
-                                                <thead>
-                                                    <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-                                                        <th style={{ padding: '10px', textAlign: 'left' }}>Aspect</th>
-                                                        <th style={{ padding: '10px', textAlign: 'left', color: 'var(--text-secondary)' }}>Stack Reconciler</th>
-                                                        <th style={{ padding: '10px', textAlign: 'left', color: 'var(--button-primary)' }}>Fiber</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                                        <td style={{ padding: '10px' }}><strong>Structure</strong></td>
-                                                        <td style={{ padding: '10px' }}>Tree (recursive)</td>
-                                                        <td style={{ padding: '10px' }}>Linked List</td>
-                                                    </tr>
-                                                    <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                                        <td style={{ padding: '10px' }}><strong>Interruptible</strong></td>
-                                                        <td style={{ padding: '10px' }}>❌ No</td>
-                                                        <td style={{ padding: '10px' }}>✅ Yes</td>
-                                                    </tr>
-                                                    <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                                        <td style={{ padding: '10px' }}><strong>Priority</strong></td>
-                                                        <td style={{ padding: '10px' }}>❌ None</td>
-                                                        <td style={{ padding: '10px' }}>✅ Yes (lanes)</td>
-                                                    </tr>
-                                                    <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                                        <td style={{ padding: '10px' }}><strong>Time Slicing</strong></td>
-                                                        <td style={{ padding: '10px' }}>❌ No</td>
-                                                        <td style={{ padding: '10px' }}>✅ Yes (~5ms)</td>
-                                                    </tr>
-                                                    <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                                        <td style={{ padding: '10px' }}><strong>Concurrent</strong></td>
-                                                        <td style={{ padding: '10px' }}>❌ No</td>
-                                                        <td style={{ padding: '10px' }}>✅ Yes</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td style={{ padding: '10px' }}><strong>UX</strong></td>
-                                                        <td style={{ padding: '10px' }}>❌ Can block UI</td>
-                                                        <td style={{ padding: '10px' }}>✅ Responsive</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
+                                    <CollapsibleSection title="Why Fiber was introduced">
+                                        <div className="lesson-prose">
+                                            <p><strong>Problems with the old Stack Reconciler:</strong></p>
+                                            <div className="lesson-points">
+                                                <div className="lesson-points__item"><span>❌ <strong>Synchronous:</strong> Had to render entire tree in one go</span></div>
+                                                <div className="lesson-points__item"><span>❌ <strong>Uninterruptible:</strong> Couldn&apos;t pause for urgent user input</span></div>
+                                                <div className="lesson-points__item"><span>❌ <strong>Blocking:</strong> Long renders blocked the browser</span></div>
+                                                <div className="lesson-points__item"><span>❌ <strong>No Priority:</strong> All updates treated equally</span></div>
+                                                <div className="lesson-points__item"><span>❌ <strong>Poor UX:</strong> UI felt laggy during heavy rendering</span></div>
+                                            </div>
+                                            <p><strong>Solutions Fiber Provides:</strong></p>
+                                            <div className="lesson-points">
+                                                <div className="lesson-points__item"><span>✅ <strong>Interruptible:</strong> Can pause and resume rendering</span></div>
+                                                <div className="lesson-points__item"><span>✅ <strong>Prioritized:</strong> Urgent updates (clicks, typing) processed first</span></div>
+                                                <div className="lesson-points__item"><span>✅ <strong>Time Slicing:</strong> Yields to browser every 5ms</span></div>
+                                                <div className="lesson-points__item"><span>✅ <strong>Concurrent:</strong> Multiple work trees can exist</span></div>
+                                                <div className="lesson-points__item"><span>✅ <strong>Better UX:</strong> UI stays responsive during heavy work</span></div>
+                                            </div>
                                         </div>
-                                    </div>
+                                    </CollapsibleSection>
 
-                                    <div
-                                      className="lesson-prose"
-                                      style={{
-                                        marginTop: '20px',
-                                        padding: 'clamp(12px, 3vw, 16px)',
-                                        borderRadius: '8px',
-                                        border: '1px solid var(--border-primary)',
-                                        background: 'var(--bg-section)',
-                                        fontSize: '14px',
-                                        minWidth: 0,
-                                        boxSizing: 'border-box',
-                                      }}
-                                    >
-                                        <h4 style={{ marginTop: 0, fontSize: 'clamp(0.95rem, 3vw, 1.05rem)' }}>
-                                          📊 What&apos;s Happening Behind the Scenes
-                                        </h4>
-                                        {currentFiber ? (
-                                            <div>
-                                                <p style={{ marginBottom: 8 }}>
-                                                  Currently processing:{' '}
-                                                  <strong style={{ color: 'var(--button-primary)' }}>{currentFiber}</strong>
-                                                </p>
-                                                <div className="lesson-points">
-                                                    <div className="lesson-points__item"><span>Creating/updating the Fiber node</span></div>
-                                                    <div className="lesson-points__item"><span>Calling the component function</span></div>
-                                                    <div className="lesson-points__item"><span>Building the WorkInProgress tree</span></div>
-                                                    <div className="lesson-points__item"><span>Marking effects for commit phase</span></div>
+                                    <CollapsibleSection title="Fiber vs Stack reconciler">
+                                        <div style={{
+                                            background: 'var(--bg-info)',
+                                            padding: '15px',
+                                            borderRadius: '8px'
+                                        }}>
+                                            <div style={{ overflowX: 'auto', marginTop: '10px' }}>
+                                                <table style={{
+                                                    width: '100%',
+                                                    borderCollapse: 'collapse',
+                                                    fontSize: '14px'
+                                                }}>
+                                                    <thead>
+                                                        <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+                                                            <th style={{ padding: '10px', textAlign: 'left' }}>Aspect</th>
+                                                            <th style={{ padding: '10px', textAlign: 'left', color: 'var(--text-secondary)' }}>Stack Reconciler</th>
+                                                            <th style={{ padding: '10px', textAlign: 'left', color: 'var(--button-primary)' }}>Fiber</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                                            <td style={{ padding: '10px' }}><strong>Structure</strong></td>
+                                                            <td style={{ padding: '10px' }}>Tree (recursive)</td>
+                                                            <td style={{ padding: '10px' }}>Linked List</td>
+                                                        </tr>
+                                                        <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                                            <td style={{ padding: '10px' }}><strong>Interruptible</strong></td>
+                                                            <td style={{ padding: '10px' }}>❌ No</td>
+                                                            <td style={{ padding: '10px' }}>✅ Yes</td>
+                                                        </tr>
+                                                        <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                                            <td style={{ padding: '10px' }}><strong>Priority</strong></td>
+                                                            <td style={{ padding: '10px' }}>❌ None</td>
+                                                            <td style={{ padding: '10px' }}>✅ Yes (lanes)</td>
+                                                        </tr>
+                                                        <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                                            <td style={{ padding: '10px' }}><strong>Time Slicing</strong></td>
+                                                            <td style={{ padding: '10px' }}>❌ No</td>
+                                                            <td style={{ padding: '10px' }}>✅ Yes (~5ms)</td>
+                                                        </tr>
+                                                        <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                                            <td style={{ padding: '10px' }}><strong>Concurrent</strong></td>
+                                                            <td style={{ padding: '10px' }}>❌ No</td>
+                                                            <td style={{ padding: '10px' }}>✅ Yes</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style={{ padding: '10px' }}><strong>UX</strong></td>
+                                                            <td style={{ padding: '10px' }}>❌ Can block UI</td>
+                                                            <td style={{ padding: '10px' }}>✅ Responsive</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </CollapsibleSection>
+
+                                    <CollapsibleSection title="Behind the scenes (live)">
+                                        <div
+                                          className="lesson-prose"
+                                          style={{
+                                            padding: 'clamp(12px, 3vw, 16px)',
+                                            borderRadius: '8px',
+                                            border: '1px solid var(--border-primary)',
+                                            background: 'var(--bg-section)',
+                                            fontSize: '14px',
+                                            minWidth: 0,
+                                            boxSizing: 'border-box',
+                                          }}
+                                        >
+                                            {currentFiber ? (
+                                                <div>
+                                                    <p style={{ marginBottom: 8 }}>
+                                                      Currently processing:{' '}
+                                                      <strong style={{ color: 'var(--button-primary)' }}>{currentFiber}</strong>
+                                                    </p>
+                                                    <div className="lesson-points">
+                                                        <div className="lesson-points__item"><span>Creating/updating the Fiber node</span></div>
+                                                        <div className="lesson-points__item"><span>Calling the component function</span></div>
+                                                        <div className="lesson-points__item"><span>Building the WorkInProgress tree</span></div>
+                                                        <div className="lesson-points__item"><span>Marking effects for commit phase</span></div>
+                                                    </div>
+                                                    <p style={{ marginBottom: 0 }}>
+                                                      <strong>Next:</strong>{' '}
+                                                      {fiberOrder[fiberOrder.indexOf(currentFiber) + 1] || 'Commit Phase'}
+                                                    </p>
                                                 </div>
-                                                <p style={{ marginBottom: 0 }}>
-                                                  <strong>Next:</strong>{' '}
-                                                  {fiberOrder[fiberOrder.indexOf(currentFiber) + 1] || 'Commit Phase'}
-                                                </p>
-                                            </div>
-                                        ) : isProcessing ? (
-                                            <div>
-                                                <p style={{ marginBottom: 0 }}>
-                                                  All Fiber nodes processed. Ready for commit phase.
-                                                </p>
-                                            </div>
-                                        ) : (
-                                            <div>
-                                                <p style={{ marginBottom: 8 }}><strong>Fiber Work Loop</strong></p>
-                                                <pre className="lesson-code">{`while (fiber && !shouldYield()) {
+                                            ) : isProcessing ? (
+                                                <div>
+                                                    <p style={{ marginBottom: 0 }}>
+                                                      All Fiber nodes processed. Ready for commit phase.
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <p style={{ marginBottom: 8 }}><strong>Fiber Work Loop</strong></p>
+                                                    <pre className="lesson-code">{`while (fiber && !shouldYield()) {
   fiber = performUnitOfWork(fiber)
   // pause if urgent work / timeslice
 }`}</pre>
-                                                <div className="lesson-points" style={{ marginTop: 10 }}>
-                                                  <div className="lesson-points__item"><span>Urgent work? → pause</span></div>
-                                                  <div className="lesson-points__item"><span>Time slice up? → yield</span></div>
-                                                  <div className="lesson-points__item"><span>Otherwise → continue</span></div>
+                                                    <div className="lesson-points" style={{ marginTop: 10 }}>
+                                                      <div className="lesson-points__item"><span>Urgent work? → pause</span></div>
+                                                      <div className="lesson-points__item"><span>Time slice up? → yield</span></div>
+                                                      <div className="lesson-points__item"><span>Otherwise → continue</span></div>
+                                                    </div>
+                                                    <p style={{ marginBottom: 0, fontSize: 13, color: 'var(--text-secondary)' }}>
+                                                      Use <strong>Start Processing</strong> on the Learn tab to watch this run.
+                                                    </p>
                                                 </div>
-                                                <p style={{ marginBottom: 0, fontSize: 13, color: 'var(--text-secondary)' }}>
-                                                  Use <strong>Start Processing</strong> above to watch this run.
-                                                </p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </Card>
+                                            )}
+                                        </div>
+                                    </CollapsibleSection>
+
+                                    <CollapsibleSection title="Fiber tree structure diagram">
+                                      <VisualDiagram
+                                        title="Fiber Tree Structure"
+                                        steps={[
+                                            {
+                                                title: 'Component Tree',
+                                                content: 'Your React components form a tree structure',
+                                                visual: `App
+  Header
+    Logo
+  Content
+  Footer`
+                                            },
+                                            {
+                                                title: 'Fiber Linked List',
+                                                content: 'Fiber converts tree to linked list for easier traversal',
+                                                visual: `App (root)\n  ↓ child\nHeader\n  ↓ child\nLogo\n  ↓ sibling (no more children, go to sibling)\nContent\n  ↓ sibling\nFooter`
+                                            },
+                                            {
+                                                title: 'Traversal Order',
+                                                content: 'Fiber processes: current → child → sibling → return',
+                                                visual: `Processing Order:\n1. App\n2. Header (child of App)\n3. Logo (child of Header)\n4. Content (sibling of Header)\n5. Footer (sibling of Content)\n\nPattern: Depth-first traversal`
+                                            },
+                                            {
+                                                title: 'Interruption Points',
+                                                content: 'After each Fiber, React can pause',
+                                                visual: `App → Header → Logo → Content → Footer\n\nEach → can interrupt`
+                                            }
+                                        ]}
+                                      />
+                                    </CollapsibleSection>
+                                </Accordion>
 
                                 <Card
                                     title="Key Takeaways"
@@ -387,36 +427,6 @@ function Day03Fiber(): JSX.Element {
                                         <div className="lesson-points__item"><span><strong>Interruptible:</strong> Can pause after each unit to handle urgent work</span></div>
                                     </div>
                                 </Card>
-
-                                <VisualDiagram
-                                    title="Fiber Tree Structure"
-                                    steps={[
-                                        {
-                                            title: 'Component Tree',
-                                            content: 'Your React components form a tree structure',
-                                            visual: `App
-  Header
-    Logo
-  Content
-  Footer`
-                                        },
-                                        {
-                                            title: 'Fiber Linked List',
-                                            content: 'Fiber converts tree to linked list for easier traversal',
-                                            visual: `App (root)\n  ↓ child\nHeader\n  ↓ child\nLogo\n  ↓ sibling (no more children, go to sibling)\nContent\n  ↓ sibling\nFooter`
-                                        },
-                                        {
-                                            title: 'Traversal Order',
-                                            content: 'Fiber processes: current → child → sibling → return',
-                                            visual: `Processing Order:\n1. App\n2. Header (child of App)\n3. Logo (child of Header)\n4. Content (sibling of Header)\n5. Footer (sibling of Content)\n\nPattern: Depth-first traversal`
-                                        },
-                                        {
-                                            title: 'Interruption Points',
-                                            content: 'After each Fiber, React can pause',
-                                            visual: `App → Header → Logo → Content → Footer\n\nEach → can interrupt`
-                                        }
-                                    ]}
-                                />
                             </div>
                         )
                     },
@@ -425,40 +435,21 @@ function Day03Fiber(): JSX.Element {
                         label: 'Practice',
                         icon: '💻',
                         content: (
-                            <div>
-                                <div style={{ marginBottom: '24px' }}>
-                                    <h2 style={{ marginBottom: '20px' }}>Fiber Tree Visualization</h2>
-                                    <VisualDiagrams type="fiber-tree" />
-                                </div>
-
-                                <div style={{ marginBottom: '24px' }}>
-                                    <h2 style={{ marginBottom: '20px' }}>Try Code Examples</h2>
-                                    <CodePlaygroundPresets presets={dayPresets[3] || []} />
-                                </div>
-
-                                {day03Challenges.length > 0 && (
-                                    <div style={{ marginBottom: '24px' }}>
-                                        <h2 style={{ marginBottom: '20px' }}>Practice Challenges</h2>
-                                        <div style={{
-                                            display: 'grid',
-                                            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-                                            gap: '20px'
-                                        }}>
-                                            {day03Challenges.map((challenge) => (
-                                                <Challenge key={challenge.id} challenge={challenge} />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                <ReactDevToolsGuide
-                                    day={3}
-                                    focusAreas={[
-                                        'Use Profiler to see Fiber work units',
-                                        'Observe interruptible rendering in action',
-                                        'Measure time slicing and concurrent rendering'
-                                    ]}
-                                />
-                            </div>
+                            <PracticeExtras
+                                lead={
+                                    <CollapsibleSection title="Fiber tree visualization" style={{ marginBottom: 12 }}>
+                                        <VisualDiagrams type="fiber-tree" />
+                                    </CollapsibleSection>
+                                }
+                                challenges={day03Challenges}
+                                presets={dayPresets[3] || []}
+                                day={3}
+                                focusAreas={[
+                                    'Use Profiler to see Fiber work units',
+                                    'Observe interruptible rendering in action',
+                                    'Measure time slicing and concurrent rendering',
+                                ]}
+                            />
                         )
                     },
                     {

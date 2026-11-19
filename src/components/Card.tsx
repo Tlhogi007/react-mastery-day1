@@ -50,18 +50,20 @@ function Card({ children, title, icon, badge, style, className, onClick }: CardP
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 10,
-          marginBottom: '16px',
-          paddingBottom: '16px',
-          borderBottom: '1px solid var(--border-light)',
+          marginBottom: 12,
+          paddingBottom: 10,
+          borderBottom: '1px solid var(--border-color)',
           flexWrap: 'wrap',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
-            {icon && <span style={{ fontSize: '24px', flexShrink: 0 }}>{icon}</span>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+            {icon && <span style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>}
             {title && (
               <h3 style={{
                 margin: 0,
-                fontSize: 'clamp(1rem, 3vw, 1.125rem)',
-                fontWeight: '600',
+                fontSize: 'clamp(0.95rem, 2.8vw, 1.05rem)',
+                fontWeight: 600,
+                fontFamily: 'var(--font-display)',
+                letterSpacing: '-0.02em',
                 lineHeight: 1.25,
                 minWidth: 0,
               }}

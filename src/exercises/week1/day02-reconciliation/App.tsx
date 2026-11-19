@@ -1,22 +1,21 @@
 import { useState, type JSX } from 'react'
 import '../../exerciseLayout.css'
-import Challenge from '../../../components/Challenge'
 import Quiz from '../../../components/Quiz'
 import DebuggingScenario from '../../../components/DebuggingScenario'
 import RealWorldScenarios from '../../../components/RealWorldScenarios'
-import ReactDevToolsGuide from '../../../components/ReactDevToolsGuide'
 import VisualDiagram from '../../../components/VisualDiagram'
 import CrossDayConnections from '../../../components/CrossDayConnections'
 import HeroSection from '../../../components/HeroSection'
 import Tabs from '../../../components/Tabs'
 import Card from '../../../components/Card'
-import CodePlaygroundPresets, { dayPresets } from '../../../components/CodePlaygroundPresets'
+import { dayPresets } from '../../../components/CodePlaygroundPresets'
 import VisualDiagrams from '../../../components/VisualDiagrams'
 import PersonalNotes from '../../../components/PersonalNotes'
 import DailyReflection from '../../../components/DailyReflection'
+import { Accordion, CollapsibleSection } from '../../../components/ui/CollapsibleSection'
+import { PracticeExtras } from '../../../components/PracticeExtras'
 import ReconciliationTodoDemo from './components/ReconciliationTodoDemo'
 import TypeComparisonDemo from './components/TypeComparisonDemo'
-import KeyConceptsSection from './components/KeyConceptsSection'
 import { day02Challenges, day02Quiz, day02Debugging, day02RealWorld } from './challenges'
 
 interface TodoItem {
@@ -135,24 +134,79 @@ function Day02Reconciliation(): JSX.Element {
                   <TypeComparisonDemo />
                 </Card>
 
-                <Card
-                  title="Key Concepts Explained"
-                  icon="🔑"
-                  style={{ marginBottom: '24px' }}
+                <p
+                  style={{
+                    margin: '0 0 16px',
+                    fontSize: 13,
+                    color: 'var(--text-secondary)',
+                    lineHeight: 1.45,
+                  }}
                 >
-                  <KeyConceptsSection />
+                  Try the todo demo above first — open Key Concepts below for the deep dive.
+                </p>
 
-                  <div
-                    className="lesson-prose"
-                    style={{
-                      background: 'var(--bg-warning)',
-                      padding: 'clamp(12px, 3vw, 15px)',
-                      borderRadius: '8px',
-                      marginTop: '20px',
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    <h4 style={{ marginTop: 0 }}>🐛 The Index Key Bug Explained</h4>
+                <Accordion style={{ marginBottom: 20 }}>
+                  <CollapsibleSection title="Type Comparison Rule" defaultOpen>
+                    <p>React's reconciliation algorithm first checks if element types match:</p>
+                    <ul>
+                      <li><strong>Same Type:</strong> React updates the existing element with new props</li>
+                      <li><strong>Different Type:</strong> React unmounts the old element completely and mounts a new one</li>
+                    </ul>
+                    <p><strong>Example:</strong></p>
+                    <pre className="lesson-code">
+{`// Same type - React updates props
+<div className="old"> → <div className="new"> ✅ Updates
+
+// Different type - React replaces
+<div> → <span> ❌ Unmounts div, mounts span`}
+                    </pre>
+                    <p><strong>Why it matters:</strong> When types differ, React destroys the old component (losing state) and creates a new one. This is why you should avoid changing component types dynamically.</p>
+                  </CollapsibleSection>
+
+                  <CollapsibleSection title="Keys and Identity">
+                    <p>Keys help React identify which items are the same across renders:</p>
+                    <ul>
+                      <li><strong>Purpose:</strong> Keys provide a stable identity for list items</li>
+                      <li><strong>Matching:</strong> React uses keys to match old and new elements</li>
+                      <li><strong>State Preservation:</strong> Same key = same component instance = state preserved</li>
+                      <li><strong>Different Key:</strong> Different key = different component = state lost</li>
+                    </ul>
+                    <p><strong>Good Keys:</strong></p>
+                    <ul>
+                      <li>✅ Stable (don't change between renders)</li>
+                      <li>✅ Unique (no duplicates in the list)</li>
+                      <li>✅ Predictable (not random values)</li>
+                      <li>✅ From data (item.id, item.uuid, etc.)</li>
+                    </ul>
+                    <p><strong>Bad Keys:</strong></p>
+                    <ul>
+                      <li>❌ Index (changes when items move)</li>
+                      <li>❌ Random values (new key every render)</li>
+                      <li>❌ Non-unique values (duplicates)</li>
+                    </ul>
+                    <p><strong>In this exercise:</strong> When using index keys, moving an item changes its key, so React thinks it's a different item and loses its state (like the checked status).</p>
+                  </CollapsibleSection>
+
+                  <CollapsibleSection title="List Diffing Complexity">
+                    <p>React's algorithm for efficiently updating lists:</p>
+                    <ul>
+                      <li><strong>With Keys:</strong> O(n) complexity - React can quickly match items by key</li>
+                      <li><strong>Without Keys:</strong> O(n²) complexity in worst case - React must compare every item with every other item</li>
+                      <li><strong>Efficiency:</strong> Keys allow React to skip items that haven't moved</li>
+                    </ul>
+                    <p><strong>How it works:</strong></p>
+                    <ol>
+                      <li>React creates a map of old items by key</li>
+                      <li>React iterates through new items</li>
+                      <li>For each new item, React looks up the old item by key</li>
+                      <li>If found: update the existing item</li>
+                      <li>If not found: mount a new item</li>
+                      <li>Items not in new list: unmount</li>
+                    </ol>
+                    <p><strong>Performance Impact:</strong> With 1000 items, proper keys make updates ~1000x faster than without keys!</p>
+                  </CollapsibleSection>
+
+                  <CollapsibleSection title="The Index Key Bug Explained">
                     <p style={{ marginBottom: 8 }}>
                       <strong>Index keys — reorder Item A down:</strong>
                     </p>
@@ -168,7 +222,6 @@ function Day02Reconciliation(): JSX.Element {
                       <li>Local state, focus, and handlers can stick to the wrong row.</li>
                       <li>Controlled props may look fine — the identity bug is still there.</li>
                     </ul>
-
                     <p style={{ marginBottom: 8 }}>
                       <strong>Stable id keys:</strong>
                     </p>
@@ -181,14 +234,10 @@ function Day02Reconciliation(): JSX.Element {
                     <p style={{ marginBottom: 0, fontSize: 14, lineHeight: 1.45 }}>
                       Same key → same component instance. Checked state and notes travel with the item.
                     </p>
-                  </div>
-                </Card>
+                  </CollapsibleSection>
+                
 
-                <Card
-                  title="Common Mistakes in Production"
-                  icon="⚠️"
-                  style={{ marginBottom: '24px' }}
-                >
+                <CollapsibleSection title="Common mistakes in production" style={{ marginBottom: 12 }}>
                   <p><strong>Real-world scenarios where index keys cause bugs:</strong></p>
                   <ul>
                     <li><strong>Sortable Lists:</strong> User sorts a list, then edits an item - edits appear on wrong item!</li>
@@ -197,9 +246,10 @@ function Day02Reconciliation(): JSX.Element {
                     <li><strong>Drag & Drop:</strong> User reorders items, then toggles something - toggle appears on wrong item!</li>
                   </ul>
                   <p><strong>Solution:</strong> Always use stable, unique keys from your data (id, uuid, etc.)</p>
-                </Card>
+                </CollapsibleSection>
 
-                <VisualDiagram
+                <CollapsibleSection title="Reconciliation process diagram">
+                  <VisualDiagram
                   title="Reconciliation Process"
                   steps={[
                     {
@@ -224,6 +274,8 @@ function Day02Reconciliation(): JSX.Element {
                     }
                   ]}
                 />
+                </CollapsibleSection>
+                </Accordion>
               </div>
             )
           },
@@ -233,37 +285,20 @@ function Day02Reconciliation(): JSX.Element {
             icon: '💻',
             content: (
               <div>
-                <div style={{ marginBottom: '24px' }}>
-                  <h2 style={{ marginBottom: '20px' }}>Reconciliation Visualization</h2>
-                  <VisualDiagrams type="reconciliation" />
-                </div>
-
-                <div style={{ marginBottom: '24px' }}>
-                  <h2 style={{ marginBottom: '20px' }}>Try Code Examples</h2>
-                  <CodePlaygroundPresets presets={dayPresets[2] || []} />
-                </div>
-
-                {day02Challenges.length > 0 && (
-                  <div style={{ marginBottom: '24px' }}>
-                    <h2 style={{ marginBottom: '20px' }}>Practice Challenges</h2>
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-                      gap: '20px'
-                    }}>
-                      {day02Challenges.map((challenge) => (
-                        <Challenge key={challenge.id} challenge={challenge} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <ReactDevToolsGuide 
-                  day={2} 
+                <PracticeExtras
+                  lead={(
+                    <CollapsibleSection title="Visual diagrams" style={{ marginBottom: 12 }}>
+                      <VisualDiagrams type="reconciliation" />
+                    </CollapsibleSection>
+                  )}
+                  challenges={day02Challenges}
+                  presets={dayPresets[2] || []}
+                  day={2}
                   focusAreas={[
                     'Use Components tab to inspect keys',
                     'Watch component state when reordering with index keys',
-                    'See how keys affect component identity'
-                  ]} 
+                    'See how keys affect component identity',
+                  ]}
                 />
               </div>
             )
