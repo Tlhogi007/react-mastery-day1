@@ -6,10 +6,12 @@ import { markAiResumePending, peekAiResumePending } from '../services/quizResume
 
 interface AiAuthBridgeProps {
   onGate: (event: { mode: 'auth' | 'quota'; message: string } | null) => void
+  /** Expose openSignIn so the AI gate modal can show a working Sign in button. */
+  onSignInReady?: (openSignIn: () => void) => void
 }
 
 /** Registers Clerk getToken for AI proxy + opens sign-in when needed. */
-export function AiAuthBridge({ onGate }: AiAuthBridgeProps): JSX.Element {
+export function AiAuthBridge({ onGate, onSignInReady }: AiAuthBridgeProps): JSX.Element {
   const { getToken, isSignedIn } = useAuth()
   const { openSignIn } = useClerk()
 
@@ -25,6 +27,17 @@ export function AiAuthBridge({ onGate }: AiAuthBridgeProps): JSX.Element {
   useEffect(() => {
     if (isSignedIn) onGate(null)
   }, [isSignedIn, onGate])
+
+  useEffect(() => {
+    if (!onSignInReady) return
+    onSignInReady(() => {
+      const url = prepareAuthReturnUrl({ inLab: true, tab: 'quiz' })
+      void openSignIn?.({
+        forceRedirectUrl: url,
+        fallbackRedirectUrl: url,
+      })
+    })
+  }, [onSignInReady, openSignIn])
 
   useEffect(() => {
     return subscribeAiGate((event) => {
@@ -53,14 +66,11 @@ export function AiAuthBridge({ onGate }: AiAuthBridgeProps): JSX.Element {
           }
           markAiResumePending({ day, mode: 'toggle' })
         }
-        const url = prepareAuthReturnUrl({ inLab: true, tab: 'quiz' })
-        openSignIn?.({
-          forceRedirectUrl: url,
-          fallbackRedirectUrl: url,
-        })
+        // Don't auto-open Clerk here — our gate overlay (z-index 2000) covers it.
+        // User taps Sign in on AiQuotaModal instead.
       }
     })
-  }, [onGate, openSignIn, isSignedIn])
+  }, [onGate, isSignedIn])
 
   return <></>
 }

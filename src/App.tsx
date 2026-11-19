@@ -132,6 +132,7 @@ function App(): JSX.Element {
   const [showTutorial, setShowTutorial] = useState<boolean>(false)
   const [dayCompleteTick, setDayCompleteTick] = useState(0)
   const [aiGate, setAiGate] = useState<{ mode: 'auth' | 'quota'; message: string } | null>(null)
+  const aiSignInRef = useRef<(() => void) | null>(null)
   const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY)
 
   const handleSignedOut = useCallback(() => {
@@ -824,6 +825,9 @@ function App(): JSX.Element {
           {clerkEnabled && (
             <AiAuthBridge
               onGate={(event) => setAiGate(event)}
+              onSignInReady={(open) => {
+                aiSignInRef.current = open
+              }}
             />
           )}
 
@@ -832,6 +836,15 @@ function App(): JSX.Element {
             mode={aiGate?.mode || 'quota'}
             message={aiGate?.message || ''}
             onClose={() => setAiGate(null)}
+            onSignIn={
+              clerkEnabled
+                ? () => {
+                    // Close our overlay first — it sits above Clerk's modal (z-index 2000).
+                    setAiGate(null)
+                    aiSignInRef.current?.()
+                  }
+                : undefined
+            }
             onOpenSettings={() => {
               setAiGate(null)
               setShowSettings(true)
