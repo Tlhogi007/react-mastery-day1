@@ -190,12 +190,12 @@ export function useQuizAi({
 
           if (aiQuestions.length > 0) {
             consumeAiResumePending(day)
-            const combined = [
-              ...questions.map(asLocal),
+            // Append AI after the current local deck — do NOT reshuffle the full
+            // bank (that re-queued already-answered locals and caused repeats).
+            setAllQuestions((prev) => [
+              ...prev.filter((q) => q.source !== 'ai'),
               ...aiQuestions.map(asAi),
-            ]
-            const shuffled = combined.sort(() => Math.random() - 0.5)
-            setAllQuestions(shuffled)
+            ])
             setAiQuestionsLoaded(true)
           } else {
             setErrorMessage('No additional questions could be loaded. Using local questions only.')
@@ -344,15 +344,24 @@ export function useQuizAi({
     if (!aiEnabled) {
       // Will trigger useEffect to fetch
     } else {
-      setAllQuestions(questions.map(asLocal))
+      // Strip AI only — keep local order/progress so answered items don't reappear.
+      setAllQuestions((prev) => {
+        const locals = prev.filter((q) => q.source !== 'ai')
+        return locals.length > 0 ? locals : questions.map(asLocal)
+      })
       setAiQuestionsLoaded(false)
-      setCurrentQuestionIndex(0)
+      setCurrentQuestionIndex((idx) => {
+        const localLen = allQuestions.filter((q) => q.source !== 'ai').length
+        const max = Math.max(0, localLen - 1)
+        return Math.min(idx, max)
+      })
       setSelectedAnswer(null)
     }
   }, [
     day,
     aiEnabled,
     questions,
+    allQuestions,
     localQuestionsCompleted,
     setAiEnabled,
     setErrorMessage,

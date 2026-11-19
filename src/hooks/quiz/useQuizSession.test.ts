@@ -1,0 +1,93 @@
+import { act, cleanup, renderHook } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { QuizQuestion } from '../../types/challenges'
+
+vi.mock('../../lib/sentry', () => ({ setAppContext: vi.fn() }))
+vi.mock('../../services/aiAuthBridge', () => ({
+  clearAiGate: vi.fn(),
+  suppressAiGate: vi.fn(),
+}))
+vi.mock('../../services/quizQuestionService', () => ({
+  quizQuestionService: { fetchLocalQuestions: vi.fn() },
+}))
+
+import { useQuizSession } from './useQuizSession'
+import { questionHistory } from '../../services/questionHistory'
+import { progressStorage } from '../../services/progressStorage'
+import { analytics } from '../../services/analytics'
+import { suppressAiGate } from '../../services/aiAuthBridge'
+
+afterEach(() => cleanup())
+
+function q(id: string): QuizQuestion {
+  return {
+    id,
+    question: `Q ${id}`,
+    options: ['A', 'B', 'C', 'D'],
+    correctAnswer: 0,
+    explanation: 'because',
+    source: 'local',
+  }
+}
+
+const bank = [q('day01-q1'), q('day01-q2'), q('day01-q3'), q('day01-q4')]
+
+function aiSetters() {
+  return {
+    setAiQuestionCount: vi.fn(),
+    setGeneratingAI: vi.fn(),
+    setAiEnabled: vi.fn(),
+    setAiQuestionsLoaded: vi.fn(),
+  }
+}
+
+describe('useQuizSession (composer)', () => {
+  beforeEach(() => {
+    vi.spyOn(questionHistory, 'pickUnseenQuestions').mockImplementation((qs) => [...qs])
+    vi.spyOn(questionHistory, 'recordAnswer').mockImplementation(() => undefined)
+    vi.spyOn(questionHistory, 'canonicalId').mockImplementation((id) => id)
+    vi.spyOn(progressStorage, 'markQuizCompleted').mockImplementation(() => undefined)
+    vi.spyOn(analytics, 'trackQuizComplete').mockImplementation(() => undefined)
+    vi.spyOn(analytics, 'trackTimeSpent').mockImplementation(() => undefined)
+    vi.spyOn(analytics, 'track').mockImplementation(() => undefined)
+  })
+
+  it('answers, advances, and finishes with side effects', () => {
+    const single = [q('only')]
+    const { result } = renderHook(() =>
+      useQuizSession({
+        questions: single,
+        day: 1,
+        boot: null,
+        aiQuestionsLoaded: true,
+        ...aiSetters(),
+      }),
+    )
+
+    act(() => result.current.handleAnswerSelect(0))
+    expect(result.current.score).toBe(1)
+
+    act(() => result.current.handleNext())
+    expect(result.current.completed).toBe(true)
+    expect(result.current.percentage).toBe(100)
+    expect(suppressAiGate).toHaveBeenCalled()
+    expect(progressStorage.markQuizCompleted).toHaveBeenCalledWith('day01', 100, true)
+  })
+
+  it('reset clears AI flags via setters', () => {
+    const tracked = aiSetters()
+    const { result } = renderHook(() =>
+      useQuizSession({
+        questions: bank,
+        day: 1,
+        boot: null,
+        aiQuestionsLoaded: true,
+        ...tracked,
+      }),
+    )
+    act(() => result.current.reset())
+    expect(tracked.setAiEnabled).toHaveBeenCalledWith(false)
+    expect(tracked.setAiQuestionsLoaded).toHaveBeenCalledWith(false)
+    expect(result.current.score).toBe(0)
+  })
+})

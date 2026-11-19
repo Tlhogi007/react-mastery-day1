@@ -11,7 +11,9 @@ test.describe('Progress bars during quiz (anonymous)', () => {
     await expect(overallPercent(page)).toHaveText('0%')
 
     await page.getByRole('tab', { name: /^Quiz$/i }).click()
-    await expect(page.getByText(/Question\s+1\s+of/i)).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText(/Question\s+1(?:\s+of\s+|\/)\d+/i)).toBeVisible({
+      timeout: 10_000,
+    })
 
     await expect
       .poll(async () => page.evaluate(() => localStorage.getItem('rm-live-day-progress')), {
@@ -28,7 +30,9 @@ test.describe('Progress bars during quiz (anonymous)', () => {
       .toBeGreaterThan(1)
 
     await page.getByRole('button', { name: /Next Question/i }).click()
-    await expect(page.getByText(/Question\s+2\s+of/i)).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText(/Question\s+2(?:\s+of\s+|\/)\d+/i)).toBeVisible({
+      timeout: 5_000,
+    })
 
     const overallText = (await overallPercent(page).textContent())?.trim() ?? ''
     expect(overallText).not.toBe('0%')

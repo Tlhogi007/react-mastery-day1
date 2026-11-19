@@ -1074,14 +1074,30 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
 .quiz-btn--primary {
   border: none;
   background: var(--button-primary);
+  background-color: var(--button-primary);
   color: var(--button-text);
+}
+
+/* Beat global `button:hover { background-color: var(--bg-section) }` */
+button.quiz-btn--primary:hover:not(:disabled) {
+  background: var(--button-primary-hover);
+  background-color: var(--button-primary-hover);
+  color: var(--button-text);
+  border-color: transparent;
 }
 
 .quiz-btn--ghost {
   border: 1px solid var(--border-color);
   background: var(--bg-card);
+  background-color: var(--bg-card);
   color: var(--text-primary);
   font-weight: 500;
+}
+
+button.quiz-btn--ghost:hover:not(:disabled) {
+  background: var(--bg-section);
+  background-color: var(--bg-section);
+  color: var(--text-primary);
 }
 
 .quiz-btn.quiz-skip-btn {
@@ -1090,16 +1106,29 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
   color: var(--text-primary) !important;
 }
 
+button.quiz-btn.quiz-skip-btn:hover:not(:disabled) {
+  background: var(--bg-section) !important;
+  background-color: var(--bg-section) !important;
+  color: var(--text-primary) !important;
+}
+
 .quiz-btn--link {
   min-height: auto;
   padding: 10px;
   border: none;
   background: transparent;
+  background-color: transparent;
   color: var(--text-muted);
   font-size: 13px;
   font-weight: 500;
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+button.quiz-btn--link:hover:not(:disabled) {
+  background: transparent;
+  background-color: transparent;
+  color: var(--text-primary);
 }
 
 .quiz-segment {

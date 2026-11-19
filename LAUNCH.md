@@ -5,6 +5,7 @@
 - **App:** https://react-mastery-day1.vercel.app  
 - **Content (contributions):** https://github.com/Tlhogi007/react-mastery-content  
 - **App source:** https://github.com/Tlhogi007/react-mastery-day1  
+- **Changelog:** [`CHANGELOG.md`](./CHANGELOG.md) (semantic-release from conventional commits)
 
 ## Done in this project
 
@@ -14,6 +15,19 @@
 - [x] GitHub Action to redeploy app when content merges to `main`  
 - [x] App repo on GitHub  
 - [x] `vercel.json` + `.env.example`  
+- [x] Intro splash (every landing visit; skipped after sign-in / sign-out → landing)  
+- [x] Support page (curriculum + community email + contribute link)  
+- [x] Lab shell split (`LabShell`, `useLabNavigation`, quiz hooks)  
+- [x] Settings theme toggle applies `.light-theme` / `.dark-theme` (shared `setAppTheme`)  
+- [x] Playwright cloud-sync e2e (progress + theme/focus/quiz resume/helpful/analytics restore)
+- [x] Playwright launch smoke (`npm run test:e2e:smoke`; optional `BASE_URL=` for prod/preview)
+- [x] Unit tests + **90% coverage gate** on `api/_lib`, `src/services`, `src/hooks` (`npm test` / Vitest)
+  - Excludes static question banks, HTTP provider shells, LLM prompt assembly, large quiz hooks (those stay on e2e)
+  - Components are not in the unit coverage include — covered by Playwright smoke/cloud/quiz specs
+- [x] CI: `.github/workflows/test.yml` runs `npm test` (coverage) + `npm run test:e2e` on push/PR to `main`
+  - Secrets required for e2e: `VITE_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` (optional `E2E_CLERK_USER_EMAIL` / `E2E_CLERK_USER_PASSWORD`)
+
+Details: https://github.com/Tlhogi007/react-mastery-content/blob/main/AUTO_REDEPLOY.md
 
 ## Done for launch automation
 
@@ -22,10 +36,9 @@
 - [x] Env vars `VITE_CONTENT_REPO_URL` + `CONTENT_REPO_URL` set
 - [x] Content repo Action redeploys via `VERCEL_TOKEN` (verified green)
 - [x] Watching content repo for PR notifications
-- [x] GitHub connected under Vercel → Settings → Git (`Tlhogi007/react-mastery-day1`, production branch `main`) — Done
+- [x] GitHub connected under Vercel → Settings → Git (`Tlhogi007/react-mastery-day1`, production branch `main`)
 - [x] Sentry client + source maps (`VITE_SENTRY_DSN`, `SENTRY_AUTH_TOKEN` / org / project on Vercel)
-
-Details: https://github.com/Tlhogi007/react-mastery-content/blob/main/AUTO_REDEPLOY.md
+- [x] GA when `VITE_GA_TRACKING_ID` is set
 
 ## AI quiz cost strategy
 
@@ -38,9 +51,18 @@ Details: https://github.com/Tlhogi007/react-mastery-content/blob/main/AUTO_REDEP
 - JWT `authorizedParties` via `APP_ORIGIN` / `CLERK_AUTHORIZED_PARTIES` (+ current `VERCEL_URL`)
 - Request body validated before quota counters increment
 - Per-IP caps + Upstash global daily budget
-- Vercel Bot Protection (challenge) on the project firewall; custom bypass for `POST /api/clerk-webhook`
-- Learners can paste BYO keys in Settings (browser-only; skips hosted quota)
-- Signed-in cloud sync (`/api/user-data`): progress, notes, reflections, flashcards, snippets, last lab location (runs on landing + lab)
+- Vercel Bot Protection (challenge) on the project firewall; custom bypass for:
+  - `POST /api/clerk-webhook`
+  - `/__clerk` + `/api/clerk-fapi` (Clerk JS / FAPI proxy when live keys + `CLERK_FAPI_PROXY_ENABLED=1`)
+- Learners can paste BYO keys in Settings (**browser-only; never uploaded / never cloud-synced**)
+- Signed-in cloud sync (`/api/user-data`) across devices:
+  - progress, live day bar, question history
+  - notes, annotations, reflections, flashcards, snippets
+  - last lab location (exercise / view / tools / tab)
+  - theme, tour complete, focus mode
+  - mid-quiz resume (30 min TTL)
+  - community helpful votes (your marks)
+  - local learning-analytics event log
 - Quiz UI shows remaining free AI generations (`N/5 free AI left`)
 - Greeting uses Clerk first name / username when signed in
 - GA `userId` set after signed-in sync (when Analytics configured)
@@ -49,6 +71,14 @@ Details: https://github.com/Tlhogi007/react-mastery-content/blob/main/AUTO_REDEP
 - `aiBanned` blocks hosted AI only — cloud sync uses `requireCloudUser` (unaffected by ban)
 - Community signed attributions: GitHub avatar/byline + contribute frontmatter from signed-in GitHub
 - No paid plans yet — add `plan: free|pro` later if monetizing
+
+## Before calling it public
+
+- [ ] Switch production Clerk to `pk_live_` (still `pk_test_` as of last check)
+- [ ] Set `CLERK_FAPI_PROXY_ENABLED=1` when using live keys on vercel.app
+- [ ] Confirm Clerk redirect URLs + authorized parties for production origin(s)
+- [ ] Run launch smoke against local or prod (`npm run test:e2e:smoke` / `BASE_URL=… npm run test:e2e:smoke`)
+- [ ] Clear/resolve stale Sentry issues so launch alerts are real
 
 ## After that
 

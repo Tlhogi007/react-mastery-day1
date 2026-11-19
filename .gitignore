@@ -39,6 +39,9 @@ my_chat.json
 *.tsbuildinfo
 scripts/last-stress-report.json
 
+# Vitest coverage
+coverage/
+
 # Playwright
 test-results/
 playwright-report/

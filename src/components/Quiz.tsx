@@ -76,6 +76,11 @@ function Quiz({
         handleCancelPrompt
     } = useQuiz({ questions, day })
 
+    const aiTotal = allQuestions.length - localQuestionsCount
+    const aiOrdinal = allQuestions
+        .slice(0, currentQuestionIndex + 1)
+        .filter((q) => q.source === 'ai').length
+
     const [currentTime, setCurrentTime] = useState<number>(0)
 
     // Update current time during quiz
@@ -254,9 +259,9 @@ function Quiz({
                             ⏱️ {formatTime(currentTime)}
                         </div>
                     )}
-                    {isAISection && (
+                    {isAISection && aiTotal > 0 && (
                         <div className="quiz-status-chip quiz-status-chip--info">
-                            AI {currentQuestionIndex - localQuestionsCount + 1}/{allQuestions.length - localQuestionsCount}
+                            AI {aiOrdinal}/{aiTotal}
                         </div>
                     )}
                 </div>

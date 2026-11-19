@@ -10,7 +10,9 @@ test.describe('Local quiz no-repeat', () => {
     await enterLab(page)
 
     await page.getByRole('tab', { name: /^Quiz$/i }).click()
-    await expect(page.getByText(/Question\s+1\s+of/i)).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText(/Question\s+1(?:\s+of\s+|\/)\d+/i)).toBeVisible({
+      timeout: 10_000,
+    })
 
     const seenIds: string[] = []
 
@@ -41,7 +43,9 @@ test.describe('Local quiz no-repeat', () => {
 
       if (i < 2) {
         await page.getByRole('button', { name: /Next Question/i }).click()
-        await expect(page.getByText(new RegExp(`Question\\s+${i + 2}\\s+of`, 'i'))).toBeVisible({
+        await expect(
+          page.getByText(new RegExp(`Question\\s+${i + 2}(?:\\s+of\\s+|\\/)\\d+`, 'i')),
+        ).toBeVisible({
           timeout: 5_000,
         })
       } else {
@@ -50,15 +54,15 @@ test.describe('Local quiz no-repeat', () => {
     }
 
     // Prompt after 3 questions
-    await expect(page.getByText(/Want More Questions/i)).toBeVisible({ timeout: 8_000 })
-    await page.getByRole('button', { name: /More Local Questions/i }).click()
+    await expect(page.getByText(/Want more questions/i)).toBeVisible({ timeout: 8_000 })
+    await page.getByRole('button', { name: /^Local questions$/i }).click()
     await expect(page.getByText(/How many local/i)).toBeVisible({ timeout: 5_000 })
-    await page.getByRole('button', { name: '5 Questions', exact: true }).click()
-    await page.getByRole('button', { name: /^Continue$/i }).click()
+    await page.getByRole('radio', { name: '5', exact: true }).click()
+    await page.getByRole('button', { name: /Continue with 5/i }).click()
 
     // Wait until prompt closes / next question shows (or exhausted message)
     const exhausted = page.getByText(/No new local questions left/i)
-    const nextQ = page.getByText(/Question\s+\d+\s+of/i)
+    const nextQ = page.getByText(/Question\s+\d+(?:\s+of\s+|\/)\d+/i)
     await expect(exhausted.or(nextQ)).toBeVisible({ timeout: 10_000 })
 
     if (await exhausted.isVisible().catch(() => false)) {

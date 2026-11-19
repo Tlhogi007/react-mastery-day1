@@ -25,6 +25,28 @@ export async function seedOnboarding(page: Page): Promise<void> {
   })
 }
 
+/** Intro splash auto-unlocks after ~5s (Strict Mode may remount once). */
+export async function dismissIntroIfPresent(page: Page): Promise<void> {
+  const dialog = page.getByRole('dialog', { name: /Welcome/i })
+  if (!(await dialog.isVisible({ timeout: 2_000 }).catch(() => false))) return
+
+  const continueBtn = dialog.getByRole('button', { name: /^Continue$/i })
+  // Prefer waiting for auto-dismiss; fall back to Continue once unlocked.
+  try {
+    await Promise.race([
+      dialog.waitFor({ state: 'hidden', timeout: 14_000 }),
+      (async () => {
+        await expect(continueBtn).toBeEnabled({ timeout: 14_000 })
+        await continueBtn.click({ timeout: 3_000 })
+      })(),
+    ])
+  } catch {
+    // Last resort: keyboard unlock path
+    await page.keyboard.press('Escape')
+  }
+  await expect(dialog).toBeHidden({ timeout: 5_000 })
+}
+
 export async function enterLab(
   page: Page,
   opts: { fresh?: boolean } = { fresh: true },
@@ -148,13 +170,13 @@ export async function readLiveProgress(page: Page): Promise<{
   })
 }
 
-/** Simulate mid-quiz live % on this device and wait for cloud PUT. */
+/** Simulate mid-quiz live % on this device and wait for cloud PUT. `null` = tombstone clear. */
 export async function pushLiveProgress(
   page: Page,
   day: number,
-  percent: number,
+  percent: number | null,
 ): Promise<void> {
-  const putPromise = waitForUserDataPut(page, 30_000)
+  const putPromise = waitForUserDataPut(page, 35_000)
   await page.evaluate(
     ({ day: d, percent: p }) => {
       localStorage.setItem(
@@ -166,6 +188,17 @@ export async function pushLiveProgress(
         }),
       )
       window.dispatchEvent(new CustomEvent('rm-progress-changed'))
+      // Force immediate cloud push (UserCloudSync flushes on hide)
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => 'hidden',
+      })
+      document.dispatchEvent(new Event('visibilitychange'))
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => 'visible',
+      })
+      document.dispatchEvent(new Event('visibilitychange'))
     },
     { day, percent },
   )

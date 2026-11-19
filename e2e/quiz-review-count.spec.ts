@@ -3,16 +3,21 @@ import { enterLab } from './helpers'
 
 async function dismissMorePrompt(page: import('@playwright/test').Page): Promise<void> {
   if (await page.getByText(/Want More Questions/i).isVisible().catch(() => false)) {
-    await page.getByRole('button', { name: /Continue with remaining/i }).click()
+    await page
+      .getByRole('button', { name: /Skip — finish remaining|Continue with remaining/i })
+      .click()
   }
 }
 
 async function finishLocalAiGate(page: import('@playwright/test').Page): Promise<boolean> {
-  if (!(await page.getByText(/Local Questions Complete/i).isVisible().catch(() => false))) {
+  if (!(await page.getByText(/Local quiz done/i).isVisible().catch(() => false))) {
     return false
   }
-  await page.getByRole('button', { name: /^Skip$/i }).click()
-  await page.getByRole('button', { name: /Finish Quiz/i }).click()
+  const none = page.getByRole('radio', { name: /^None$/i })
+  if (await none.isVisible().catch(() => false)) {
+    await none.click()
+  }
+  await page.getByRole('button', { name: /Finish quiz/i }).click()
   return true
 }
 
@@ -20,7 +25,9 @@ test.describe('Quiz review count', () => {
   test('missed count matches score (wrong + skip)', async ({ page }) => {
     await enterLab(page)
     await page.getByRole('tab', { name: /^Quiz$/i }).click()
-    await expect(page.getByText(/Question\s+1\s+of/i)).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText(/Question\s+1(?:\s+of\s+|\/)\d+/i)).toBeVisible({
+      timeout: 10_000,
+    })
 
     // Q1 answer
     await page.locator('.quiz-option').first().click()

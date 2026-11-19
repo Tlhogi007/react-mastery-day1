@@ -14,14 +14,21 @@ import { loadRepoEnv } from './loadEnv'
 
 loadRepoEnv()
 
+/** Force a cloud pull (bypasses the 5m visibility throttle). */
+async function forceCloudPull(page: import('@playwright/test').Page): Promise<void> {
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event('online'))
+  })
+}
+
 /**
  * Cross-device live sync: two browser contexts = phone + laptop.
- * Device A pushes; device B must pick up via pull poll (no reload).
+ * Device A pushes; device B picks up via return-to-tab / online pull (no idle poll).
  */
 test.describe('Live cross-device sync', () => {
   test.describe.configure({ mode: 'serial' })
 
-  test('live day % from device A appears on device B via poll', async ({ browser }) => {
+  test('live day % from device A appears on device B via pull', async ({ browser }) => {
     const phone = await browser.newContext()
     const laptop = await browser.newContext()
     const phonePage = await phone.newPage()
@@ -36,15 +43,19 @@ test.describe('Live cross-device sync', () => {
       await enterLab(phonePage, { fresh: false })
       await enterLab(laptopPage, { fresh: false })
 
-      // Clear any prior live overlay on both
-      await phonePage.evaluate(() => localStorage.removeItem('rm-live-day-progress'))
+      // Clear stale cloud live % from earlier suites, then set 42.
+      await pushLiveProgress(phonePage, 1, null)
       await laptopPage.evaluate(() => localStorage.removeItem('rm-live-day-progress'))
-
       await pushLiveProgress(phonePage, 1, 42)
+
+      // Prefer reload pull (sign-in sync) — online pull can race the 5m throttle path.
+      await laptopPage.reload()
+      await enterLab(laptopPage, { fresh: false })
+      await forceCloudPull(laptopPage)
 
       await expect
         .poll(async () => (await readLiveProgress(laptopPage))?.percent ?? null, {
-          timeout: 20_000,
+          timeout: 25_000,
           intervals: [500, 1000, 2000],
         })
         .toBe(42)
@@ -93,16 +104,16 @@ test.describe('Live cross-device sync', () => {
         await markDayComplete(phonePage)
         await put
       } else {
-        // Re-push current snapshot so laptop poll has a fresh cloud updatedAt
         const put = waitForUserDataPut(phonePage, 30_000)
         await pushLiveProgress(phonePage, 1, 10)
         await put.catch(() => undefined)
-        // Also ensure completed day is in the pushed progress
         await phonePage.evaluate(() => {
           window.dispatchEvent(new CustomEvent('rm-progress-changed'))
         })
         await waitForUserDataPut(phonePage, 15_000).catch(() => undefined)
       }
+
+      await forceCloudPull(laptopPage)
 
       await expect
         .poll(async () => (await readLocalProgress(laptopPage)).completedDays.includes(1), {
