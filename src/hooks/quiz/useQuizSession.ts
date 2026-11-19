@@ -12,6 +12,7 @@ import { questionHistory } from '../../services/questionHistory'
 import { setAppContext } from '../../lib/sentry'
 import { clearQuizProgress } from '../../services/quizResume'
 import { getTopicForDay } from '../../services/topicMapper'
+import { USER_CLOUD_SYNCED_EVENT } from '../../services/userCloudSync'
 import { createInitialQuizSessionState, pickLocalDeck } from './quizSessionState'
 import { applyNext, quizSessionReducer } from './quizSessionReducer'
 import { loadMoreLocalQuestions } from './loadMoreLocals'
@@ -67,26 +68,56 @@ export function useQuizSession({
 
   // Depend on question ids — callers often pass a fresh `questions` array each render.
   const questionIdsKey = questions.map((q) => q.id).join('|')
+
+  const seedFromHistory = useCallback(
+    (forceReseed: boolean): void => {
+      if (boot) return
+      const s = stateRef.current
+      if (s.completed || s.showQuestionPrompt || s.localQuestionsCompleted) return
+
+      const picked = questionHistory.pickUnseenQuestions(
+        questions,
+        new Set(),
+        questions.length,
+        day,
+      )
+      const { questions: deck, exhausted } = pickLocalDeck(questions, picked)
+      const exhaustedMessage = exhausted
+        ? 'All local questions were already completed. Showing the full bank again — or use AI / Retake Incorrect.'
+        : null
+
+      // Mid-attempt on this device: don't reshuffle, only surface the banner once history arrives.
+      const quizStarted =
+        s.currentQuestionIndex > 0 || s.selectedAnswer !== null || s.score > 0
+      if (quizStarted && !forceReseed) {
+        if (exhausted && !s.errorMessage) {
+          dispatch({ type: QuizSessionActionType.SetError, value: exhaustedMessage })
+        }
+        return
+      }
+
+      dispatch({
+        type: QuizSessionActionType.SeedUnseen,
+        questions: deck,
+        exhaustedMessage,
+        now: Date.now(),
+      })
+      questionStartTimeRef.current = Date.now()
+    },
+    [boot, day, questions],
+  )
+
   useEffect(() => {
-    if (boot) return
-    const picked = questionHistory.pickUnseenQuestions(
-      questions,
-      new Set(),
-      questions.length,
-      day,
-    )
-    const { questions: deck, exhausted } = pickLocalDeck(questions, picked)
-    dispatch({
-      type: QuizSessionActionType.SeedUnseen,
-      questions: deck,
-      exhaustedMessage: exhausted
-        ? 'You have already completed all local questions for this day. Retake will reuse the bank, or try AI questions.'
-        : null,
-      now: Date.now(),
-    })
-    questionStartTimeRef.current = Date.now()
+    seedFromHistory(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- questionIdsKey tracks bank identity
   }, [questionIdsKey, boot, day])
+
+  // History can land from cloud after the quiz already seeded (other device finished first).
+  useEffect(() => {
+    const onSynced = (): void => seedFromHistory(false)
+    window.addEventListener(USER_CLOUD_SYNCED_EVENT, onSynced)
+    return () => window.removeEventListener(USER_CLOUD_SYNCED_EVENT, onSynced)
+  }, [seedFromHistory])
 
   useEffect(() => {
     if (currentQuestion) questionStartTimeRef.current = Date.now()
@@ -222,9 +253,24 @@ export function useQuizSession({
   }, [])
 
   const handleCancelPrompt = useCallback((): void => {
+    const prev = stateRef.current
+    const nextIndex = prev.currentQuestionIndex + 1
+    const willComplete = nextIndex >= prev.allQuestions.length
     dispatch({ type: QuizSessionActionType.CancelPrompt, now: Date.now() })
-    questionStartTimeRef.current = Date.now()
-  }, [])
+    if (willComplete) {
+      finishIfNeeded(prev, {
+        ...prev,
+        completed: true,
+        localQuestionsCompleted: true,
+        showQuestionPrompt: false,
+        questionPromptType: null,
+        errorMessage: null,
+        selectedAnswer: null,
+      })
+    } else {
+      questionStartTimeRef.current = Date.now()
+    }
+  }, [finishIfNeeded])
 
   const reset = useCallback((): void => {
     setAiQuestionCount(null)

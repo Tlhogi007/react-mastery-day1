@@ -273,7 +273,7 @@ const Consumer = memo(() => {
                     <div style={{ marginBottom: '20px' }}>
                         <h4>Quiz</h4>
                         <ul>
-                            <li><kbd>1-4</kbd> - Select answer option</li>
+                            <li><kbd>A–D</kbd> / <kbd>1–4</kbd> - Select answer option</li>
                             <li><kbd>Space</kbd> / <kbd>Enter</kbd> - Next question</li>
                             <li><kbd>s</kbd> - Skip question</li>
                             <li><kbd>j</kbd> / <kbd>k</kbd> - Navigate questions</li>

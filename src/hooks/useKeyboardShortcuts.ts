@@ -62,12 +62,17 @@ export function useKeyboardShortcuts({
       return
     }
 
-    // 1-4: Select option
-    if (onSelect && ['1', '2', '3', '4'].includes(event.key)) {
-      event.preventDefault()
-      const index = parseInt(event.key, 10) - 1
-      onSelect(index)
-      return
+    // A–D (matches on-screen letters) or 1–4 (num-row alias)
+    if (onSelect) {
+      const letter = event.key.toLowerCase()
+      const letterIdx = ['a', 'b', 'c', 'd'].indexOf(letter)
+      const digitIdx = ['1', '2', '3', '4'].indexOf(event.key)
+      const index = letterIdx >= 0 ? letterIdx : digitIdx
+      if (index >= 0) {
+        event.preventDefault()
+        onSelect(index)
+        return
+      }
     }
 
     // Escape: Close/Cancel

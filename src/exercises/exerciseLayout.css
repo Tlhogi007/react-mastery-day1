@@ -1283,7 +1283,7 @@ button.quiz-btn--link:hover:not(:disabled) {
      [0 free AI — add your key]   ☐ Add AI questions
    Desktop:
      [Question · ⏱️]              [badge] [☐ Add AI]
-     Press 1-4… (quiet, full width under)
+     Press A–D… (quiet, full width under)
 */
 .quiz-toolbar {
   display: grid;
@@ -2090,6 +2090,79 @@ button.quiz-btn--link:hover:not(:disabled) {
   color: var(--text-on-warning);
   font-size: 13px;
   text-align: left;
+}
+
+/* Mid-quiz AI blocked — gold callout + one clear path out */
+.quiz-ai-escape {
+  text-align: left;
+}
+
+.quiz-ai-escape__callout {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--bg-warning);
+  color: var(--text-on-warning);
+  border: 1px solid color-mix(in srgb, var(--text-on-warning) 18%, transparent);
+}
+
+.quiz-ai-escape__status {
+  display: inline-block;
+  margin: 0 0 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--text-on-warning) 14%, transparent);
+  color: var(--text-on-warning);
+}
+
+.quiz-ai-escape__message {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: break-word;
+}
+
+.quiz-ai-escape__actions {
+  margin-top: 16px;
+}
+
+.quiz-ai-escape__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 14px;
+  margin-top: 12px;
+  padding-top: 4px;
+}
+
+.quiz-ai-escape__footer-btn {
+  min-height: auto;
+  padding: 4px 0;
+  border: none;
+  background: transparent;
+  background-color: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+button.quiz-ai-escape__footer-btn:hover:not(:disabled) {
+  background: transparent;
+  background-color: transparent;
+  color: var(--text-primary);
+}
+
+.quiz-ai-escape__footer-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .quiz-count-prompt__actions {

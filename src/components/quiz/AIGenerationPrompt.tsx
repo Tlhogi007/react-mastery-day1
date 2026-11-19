@@ -156,8 +156,21 @@ function AIGenerationPrompt({
     window.setTimeout(() => onGenerate(0), isMobile ? SHEET_EXIT_MS : 0)
   }
 
+  const blockedStatus =
+    blockReason === 'auth'
+      ? 'Sign-in required'
+      : blockReason === 'quota'
+        ? 'Free limit reached'
+        : 'AI unavailable'
+
+  const blockedBanner =
+    errorMessage ||
+    (blockReason === 'auth'
+      ? 'Hosted AI needs sign-in. Finish with your local score, or add your own API key in Settings.'
+      : 'Hosted AI isn’t available (limit or sign-in). Finish the quiz, or add your own API key in Settings.')
+
   const decisionBody = (
-    <div className="quiz-ai-gate">
+    <div className={`quiz-ai-gate${aiUnavailable ? ' quiz-ai-escape' : ''}`}>
       <h2 className="quiz-panel__title" id={titleId}>
         Local quiz done
       </h2>
@@ -167,15 +180,10 @@ function AIGenerationPrompt({
       <p className="quiz-ai-gate__pct">{pct}% score</p>
 
       {aiUnavailable ? (
-        <>
-          <p className="quiz-ai-gate__question">
-            {blockReason === 'auth' ? 'Sign in required for hosted AI' : 'Free hosted AI limit reached'}
-          </p>
-          <p className="quiz-ai-gate__hint" style={{ marginTop: 8 }}>
-            You can add your own API key, {blockReason === 'auth' ? 'sign in, ' : ''}
-            or finish with your local results.
-          </p>
-        </>
+        <div className="quiz-ai-escape__callout" role="alert" style={{ marginTop: 14 }}>
+          <span className="quiz-ai-escape__status">{blockedStatus}</span>
+          <p className="quiz-ai-escape__message">{blockedBanner}</p>
+        </div>
       ) : (
         <>
           <p className="quiz-ai-gate__question">Add AI questions?</p>
@@ -207,36 +215,28 @@ function AIGenerationPrompt({
         </p>
       )}
 
-      <div className="quiz-actions">
+      <div className={`quiz-actions${aiUnavailable ? ' quiz-ai-escape__actions' : ''}`}>
         {aiUnavailable ? (
           <>
             <button
               type="button"
               className="quiz-btn quiz-btn--primary"
-              onClick={openSettings}
-              disabled={generating}
-            >
-              Add API key in Settings
-            </button>
-            {blockReason === 'auth' && (
-              <button
-                type="button"
-                className="quiz-btn quiz-btn--ghost"
-                onClick={() => {
-                  window.dispatchEvent(new CustomEvent('rm-open-ai-sign-in'))
-                }}
-                disabled={generating}
-              >
-                Sign in
-              </button>
-            )}
-            <button
-              type="button"
-              className="quiz-btn quiz-btn--ghost"
               onClick={finish}
               disabled={generating}
             >
               Finish quiz
+            </button>
+            <button
+              type="button"
+              className="quiz-btn quiz-btn--ghost"
+              onClick={
+                blockReason === 'auth'
+                  ? () => window.dispatchEvent(new CustomEvent('rm-open-ai-sign-in'))
+                  : openSettings
+              }
+              disabled={generating}
+            >
+              {blockReason === 'auth' ? 'Sign in' : 'Add API key'}
             </button>
           </>
         ) : (
@@ -257,11 +257,22 @@ function AIGenerationPrompt({
         )}
       </div>
 
-      {!aiUnavailable && (
+      {aiUnavailable && blockReason === 'auth' ? (
+        <div className="quiz-ai-escape__footer">
+          <button
+            type="button"
+            className="quiz-ai-escape__footer-btn"
+            onClick={openSettings}
+            disabled={generating}
+          >
+            Use your own key
+          </button>
+        </div>
+      ) : !aiUnavailable ? (
         <p className="quiz-ai-gate__hint">
           AI questions come from free APIs and templates; quality varies.
         </p>
-      )}
+      ) : null}
     </div>
   )
 

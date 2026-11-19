@@ -165,6 +165,9 @@ function Quiz({
                 <QuestionPrompt
                     onSelectType={handleSelectPromptType}
                     onCancel={handleCancelPrompt}
+                    onFinishQuiz={() => {
+                        void handleAIGenerationRequest(0)
+                    }}
                     selectedType={questionPromptType}
                     onSelectCount={(type, count) => {
                         if (type === 'local') {
@@ -222,7 +225,21 @@ function Quiz({
         return shell(
             <>
                 <h3 className="quiz-shell__title">{title}</h3>
-                <p className="quiz-panel__lead">Loading questions…</p>
+                <div className="quiz-panel" role="status">
+                    <p className="quiz-panel__title">No question to show</p>
+                    <p className="quiz-panel__lead">
+                        The quiz ran past the last question. Finish or retake to continue.
+                    </p>
+                    <div className="quiz-actions">
+                        <button
+                            type="button"
+                            className="quiz-btn quiz-btn--primary"
+                            onClick={reset}
+                        >
+                            Retake quiz
+                        </button>
+                    </div>
+                </div>
             </>,
         )
     }
@@ -242,7 +259,7 @@ function Quiz({
               Mobile:  Question ········ timer
                        [badge] ········ ☐ Add AI
               Desktop: [Question · timer] ····· [badge] [☐ Add AI]
-                       Press 1-4… (quiet line)
+                       Press A–D… (quiet line)
             */}
             <div className="quiz-toolbar">
                 <div className="quiz-toolbar__left">
@@ -276,7 +293,7 @@ function Quiz({
                 </div>
                 {!isAISection && !completed && (
                     <div className="quiz-input-hint">
-                        <span className="quiz-input-hint__desktop">Press 1-4 to select, Space/Enter for next</span>
+                        <span className="quiz-input-hint__desktop">Press A–D to select, Space/Enter for next</span>
                         <span className="quiz-input-hint__touch">Tap an answer, then Next</span>
                     </div>
                 )}

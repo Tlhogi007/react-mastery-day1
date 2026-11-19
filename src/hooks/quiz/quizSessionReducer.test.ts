@@ -84,10 +84,11 @@ describe('quizSessionReducer', () => {
     expect(state.completed).toBe(true)
   })
 
-  it('advances after cancel prompt', () => {
+  it('advances after cancel prompt when more questions remain', () => {
     let state = createInitialQuizSessionState(bank, null)
     state = {
       ...state,
+      currentQuestionIndex: 2,
       showQuestionPrompt: true,
       questionPromptType: QuestionPromptKind.Local,
     }
@@ -96,7 +97,26 @@ describe('quizSessionReducer', () => {
       now: Date.now(),
     })
     expect(state.showQuestionPrompt).toBe(false)
-    expect(state.currentQuestionIndex).toBe(1)
+    expect(state.currentQuestionIndex).toBe(3)
+    expect(state.completed).toBe(false)
+  })
+
+  it('completes after cancel prompt when no questions remain', () => {
+    const short = [q('a'), q('b'), q('c')]
+    let state = createInitialQuizSessionState(short, null)
+    state = {
+      ...state,
+      currentQuestionIndex: 2,
+      showQuestionPrompt: true,
+      questionPromptType: QuestionPromptKind.Ai,
+    }
+    state = quizSessionReducer(state, {
+      type: QuizSessionActionType.CancelPrompt,
+      now: Date.now(),
+    })
+    expect(state.showQuestionPrompt).toBe(false)
+    expect(state.completed).toBe(true)
+    expect(state.currentQuestionIndex).toBe(2)
   })
 
   it('reset clears progress and reseeds bank', () => {

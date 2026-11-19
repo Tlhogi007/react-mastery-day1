@@ -224,15 +224,22 @@ export function quizSessionReducer(
     case QuizSessionActionType.SelectPromptType:
       return { ...state, errorMessage: null, questionPromptType: action.promptType }
 
-    case QuizSessionActionType.CancelPrompt:
+    case QuizSessionActionType.CancelPrompt: {
+      // Mid-prompt stays on the answered index (usually 2). Advancing past the
+      // last item left currentQuestion undefined → perpetual "Loading questions…".
+      const nextIndex = state.currentQuestionIndex + 1
+      const hasMore = nextIndex < state.allQuestions.length
       return {
         ...state,
         errorMessage: null,
         showQuestionPrompt: false,
         questionPromptType: null,
-        currentQuestionIndex: state.currentQuestionIndex + 1,
         selectedAnswer: null,
+        ...(hasMore
+          ? { currentQuestionIndex: nextIndex }
+          : { completed: true, localQuestionsCompleted: true }),
       }
+    }
 
     case QuizSessionActionType.LoadMoreOk:
       return {

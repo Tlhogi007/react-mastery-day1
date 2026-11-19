@@ -36,18 +36,21 @@ describe('useKeyboardShortcuts', () => {
     expect(onPrevious).toHaveBeenCalledTimes(2)
   })
 
-  it('maps s to skip, 1-4 to select index, Escape to escape', () => {
+  it('maps s to skip, A–D / 1–4 to select index, Escape to escape', () => {
     const onSkip = vi.fn()
     const onSelect = vi.fn()
     const onEscape = vi.fn()
     renderHook(() => useKeyboardShortcuts({ onSkip, onSelect, onEscape }))
     press('s', {}, document.body)
+    press('a', {}, document.body)
+    press('D', {}, document.body)
     press('1', {}, document.body)
     press('4', {}, document.body)
     press('5', {}, document.body)
+    press('e', {}, document.body)
     press('Escape', {}, document.body)
     expect(onSkip).toHaveBeenCalledTimes(1)
-    expect(onSelect.mock.calls).toEqual([[0], [3]])
+    expect(onSelect.mock.calls).toEqual([[0], [3], [0], [3]])
     expect(onEscape).toHaveBeenCalledTimes(1)
   })
 

@@ -20,7 +20,7 @@ const SECTIONS: { title: string; items: Shortcut[] }[] = [
   {
     title: 'Quiz',
     items: [
-      { keys: ['1–4'], action: 'Pick an answer' },
+      { keys: ['A–D', '1–4'], action: 'Pick an answer' },
       { keys: ['Space'], action: 'Next question' },
       { keys: ['S'], action: 'Skip' },
     ],
