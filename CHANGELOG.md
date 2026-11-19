@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.6.3...v1.7.0) (2026-11-19)
+
+
+### Features
+
+* **growth:** per-day share links with OG previews and GA funnel events ([0222e60](https://github.com/Tlhogi007/react-mastery-day1/commit/0222e601874302c33bd2641b15d516563929dd2e))
+
 ## [1.6.3](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.6.2...v1.6.3) (2026-11-19)
 
 
