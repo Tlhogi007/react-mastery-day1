@@ -152,6 +152,72 @@ function UsageTable({
   )
 }
 
+function UsageChart({ users }: { users: AdminUserRow[] }): JSX.Element {
+  const max = Math.max(1, ...users.map((u) => u.usedToday))
+  const top = [...users].sort((a, b) => b.usedToday - a.usedToday).slice(0, 8)
+  const totalUsed = users.reduce((s, u) => s + u.usedToday, 0)
+  const banned = users.filter((u) => u.aiBanned).length
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 8,
+          marginBottom: 12,
+        }}
+      >
+        {[
+          { label: 'Users', value: String(users.length) },
+          { label: 'Gens today', value: String(totalUsed) },
+          { label: 'Banned', value: String(banned) },
+        ].map((s) => (
+          <div
+            key={s.label}
+            style={{
+              padding: '10px 12px',
+              borderRadius: 8,
+              border: '1px solid var(--border-color)',
+              background: 'var(--bg-section)',
+            }}
+          >
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{s.label}</div>
+            <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{s.value}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {top.map((u) => (
+          <div key={u.userId} style={{ display: 'grid', gridTemplateColumns: '120px 1fr 40px', gap: 8, alignItems: 'center' }}>
+            <span
+              style={{
+                fontSize: 12,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+              title={u.email || u.userId}
+            >
+              {u.name || u.email || u.userId.slice(0, 10)}
+            </span>
+            <div style={{ height: 8, background: 'var(--bg-section)', borderRadius: 4, overflow: 'hidden' }}>
+              <div
+                style={{
+                  height: '100%',
+                  width: `${(u.usedToday / max) * 100}%`,
+                  background: u.aiBanned ? 'var(--border-warning)' : 'var(--button-primary)',
+                }}
+              />
+            </div>
+            <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', textAlign: 'right' }}>{u.usedToday}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function UsageBody({
   state,
   busyId,
@@ -171,7 +237,12 @@ function UsageBody({
       <p style={{ color: 'var(--text-secondary)' }}>No AI quota keys found for recent days.</p>
     )
   }
-  return <UsageTable users={state.users} busyId={busyId} setBanned={setBanned} />
+  return (
+    <>
+      <UsageChart users={state.users} />
+      <UsageTable users={state.users} busyId={busyId} setBanned={setBanned} />
+    </>
+  )
 }
 
 /** Account page block — renders nothing unless the signed-in user is an admin. */

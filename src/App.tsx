@@ -13,7 +13,9 @@ import { AiQuotaModal } from './components/AiQuotaModal'
 import { ShareDayButton } from './components/ShareDayButton'
 import { SignedInGreeting } from './components/SignedInGreeting'
 import { UserCloudSync } from './components/UserCloudSync'
+import { Week1Certificate } from './components/Week1Certificate'
 import { applyDocumentMeta } from './lib/shareDay'
+import { shouldNudgeDaySkip } from './lib/learningPath'
 import {
   prepareLandingAfterSignOut,
   getActiveTab,
@@ -134,6 +136,8 @@ function App(): JSX.Element {
   const [showTutorial, setShowTutorial] = useState<boolean>(false)
   const [dayCompleteTick, setDayCompleteTick] = useState(0)
   const [aiGate, setAiGate] = useState<{ mode: 'auth' | 'quota'; message: string } | null>(null)
+  const [showCertificate, setShowCertificate] = useState(false)
+  const [communitySlug, setCommunitySlug] = useState<string | null>(null)
   const aiSignInRef = useRef<(() => void) | null>(null)
   const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY)
 
@@ -316,6 +320,17 @@ function App(): JSX.Element {
   }, [isMobile, showSidebar])
 
   const handleExerciseSelect = (key: ExerciseKey): void => {
+    const day = exercises[key]?.day
+    if (typeof day === 'number' && shouldNudgeDaySkip(day)) {
+      window.dispatchEvent(
+        new CustomEvent('showToast', {
+          detail: {
+            message: `Suggested path: finish Day ${day - 1} first — jumping ahead is fine, just expect more context.`,
+            type: 'info',
+          },
+        }),
+      )
+    }
     // Don't carry Learn/Quiz/etc. across days — only auth restore should keep a tab.
     if (key !== currentExercise) {
       setActiveTab('learn')
@@ -576,15 +591,24 @@ function App(): JSX.Element {
       )}
       {showLanding ? (
         <Landing
-          onGetStarted={() => {
+          exercises={exercises}
+          onGetStarted={(opts) => {
             window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
             document.documentElement.scrollTop = 0
             document.body.scrollTop = 0
             setShowLanding(false)
             setShowTools(false)
-            setCurrentView('exercises')
+            if (opts?.communitySlug) {
+              setCommunitySlug(opts.communitySlug)
+              setCurrentView('community')
+            } else {
+              setCurrentView('exercises')
+              if (opts?.exercise && opts.exercise in exercises) {
+                setCurrentExercise(opts.exercise as ExerciseKey)
+              }
+            }
             setShowSidebar(window.innerWidth >= BREAKPOINTS.MOBILE)
-            if (!settingsStorage.hasCompletedOnboarding()) {
+            if (!opts?.communitySlug && !settingsStorage.hasCompletedOnboarding()) {
               // Let the lab shell mount before highlighting targets
               window.setTimeout(() => setShowTutorial(true), 450)
             }
@@ -812,6 +836,8 @@ function App(): JSX.Element {
                 <MemoizedProgressDashboard
                   key={dayCompleteTick}
                   exercises={exercises}
+                  onOpenCertificate={() => setShowCertificate(true)}
+                  onJumpToDay={handleNavigateToDay}
                 />
               )}
 
@@ -833,7 +859,7 @@ function App(): JSX.Element {
                     onNavigateToDay={handleNavigateToDay}
                   />
                 ) : currentView === 'community' ? (
-                  <CommunityPage />
+                  <CommunityPage initialSlug={communitySlug} />
                 ) : currentView === 'settings' ? (
                   <SettingsPage
                     onBack={() => {
@@ -938,6 +964,9 @@ function App(): JSX.Element {
 
           {/* Toast Container */}
           <ToastContainer />
+          {showCertificate && (
+            <Week1Certificate onClose={() => setShowCertificate(false)} />
+          )}
 
           {/* Confetti for achievements */}
           <Confetti

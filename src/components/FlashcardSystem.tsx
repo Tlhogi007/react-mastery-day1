@@ -123,10 +123,13 @@ function FlashcardSystem({ day }: FlashcardSystemProps): JSX.Element {
     return (
         <div className="tool-panel" style={containerStyle}>
             <Card
-                title="Flashcards"
+                title="Flashcards · spaced repetition"
                 icon="🎴"
                 style={{ marginBottom: '24px' }}
             >
+                <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                    SM-2 scheduling: cards you miss come back sooner. Save wrong quiz answers from the Quiz tab.
+                </p>
                 <div className="tool-chip-row" style={{ marginBottom: '16px' }}>
                     <button
                         type="button"
@@ -143,7 +146,7 @@ function FlashcardSystem({ day }: FlashcardSystemProps): JSX.Element {
                             cursor: 'pointer'
                         }}
                     >
-                        Review ({stats.due})
+                        Due today ({stats.due})
                     </button>
                     <button
                         type="button"

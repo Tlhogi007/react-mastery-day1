@@ -26,10 +26,17 @@ interface QuizProps {
     questions: QuizQuestion[]
     title?: string
     day?: number
+    topic?: string
     enableAI?: boolean
 }
 
-function Quiz({ questions, title = 'Self-Assessment Quiz', day, enableAI = false }: QuizProps): JSX.Element {
+function Quiz({
+    questions,
+    title = 'Self-Assessment Quiz',
+    day,
+    topic = 'React',
+    enableAI = false,
+}: QuizProps): JSX.Element {
     const {
         allQuestions,
         currentQuestion,
@@ -255,6 +262,8 @@ function Quiz({ questions, title = 'Self-Assessment Quiz', day, enableAI = false
                 onSkip={handleSkip}
                 isLastQuestion={currentQuestionIndex === allQuestions.length - 1}
                 isAISection={isAISection}
+                day={day}
+                topic={topic}
             />
         </div>
     )

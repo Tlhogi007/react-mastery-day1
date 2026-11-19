@@ -51,9 +51,16 @@ export function AiQuotaModal({
         <h3 style={{ margin: '0 0 8px', fontSize: 18 }}>
           {mode === 'auth' ? 'Sign in for hosted AI' : 'Free AI limit reached'}
         </h3>
-        <p style={{ margin: '0 0 16px', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+        <p style={{ margin: '0 0 12px', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
           {message}
         </p>
+        {mode === 'quota' && (
+          <ol style={{ margin: '0 0 16px', paddingLeft: 18, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            <li>Add a Groq / Gemini / Together key in Settings (browser-only).</li>
+            <li>Or wait until tomorrow UTC for free hosted AI to reset.</li>
+            <li>Local quiz questions always stay free — no key needed.</li>
+          </ol>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {mode === 'auth' && onSignIn && (
             <button
@@ -78,9 +85,9 @@ export function AiQuotaModal({
             style={{
               padding: '12px 14px',
               borderRadius: 8,
-              border: '1px solid var(--border-color)',
-              background: 'var(--bg-section)',
-              color: 'var(--text-primary)',
+              border: mode === 'quota' ? 'none' : '1px solid var(--border-color)',
+              background: mode === 'quota' ? 'var(--button-primary)' : 'var(--bg-section)',
+              color: mode === 'quota' ? 'var(--button-text)' : 'var(--text-primary)',
               fontWeight: 600,
               cursor: 'pointer',
             }}
@@ -88,7 +95,7 @@ export function AiQuotaModal({
             {mode === 'quota' ? 'Add your API key in Settings' : 'Or use your own API key'}
           </button>
           <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.45 }}>
-            Your own key stays in this browser only — never uploaded to React Mastery. Same if you are signed in or not.
+            Your own key stays in this browser only — never uploaded to React Mastery. Works whether you are signed in or not.
           </p>
           <button
             type="button"

@@ -20,6 +20,10 @@
       "includeFiles": "api/_lib/**",
       "maxDuration": 20
     },
+    "api/community-helpful.ts": {
+      "includeFiles": "api/_lib/**",
+      "maxDuration": 10
+    },
     "api/clerk-fapi.ts": {
       "includeFiles": "api/_lib/**",
       "maxDuration": 30

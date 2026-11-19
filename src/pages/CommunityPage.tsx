@@ -1,18 +1,36 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
-import { getAllCommunityContent, type CommunityContent } from '../lib/contentLoader'
+import { getAllCommunityContent, getCommunityContent, type CommunityContent } from '../lib/contentLoader'
 import { tracking } from '../lib/googleAnalytics'
 import { CommunityAttribution } from '../components/CommunityAttribution'
 import { CommunityContributeHint } from '../components/CommunityContributeHint'
+import { CommunityHelpfulButton } from '../components/CommunityHelpfulButton'
+import { ContributorProfile } from '../components/ContributorProfile'
+import { fetchHelpfulCounts } from '../services/communityHelpful'
 import './CommunityPage.css'
 
-export default function CommunityPage() {
+interface CommunityPageProps {
+  initialSlug?: string | null
+}
+
+export default function CommunityPage({ initialSlug = null }: CommunityPageProps) {
   const [selectedContent, setSelectedContent] = useState<CommunityContent | null>(null)
   const [filterTopic, setFilterTopic] = useState<string>('all')
   const [filterDifficulty, setFilterDifficulty] = useState<string>('all')
+  const [profileGithub, setProfileGithub] = useState<string | null>(null)
   
   const allContent = getAllCommunityContent()
+
+  useEffect(() => {
+    void fetchHelpfulCounts()
+  }, [])
+
+  useEffect(() => {
+    if (!initialSlug) return
+    const hit = getCommunityContent(initialSlug)
+    if (hit) setSelectedContent(hit)
+  }, [initialSlug])
   
   const filteredContent = allContent.filter(content => {
     if (filterTopic !== 'all' && content.topic !== filterTopic) return false
@@ -21,6 +39,23 @@ export default function CommunityPage() {
   })
   
   const topics = [...new Set(allContent.map(c => c.topic))]
+
+  if (profileGithub) {
+    return (
+      <div className="community-article-view">
+        <button className="back-button" type="button" onClick={() => setProfileGithub(null)}>
+          ← Back to Community
+        </button>
+        <ContributorProfile
+          github={profileGithub}
+          onOpenArticle={(c) => {
+            setProfileGithub(null)
+            setSelectedContent(c)
+          }}
+        />
+      </div>
+    )
+  }
   
   if (selectedContent) {
     return (
@@ -42,6 +77,16 @@ export default function CommunityPage() {
                   github={selectedContent.github}
                 />
               </span>
+              {selectedContent.github && (
+                <button
+                  type="button"
+                  className="back-button"
+                  style={{ margin: 0, padding: '4px 8px', fontSize: 12 }}
+                  onClick={() => setProfileGithub(selectedContent.github || null)}
+                >
+                  View contributor
+                </button>
+              )}
               <span className="difficulty">{selectedContent.difficulty}</span>
               <span className="date">{selectedContent.date}</span>
               {selectedContent.estimatedTime && (
@@ -52,6 +97,9 @@ export default function CommunityPage() {
               {selectedContent.tags.map(tag => (
                 <span key={tag} className="tag">{tag}</span>
               ))}
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <CommunityHelpfulButton slug={selectedContent.slug} />
             </div>
           </header>
           

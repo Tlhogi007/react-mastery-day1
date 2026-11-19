@@ -25,17 +25,20 @@ function QuizOption({
 }: QuizOptionProps): JSX.Element {
   const isSelected = selectedAnswer === index
   const isCorrect = index === question.correctAnswer
+  const answered = selectedAnswer !== null
+  const showAsCorrect = answered && isCorrect
+  const showAsWrong = answered && isSelected && !isCorrect
 
   return (
     <div
-      className={`quiz-option${isSelected ? ' quiz-option--selected' : ''}${isSelected && isCorrect ? ' quiz-option--correct' : ''}${isSelected && !isCorrect ? ' quiz-option--wrong' : ''}`}
-      onClick={() => !completed && onSelect(index)}
+      className={`quiz-option${isSelected ? ' quiz-option--selected' : ''}${showAsCorrect ? ' quiz-option--correct' : ''}${showAsWrong ? ' quiz-option--wrong' : ''}`}
+      onClick={() => !completed && selectedAnswer === null && onSelect(index)}
       role="button"
-      tabIndex={completed ? -1 : 0}
+      tabIndex={completed || answered ? -1 : 0}
       aria-label={`Option ${String.fromCharCode(65 + index)}: ${option}`}
-      style={{ cursor: completed ? 'default' : 'pointer' }}
+      style={{ cursor: completed || answered ? 'default' : 'pointer' }}
       onKeyDown={(e) => {
-        if (!completed && (e.key === 'Enter' || e.key === ' ')) {
+        if (!completed && selectedAnswer === null && (e.key === 'Enter' || e.key === ' ')) {
           e.preventDefault()
           onSelect(index)
         }
@@ -46,9 +49,14 @@ function QuizOption({
           {String.fromCharCode(65 + index)}
         </div>
         <div className="quiz-option__text">{option}</div>
-        {isSelected && (
+        {showAsCorrect && (
           <div className="quiz-option__mark" aria-hidden>
-            {isCorrect ? '✅' : '❌'}
+            ✓
+          </div>
+        )}
+        {showAsWrong && (
+          <div className="quiz-option__mark" aria-hidden>
+            ✕
           </div>
         )}
       </div>

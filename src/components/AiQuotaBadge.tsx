@@ -48,8 +48,28 @@ export function AiQuotaBadge(): JSX.Element {
   }, [isLoaded, isSignedIn, usingByo])
 
   if (!isLoaded || !isSignedIn) return <></>
-  if (usingByo) return <></>
+  if (usingByo) {
+    return (
+      <span
+        style={{
+          fontSize: 12,
+          fontWeight: 600,
+          padding: '4px 8px',
+          borderRadius: 6,
+          background: 'var(--bg-success)',
+          color: 'var(--text-on-success)',
+          border: '1px solid var(--border-color)',
+        }}
+        title="Using your own API key in this browser — hosted free quota is not used."
+      >
+        Own API key
+      </span>
+    )
+  }
   if (!quota?.available) return <></>
+
+  const low = quota.remaining <= 2
+  const empty = quota.remaining <= 0
 
   return (
     <span
@@ -58,13 +78,23 @@ export function AiQuotaBadge(): JSX.Element {
         fontWeight: 600,
         padding: '4px 8px',
         borderRadius: 6,
-        background: quota.remaining > 0 ? 'var(--bg-section)' : 'var(--bg-warning)',
-        color: quota.remaining > 0 ? 'var(--text-secondary)' : 'var(--text-on-warning)',
+        background: empty ? 'var(--bg-warning)' : low ? 'var(--bg-info, var(--bg-section))' : 'var(--bg-section)',
+        color: empty ? 'var(--text-on-warning)' : 'var(--text-secondary)',
         border: '1px solid var(--border-color)',
       }}
-      title={`Free hosted AI generations left today (UTC). Resets daily.`}
+      title={
+        empty
+          ? 'Free hosted AI used up for today (UTC). Add your own key in Settings to keep generating.'
+          : low
+            ? `${quota.remaining} free hosted AI left today — add your own key anytime in Settings.`
+            : `Free hosted AI generations left today (UTC). Resets daily.`
+      }
     >
-      {quota.remaining}/{quota.limit} free AI left
+      {empty
+        ? '0 free AI — add your key'
+        : low
+          ? `${quota.remaining} free AI left · Settings for your key`
+          : `${quota.remaining}/${quota.limit} free AI left`}
     </span>
   )
 }

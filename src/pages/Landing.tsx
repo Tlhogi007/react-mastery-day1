@@ -4,9 +4,13 @@ import './Landing.css'
 import { tracking } from '../lib/googleAnalytics'
 import { formatBuildStamp } from '../lib/buildInfo'
 import { AuthButton } from '../components/AuthButton'
+import { FeaturedContributions } from '../components/FeaturedContributions'
+import { LandingResume } from '../components/LandingResume'
+import type { ExercisesRegistry } from '../types/exercises'
 
 interface LandingProps {
-  onGetStarted: () => void
+  onGetStarted: (opts?: { exercise?: string; communitySlug?: string }) => void
+  exercises?: ExercisesRegistry
 }
 
 const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY)
@@ -18,7 +22,7 @@ const codeSnippets = [
   { bad: '<div key={index}>', issue: 'Index as key' }
 ]
 
-export default function Landing({ onGetStarted }: LandingProps) {
+export default function Landing({ onGetStarted, exercises }: LandingProps) {
   const [currentSnippet, setCurrentSnippet] = useState(0)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
 
@@ -107,6 +111,16 @@ export default function Landing({ onGetStarted }: LandingProps) {
               <span className="cta-text">Start Day 1</span>
               <span className="cta-arrow">→</span>
             </button>
+
+            {clerkEnabled && exercises && (
+              <LandingResume
+                exercises={exercises}
+                onResume={(exercise) => {
+                  tracking.ctaClicked('resume')
+                  onGetStarted({ exercise })
+                }}
+              />
+            )}
           </motion.div>
         </section>
 
@@ -156,6 +170,13 @@ export default function Landing({ onGetStarted }: LandingProps) {
             Jump into Week 1 →
           </button>
         </section>
+
+        <FeaturedContributions
+          onOpenCommunity={(slug) => {
+            tracking.ctaClicked('featured')
+            onGetStarted({ communitySlug: slug })
+          }}
+        />
 
         <section className="concepts-section">
           <h2 className="section-title-unique">Not another React course</h2>

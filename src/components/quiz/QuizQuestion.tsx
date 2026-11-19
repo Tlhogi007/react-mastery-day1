@@ -3,9 +3,10 @@
  * Single Responsibility: Display question and options
  */
 
-import { type JSX } from 'react'
+import { useState, type JSX } from 'react'
 import type { QuizQuestion as QuizQuestionType } from '../../types/challenges'
 import QuizOption from './QuizOption'
+import { flashcardStorage } from '../../services/flashcardStorage'
 import '../../exercises/exerciseLayout.css'
 
 interface QuizQuestionProps {
@@ -17,6 +18,8 @@ interface QuizQuestionProps {
     onSkip?: () => void
     isLastQuestion: boolean
     isAISection: boolean
+    day?: number
+    topic?: string
 }
 
 function QuizQuestion({
@@ -27,8 +30,16 @@ function QuizQuestion({
     onNext,
     onSkip,
     isLastQuestion,
-    isAISection
+    isAISection,
+    day = 1,
+    topic = 'React',
 }: QuizQuestionProps): JSX.Element {
+    const [savedCard, setSavedCard] = useState(false)
+    const isWrong =
+        selectedAnswer !== null && selectedAnswer !== question.correctAnswer
+    const correctLabel =
+        question.options[question.correctAnswer] ?? `Option ${question.correctAnswer + 1}`
+
     return (
         <>
             <div className="quiz-question-card">
@@ -61,9 +72,44 @@ function QuizQuestion({
 
             {selectedAnswer !== null && (
                 <div className="quiz-explanation">
-                    <strong>Explanation:</strong>
-                    <p>{question.explanation}</p>
+                    {isWrong ? (
+                        <>
+                            <strong>Not quite — here&apos;s why</strong>
+                            <p style={{ marginBottom: 8 }}>
+                                Correct answer: <strong>{correctLabel}</strong>
+                            </p>
+                            <p>{question.explanation}</p>
+                        </>
+                    ) : (
+                        <>
+                            <strong>Correct — why it works</strong>
+                            <p>{question.explanation}</p>
+                        </>
+                    )}
                     <div className="quiz-explanation__actions">
+                        {isWrong && (
+                            <button
+                                type="button"
+                                className="lesson-full-btn quiz-skip-btn"
+                                disabled={savedCard}
+                                onClick={() => {
+                                    flashcardStorage.createFromQuizQuestion(
+                                        question.id,
+                                        question.question,
+                                        `${correctLabel}\n\n${question.explanation}`,
+                                        day,
+                                        topic,
+                                        question.difficulty === 'easy' ||
+                                            question.difficulty === 'hard'
+                                            ? question.difficulty
+                                            : 'medium',
+                                    )
+                                    setSavedCard(true)
+                                }}
+                            >
+                                {savedCard ? 'Saved to flashcards' : 'Save as flashcard'}
+                            </button>
+                        )}
                         <button
                             type="button"
                             className="lesson-full-btn quiz-next-btn"
@@ -89,7 +135,7 @@ function QuizQuestion({
                                 onClick={onSkip}
                                 aria-label="Skip question"
                             >
-                                ⏭️ Skip
+                                Skip
                             </button>
                         )}
                     </div>
