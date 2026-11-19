@@ -40,6 +40,7 @@ function syncFingerprint(snapshot: UserCloudSnapshot): string {
  * Low-data cloud sync: no idle polling.
  * Push only when progress actually changed (debounced) or when leaving the tab.
  * Pull only on sign-in and throttled return-to-tab / online.
+ * Push and pull share one in-flight mutex so they never race.
  */
 export function UserCloudSync({
   exercise,
@@ -56,6 +57,17 @@ export function UserCloudSync({
   labRef.current = { exercise, view, tools, tab }
   const lastPushedFp = useRef<string>('')
   const lastPullAt = useRef(0)
+  /** Shared mutex — only one network sync at a time. */
+  const syncGate = useRef<Promise<void>>(Promise.resolve())
+  const runExclusive = (task: () => Promise<void>): Promise<void> => {
+    const next = syncGate.current.then(task, task)
+    // Keep the chain alive even if a task rejects
+    syncGate.current = next.then(
+      () => undefined,
+      () => undefined,
+    )
+    return next
+  }
 
   useEffect(() => {
     if (!isLoaded) return
@@ -71,32 +83,35 @@ export function UserCloudSync({
     let attempts = 0
 
     const run = async () => {
-      const { exercise: ex, view: v, tools: t, tab: tb } = labRef.current
-      const result = await syncUserCloudOnSignIn({ exercise: ex, view: v, tools: t, tab: tb })
-      if (cancelled) return
-      if (!result) {
-        attempts += 1
-        if (attempts < 12) {
-          retryTimer = window.setTimeout(() => {
-            void run()
-          }, 500)
+      await runExclusive(async () => {
+        if (cancelled) return
+        const { exercise: ex, view: v, tools: t, tab: tb } = labRef.current
+        const result = await syncUserCloudOnSignIn({ exercise: ex, view: v, tools: t, tab: tb })
+        if (cancelled) return
+        if (!result) {
+          attempts += 1
+          if (attempts < 12) {
+            retryTimer = window.setTimeout(() => {
+              void run()
+            }, 500)
+          }
+          return
         }
-        return
-      }
-      syncedForUser.current = userId
-      lastPullAt.current = Date.now()
-      if (result.cloud) {
-        lastPushedFp.current = syncFingerprint(result.cloud as UserCloudSnapshot)
-      }
-      if (userId) tracking.identifyUser(userId)
-      if (result.cloud.lab && onRestoredLab) {
-        onRestoredLab({
-          exercise: result.cloud.lab.exercise,
-          view: normalizeLabView(result.cloud.lab.view),
-          tools: Boolean(result.cloud.lab.tools),
-          tab: result.cloud.lab.tab,
-        })
-      }
+        syncedForUser.current = userId
+        lastPullAt.current = Date.now()
+        if (result.cloud) {
+          lastPushedFp.current = syncFingerprint(result.cloud as UserCloudSnapshot)
+        }
+        if (userId) tracking.identifyUser(userId)
+        if (result.cloud.lab && onRestoredLab) {
+          onRestoredLab({
+            exercise: result.cloud.lab.exercise,
+            view: normalizeLabView(result.cloud.lab.view),
+            tools: Boolean(result.cloud.lab.tools),
+            tab: result.cloud.lab.tab,
+          })
+        }
+      })
     }
 
     void run()
@@ -116,11 +131,12 @@ export function UserCloudSync({
       if (saveTimer.current) window.clearTimeout(saveTimer.current)
       const run = () => {
         saveTimer.current = null
-        const { exercise: ex, view: v, tools: t, tab: tb } = labRef.current
-        const snapshot = buildLocalSnapshot({ exercise: ex, view: v, tools: t, tab: tb })
-        const fp = syncFingerprint(snapshot)
-        if (fp === lastPushedFp.current) return
-        void pushUserCloud(snapshot).then((res) => {
+        void runExclusive(async () => {
+          const { exercise: ex, view: v, tools: t, tab: tb } = labRef.current
+          const snapshot = buildLocalSnapshot({ exercise: ex, view: v, tools: t, tab: tb })
+          const fp = syncFingerprint(snapshot)
+          if (fp === lastPushedFp.current) return
+          const res = await pushUserCloud(snapshot)
           if (res?.cloud) {
             lastPushedFp.current = syncFingerprint(res.cloud as UserCloudSnapshot)
           } else {
@@ -154,30 +170,30 @@ export function UserCloudSync({
     if (!isLoaded || !isSignedIn || !userId) return
 
     let cancelled = false
-    let inFlight = false
 
     const isVisible = () =>
       typeof document === 'undefined' || document.visibilityState === 'visible'
 
     const pull = async (force: boolean): Promise<void> => {
-      if (cancelled || inFlight) return
+      if (cancelled) return
       if (!isVisible()) return
       const now = Date.now()
       if (!force && now - lastPullAt.current < PULL_THROTTLE_MS) return
-      inFlight = true
-      try {
-        const { exercise: ex, view: v, tools: t, tab: tb } = labRef.current
-        await pullAndMergeUserCloud({ exercise: ex, view: v, tools: t, tab: tb })
-        lastPullAt.current = Date.now()
-        // Avoid push-back loop after merge
-        lastPushedFp.current = syncFingerprint(
-          buildLocalSnapshot({ exercise: ex, view: v, tools: t, tab: tb }),
-        )
-      } catch {
-        // Offline / transient
-      } finally {
-        inFlight = false
-      }
+      await runExclusive(async () => {
+        if (cancelled || !isVisible()) return
+        const nowInner = Date.now()
+        if (!force && nowInner - lastPullAt.current < PULL_THROTTLE_MS) return
+        try {
+          const { exercise: ex, view: v, tools: t, tab: tb } = labRef.current
+          await pullAndMergeUserCloud({ exercise: ex, view: v, tools: t, tab: tb })
+          lastPullAt.current = Date.now()
+          lastPushedFp.current = syncFingerprint(
+            buildLocalSnapshot({ exercise: ex, view: v, tools: t, tab: tb }),
+          )
+        } catch {
+          // Offline / transient
+        }
+      })
     }
 
     const onVisibility = () => {

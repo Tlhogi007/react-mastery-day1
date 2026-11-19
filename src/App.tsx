@@ -1,4 +1,14 @@
-import { useState, useMemo, useEffect, useRef, useCallback, lazy, Suspense, type JSX } from 'react'
+import {
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useCallback,
+  useDeferredValue,
+  lazy,
+  Suspense,
+  type JSX,
+} from 'react'
 import './App.css'
 import type { ExerciseKey, ExercisesRegistry } from './types/exercises'
 import Landing from './pages/Landing'
@@ -340,7 +350,7 @@ function App(): JSX.Element {
     }
   }, [isMobile, showSidebar])
 
-  const handleExerciseSelect = (key: ExerciseKey): void => {
+  const handleExerciseSelect = useCallback((key: ExerciseKey): void => {
     const day = exercises[key]?.day
     if (typeof day === 'number' && shouldNudgeDaySkip(day)) {
       window.dispatchEvent(
@@ -353,17 +363,17 @@ function App(): JSX.Element {
       )
     }
     // Don't carry Learn/Quiz/etc. across days — only auth restore should keep a tab.
-    if (key !== currentExercise) {
-      setActiveTab('learn')
-    }
-    setCurrentExercise(key)
+    setCurrentExercise((prev) => {
+      if (key !== prev) setActiveTab('learn')
+      return key
+    })
     setCurrentView('exercises')
     setShowTools(false)
     if (isMobile) {
       setShowSidebar(false)
     }
     analytics.trackExerciseComplete(exercises[key].day, exercises[key].week)
-  }
+  }, [exercises, isMobile])
 
   const handleNavigateToDay = useCallback((day: number): void => {
     const entry = (Object.entries(exercises) as [ExerciseKey, (typeof exercises)[ExerciseKey]][])
@@ -429,10 +439,12 @@ function App(): JSX.Element {
     enabled: !showSettings && !studyMode
   })
 
-  const searchResults = useMemo<SearchResult[]>(() => {
-    if (searchQuery.length === 0) return []
+  const deferredSearchQuery = useDeferredValue(searchQuery)
 
-    const query = searchQuery.toLowerCase()
+  const searchResults = useMemo<SearchResult[]>(() => {
+    if (deferredSearchQuery.length === 0) return []
+
+    const query = deferredSearchQuery.toLowerCase()
     const results: SearchResult[] = []
 
     Object.entries(exercises).forEach(([, exercise]) => {
@@ -474,31 +486,15 @@ function App(): JSX.Element {
     })
 
     return results.slice(0, 10) // Limit results
-  }, [searchQuery])
+  }, [deferredSearchQuery])
 
-  const handleSearch = (query: string): void => {
+  const handleSearch = useCallback((query: string): void => {
     setSearchQuery(query)
-    if (query.length > 0) {
-      analytics.trackSearch(query, searchResults.length)
-      // Auto-navigate to relevant exercise if found
-      const lowerQuery = query.toLowerCase()
-      if (lowerQuery.includes('render') || lowerQuery.includes('pipeline') || lowerQuery.includes('commit')) {
-        setCurrentExercise('day01-rendering-pipeline')
-      } else if (lowerQuery.includes('reconciliat') || lowerQuery.includes('key') || lowerQuery.includes('diff')) {
-        setCurrentExercise('day02-reconciliation')
-      } else if (lowerQuery.includes('fiber') || lowerQuery.includes('work') || lowerQuery.includes('concurrent')) {
-        setCurrentExercise('day03-fiber')
-      } else if (lowerQuery.includes('memo') || lowerQuery.includes('bailout')) {
-        setCurrentExercise('day04-memoization')
-      } else if (lowerQuery.includes('effect') || lowerQuery.includes('closure')) {
-        setCurrentExercise('day05-effects')
-      } else if (lowerQuery.includes('context') || lowerQuery.includes('re-render')) {
-        setCurrentExercise('day06-context')
-      } else if (lowerQuery.includes('reflection') || lowerQuery.includes('review')) {
-        setCurrentExercise('day07-reflection')
-      }
+    // Navigate only via result click — typing must not remount the day app.
+    if (query.length > 2) {
+      analytics.trackSearch(query, 0)
     }
-  }
+  }, [])
 
 
   const appContainerStyle: React.CSSProperties = {
@@ -960,7 +956,6 @@ function App(): JSX.Element {
 
               {!studyMode && !showTools && currentView === 'exercises' && (
                 <MemoizedProgressDashboard
-                  key={dayCompleteTick}
                   exercises={exercises}
                   onOpenCertificate={() => setShowCertificate(true)}
                   onJumpToDay={handleNavigateToDay}

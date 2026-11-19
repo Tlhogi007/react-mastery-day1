@@ -1,11 +1,11 @@
 import {
+  Children,
   createContext,
+  isValidElement,
   useCallback,
   useContext,
-  useEffect,
   useId,
   useMemo,
-  useRef,
   useState,
   type CSSProperties,
   type JSX,
@@ -15,7 +15,6 @@ import {
 type AccordionContextValue = {
   openId: string | null
   toggle: (id: string) => void
-  registerDefault: (id: string) => void
 }
 
 const AccordionContext = createContext<AccordionContextValue | null>(null)
@@ -24,27 +23,36 @@ interface AccordionProps {
   children: ReactNode
   style?: CSSProperties
   className?: string
+  /** Stable id of the section that should start open (matches CollapsibleSection `id` or `title`). */
+  defaultOpenId?: string
+}
+
+function findDefaultOpenId(children: ReactNode): string | null {
+  let found: string | null = null
+  Children.forEach(children, (child) => {
+    if (found || !isValidElement(child)) return
+    const props = child.props as { defaultOpen?: boolean; id?: string; title?: string }
+    if (props.defaultOpen) found = props.id ?? props.title ?? null
+  })
+  return found
 }
 
 /** Exclusive accordion: only one CollapsibleSection open at a time. */
-export function Accordion({ children, style, className }: AccordionProps): JSX.Element {
-  const [openId, setOpenId] = useState<string | null>(null)
-  const defaultLocked = useRef(false)
-
-  const registerDefault = useCallback((id: string) => {
-    if (defaultLocked.current) return
-    defaultLocked.current = true
-    setOpenId(id)
-  }, [])
+export function Accordion({
+  children,
+  style,
+  className,
+  defaultOpenId,
+}: AccordionProps): JSX.Element {
+  const [openId, setOpenId] = useState<string | null>(
+    () => defaultOpenId ?? findDefaultOpenId(children),
+  )
 
   const toggle = useCallback((id: string) => {
     setOpenId((prev) => (prev === id ? null : id))
   }, [])
 
-  const value = useMemo(
-    () => ({ openId, toggle, registerDefault }),
-    [openId, toggle, registerDefault],
-  )
+  const value = useMemo(() => ({ openId, toggle }), [openId, toggle])
 
   return (
     <AccordionContext.Provider value={value}>
@@ -81,14 +89,11 @@ export function CollapsibleSection({
   id,
 }: CollapsibleSectionProps): JSX.Element {
   const reactId = useId()
-  const sectionId = id ?? `${title}::${reactId}`
   const accordion = useContext(AccordionContext)
+  // Prefer stable title/id inside Accordion so defaultOpenId matching works without effects.
+  const sectionId = id ?? (accordion ? title : `${title}::${reactId}`)
   const [localOpen, setLocalOpen] = useState(defaultOpen)
   const panelId = useId()
-
-  useEffect(() => {
-    if (accordion && defaultOpen) accordion.registerDefault(sectionId)
-  }, [accordion, defaultOpen, sectionId])
 
   const open = accordion ? accordion.openId === sectionId : localOpen
 
@@ -145,6 +150,8 @@ export function CollapsibleSection({
       {open && (
         <div
           id={panelId}
+          role="region"
+          aria-label={title}
           style={{
             padding: '0 14px 14px',
             borderTop: '1px solid var(--border-color)',

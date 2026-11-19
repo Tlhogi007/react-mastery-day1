@@ -57,19 +57,43 @@ function SettingsModal({
     useEffect(() => {
         if (!isOpen) return
 
-        const handleEscape = (e: KeyboardEvent): void => {
+        const previouslyFocused = document.activeElement as HTMLElement | null
+        const root = modalRef.current
+        root?.focus()
+
+        const focusables = (): HTMLElement[] => {
+            if (!root) return []
+            return Array.from(
+                root.querySelectorAll<HTMLElement>(
+                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+                ),
+            ).filter((el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true')
+        }
+
+        const handleKey = (e: KeyboardEvent): void => {
             if (e.key === 'Escape') {
                 onClose()
+                return
+            }
+            if (e.key !== 'Tab') return
+            const list = focusables()
+            if (list.length === 0) return
+            const first = list[0]
+            const last = list[list.length - 1]
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault()
+                last.focus()
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault()
+                first.focus()
             }
         }
 
-        // Focus trap: focus the modal when it opens
-        if (modalRef.current) {
-            modalRef.current.focus()
+        document.addEventListener('keydown', handleKey)
+        return () => {
+            document.removeEventListener('keydown', handleKey)
+            previouslyFocused?.focus?.()
         }
-
-        document.addEventListener('keydown', handleEscape)
-        return () => document.removeEventListener('keydown', handleEscape)
     }, [isOpen, onClose])
 
     useEffect(() => {
