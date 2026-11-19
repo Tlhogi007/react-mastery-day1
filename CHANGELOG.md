@@ -1,3 +1,10 @@
+## [1.10.2](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.10.1...v1.10.2) (2026-11-19)
+
+
+### Bug Fixes
+
+* **quiz:** correct local/AI counts and honest missed review totals ([b7ccb74](https://github.com/Tlhogi007/react-mastery-day1/commit/b7ccb743874918f85799cd32e4127745d4d84aad))
+
 ## [1.10.1](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.10.0...v1.10.1) (2026-11-19)
 
 
