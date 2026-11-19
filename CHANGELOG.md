@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.8.1...v1.9.0) (2026-11-19)
+
+
+### Features
+
+* sync live quiz progress bars across signed-in devices ([5609973](https://github.com/Tlhogi007/react-mastery-day1/commit/5609973ac0c987c24877f53f87a6519ca9ade009))
+
 ## [1.8.1](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.8.0...v1.8.1) (2026-11-19)
 
 
