@@ -46,6 +46,11 @@ export default function IntroSplash({ onContinue }: IntroSplashProps): JSX.Eleme
   }
 
   useEffect(() => {
+    const prevHtml = document.documentElement.style.overflow
+    const prevBody = document.body.style.overflow
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault()
@@ -53,7 +58,11 @@ export default function IntroSplash({ onContinue }: IntroSplashProps): JSX.Eleme
       }
     }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      document.documentElement.style.overflow = prevHtml
+      document.body.style.overflow = prevBody
+      window.removeEventListener('keydown', onKey)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -68,21 +77,32 @@ export default function IntroSplash({ onContinue }: IntroSplashProps): JSX.Eleme
       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="intro-splash__inner">
-        <motion.img
-          className="intro-splash__logo"
-          src="/favicon.svg"
-          alt=""
-          width={72}
-          height={72}
+        <motion.div
+          className="intro-splash__magnet"
+          aria-hidden
+          initial={{ opacity: 0 }}
+          animate={{ opacity: exiting ? 0 : 1 }}
+          transition={{ delay: 0.12, duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+        />
+        <motion.div
+          className="intro-splash__logo-wrap"
           initial={{ opacity: 0, scale: 0.88 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        />
+        >
+          <img
+            className="intro-splash__logo"
+            src="/favicon.svg"
+            alt=""
+            width={72}
+            height={72}
+          />
+        </motion.div>
         <motion.h1
           className="intro-splash__brand"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.12, duration: 0.45 }}
+          transition={{ delay: 0.12, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         >
           React Mastery
           <span className="intro-splash__lab">Lab</span>

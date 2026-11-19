@@ -8,29 +8,82 @@
   padding: max(24px, env(safe-area-inset-top, 0px)) 24px
     max(24px, env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
-  background:
-    radial-gradient(ellipse 70% 50% at 50% 35%, rgba(226, 61, 43, 0.1), transparent 60%),
-    var(--bg-primary);
+  background: var(--bg-primary);
   color: var(--text-primary);
   cursor: default;
+  overflow: hidden;
 }
 
 .intro-splash__inner {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   gap: 14px;
-  max-width: 360px;
+  max-width: min(420px, 100%);
   cursor: default;
 }
 
+/* Typewriter wash + Continue magnet — anchored to logo stack */
+.intro-splash__magnet {
+  position: absolute;
+  left: 50%;
+  top: 36px; /* logo center (72/2) */
+  z-index: 0;
+  width: min(64vw, 320px);
+  height: min(64vw, 320px);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(226, 61, 43, 0.18),
+    rgba(226, 61, 43, 0.06) 42%,
+    transparent 72%
+  );
+  transform: translate(-50%, -50%);
+  transition:
+    top 1.05s cubic-bezier(0.22, 1, 0.36, 1),
+    width 1.05s cubic-bezier(0.22, 1, 0.36, 1),
+    height 1.05s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.55s ease;
+  will-change: top, width, height;
+}
+
+.intro-splash:has(.intro-splash__continue:hover) .intro-splash__magnet,
+.intro-splash:has(.intro-splash__continue:focus-visible) .intro-splash__magnet {
+  top: calc(100% - 20px); /* toward Continue */
+  width: min(50vw, 260px);
+  height: min(50vw, 260px);
+}
+
+.intro-splash__logo-wrap {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+}
+
 .intro-splash__logo {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 72px;
   height: 72px;
   border-radius: 16px;
   box-shadow: var(--shadow-md);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-splash__magnet {
+    transition: none;
+    opacity: 1 !important;
+    top: 36px !important;
+    width: min(64vw, 320px) !important;
+    height: min(64vw, 320px) !important;
+  }
 }
 
 .intro-splash__brand {
@@ -41,10 +94,11 @@
   letter-spacing: -0.03em;
   line-height: 1.15;
   color: var(--text-primary);
+  white-space: nowrap;
 }
 
 .intro-splash__lab {
-  display: inline-block;
+  display: inline;
   margin-left: 0.35em;
   font-weight: 650;
   color: var(--button-primary);
