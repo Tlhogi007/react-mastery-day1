@@ -1,3 +1,10 @@
+## [1.13.2](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.13.1...v1.13.2) (2026-11-19)
+
+
+### Bug Fixes
+
+* make intro wait for Continue and cover quiz sync exits ([b8e7492](https://github.com/Tlhogi007/react-mastery-day1/commit/b8e7492ca7d7b0279577447f718351c8d3f2176f))
+
 ## [1.13.1](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.13.0...v1.13.1) (2026-11-19)
 
 
