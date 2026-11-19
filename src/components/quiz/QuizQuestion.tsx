@@ -70,6 +70,19 @@ function QuizQuestion({
                 ))}
             </div>
 
+            {selectedAnswer === null && onSkip && (
+                <div className="quiz-explanation__actions" style={{ marginTop: 16 }}>
+                    <button
+                        type="button"
+                        className="lesson-full-btn quiz-skip-btn"
+                        onClick={onSkip}
+                        aria-label="Skip question"
+                    >
+                        Skip
+                    </button>
+                </div>
+            )}
+
             {selectedAnswer !== null && (
                 <div className="quiz-explanation">
                     {isWrong ? (
@@ -128,16 +141,6 @@ function QuizQuestion({
                                     ? 'Finish Quiz'
                                     : 'Complete Local Questions'}
                         </button>
-                        {onSkip && selectedAnswer === null && (
-                            <button
-                                type="button"
-                                className="lesson-full-btn quiz-skip-btn"
-                                onClick={onSkip}
-                                aria-label="Skip question"
-                            >
-                                Skip
-                            </button>
-                        )}
                     </div>
                 </div>
             )}

@@ -46,6 +46,8 @@ function Quiz({
         score,
         completed,
         localQuestionsCompleted,
+        localQuestionsCount,
+        isAISection,
         aiQuestionCount,
         generatingAI,
         aiEnabled,
@@ -57,6 +59,7 @@ function Quiz({
         questionPromptType,
         incorrectAnswers,
         incorrectAnswersWithSelection,
+        missedCount,
         quizStartTime,
         totalTimeSpent,
         skippedQuestions,
@@ -72,8 +75,6 @@ function Quiz({
         handleCancelPrompt
     } = useQuiz({ questions, day })
 
-    const localQuestionsCount = questions.length
-    const isAISection = currentQuestionIndex >= localQuestionsCount
     const [currentTime, setCurrentTime] = useState<number>(0)
 
     // Update current time during quiz
@@ -147,6 +148,7 @@ function Quiz({
                     aiQuestionsLoaded={aiQuestionsLoaded}
                     incorrectAnswers={incorrectAnswers}
                     incorrectAnswersWithSelection={incorrectAnswersWithSelection}
+                    missedCount={missedCount}
                     totalTimeSpent={totalTimeSpent}
                     skippedCount={skippedQuestions.size}
                     onRetake={reset}

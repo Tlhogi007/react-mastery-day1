@@ -22,6 +22,18 @@ import {
   saveQuizProgress,
 } from '../services/quizResume'
 
+function asLocal(q: QuizQuestion): QuizQuestion {
+  return q.source === 'ai' ? q : { ...q, source: 'local' }
+}
+
+function asAi(q: QuizQuestion): QuizQuestion {
+  return { ...q, source: 'ai' }
+}
+
+function isLocalQuestion(q: QuizQuestion | undefined): boolean {
+  return Boolean(q && q.source !== 'ai')
+}
+
 interface UseQuizOptions {
   questions: QuizQuestion[]
   day?: number
@@ -36,6 +48,9 @@ interface UseQuizReturn {
   score: number
   completed: boolean
   localQuestionsCompleted: boolean
+  /** Count of non-AI questions currently in the session (updates after More Local). */
+  localQuestionsCount: number
+  isAISection: boolean
   aiQuestionCount: number | null
   generatingAI: boolean
   aiEnabled: boolean
@@ -47,6 +62,8 @@ interface UseQuizReturn {
   questionPromptType: 'local' | 'ai' | null
   incorrectAnswers: QuizQuestion[]
   incorrectAnswersWithSelection: Array<{ question: QuizQuestion; selectedIndex: number }>
+  /** totalQuestions - score; keeps Review copy honest even if a path missed the list */
+  missedCount: number
   quizStartTime: number | null
   totalTimeSpent: number
   skippedQuestions: Set<string>
@@ -68,9 +85,10 @@ interface UseQuizReturn {
 export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
   const [boot] = useState(() => (day != null ? loadQuizProgress(day) : null))
 
-  const [allQuestions, setAllQuestions] = useState<QuizQuestion[]>(
-    () => boot?.allQuestions ?? questions,
-  )
+  const [allQuestions, setAllQuestions] = useState<QuizQuestion[]>(() => {
+    const seed = boot?.allQuestions ?? questions
+    return seed.map((q) => (q.source === 'ai' ? asAi(q) : asLocal(q)))
+  })
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(
     () => boot?.currentQuestionIndex ?? 0,
   )
@@ -92,6 +110,8 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [showQuestionPrompt, setShowQuestionPrompt] = useState<boolean>(false)
   const [questionPromptType, setQuestionPromptType] = useState<'local' | 'ai' | null>(null)
+  /** Mid-quiz “want more?” only once per attempt (index 2 → 3). */
+  const midQuizPromptShownRef = useRef(false)
   const [usedLocalQuestionIds, setUsedLocalQuestionIds] = useState<Set<string>>(
     () => new Set(boot?.usedLocalQuestionIds ?? []),
   )
@@ -109,8 +129,12 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
   const timePerQuestionRef = useRef<Map<string, number>>(new Map())
 
   const currentQuestion = allQuestions[currentQuestionIndex]
-  const localQuestionsCount = questions.length
-  const isAISection = currentQuestionIndex >= localQuestionsCount
+  const localQuestionsCount = useMemo(
+    () => allQuestions.filter((q) => isLocalQuestion(q)).length,
+    [allQuestions],
+  )
+  const isAISection = currentQuestion?.source === 'ai'
+  const missedCount = Math.max(0, allQuestions.length - score)
 
   useEffect(() => {
     if (day != null) {
@@ -127,10 +151,9 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
       questions.length,
       day,
     )
-    const shuffled =
-      picked.length > 0
-        ? picked
-        : [...questions].sort(() => Math.random() - 0.5)
+    const shuffled = (picked.length > 0 ? picked : [...questions].sort(() => Math.random() - 0.5)).map(
+      asLocal,
+    )
     setAllQuestions(shuffled)
     setUsedLocalQuestionIds(new Set())
     setQuizStartTime(Date.now())
@@ -212,7 +235,7 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
               if (aiQuestions.length > 0) {
                 setAllQuestions((prev) => [
                   ...prev.slice(0, currentQuestionIndex + 1),
-                  ...aiQuestions,
+                  ...aiQuestions.map(asAi),
                   ...prev.slice(currentQuestionIndex + 1),
                 ])
                 setAiQuestionsLoaded(true)
@@ -265,7 +288,10 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
           if (aiQuestions.length > 0) {
             consumeAiResumePending(day)
             // Combine local + AI questions, shuffle them
-            const combined = [...questions, ...aiQuestions]
+            const combined = [
+              ...questions.map(asLocal),
+              ...aiQuestions.map(asAi),
+            ]
             const shuffled = combined.sort(() => Math.random() - 0.5)
             setAllQuestions(shuffled)
             setAiQuestionsLoaded(true)
@@ -350,20 +376,35 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
 
   const handleNext = useCallback((): void => {
     // Mark the current question as used when moving to next (only for local questions)
-    if (currentQuestion && !isAISection) {
-      setUsedLocalQuestionIds(prev => new Set([...prev, currentQuestion.id]))
+    if (currentQuestion && isLocalQuestion(currentQuestion)) {
+      setUsedLocalQuestionIds((prev) => new Set([...prev, questionHistory.canonicalId(currentQuestion.id)]))
     }
 
-    // Show prompt after 3 questions (when moving from index 2 to 3)
-    if (currentQuestionIndex === 2 && !showQuestionPrompt && !localQuestionsCompleted && !completed && !isAISection) {
+    // Show prompt after 3 questions (when leaving index 2) — once per attempt
+    if (
+      currentQuestionIndex === 2 &&
+      !midQuizPromptShownRef.current &&
+      !showQuestionPrompt &&
+      !localQuestionsCompleted &&
+      !completed &&
+      isLocalQuestion(currentQuestion)
+    ) {
+      midQuizPromptShownRef.current = true
       setShowQuestionPrompt(true)
       setSelectedAnswer(null)
       return
     }
 
-    // Check if we're completing the last local question
-    if (currentQuestionIndex === localQuestionsCount - 1 && !isAISection) {
-      // Completing last local question - mark local section as complete
+    // Last local question when nothing local remains after this index
+    const moreLocalAfter = allQuestions
+      .slice(currentQuestionIndex + 1)
+      .some((q) => isLocalQuestion(q))
+    if (
+      isLocalQuestion(currentQuestion) &&
+      !moreLocalAfter &&
+      !aiQuestionsLoaded &&
+      !localQuestionsCompleted
+    ) {
       setLocalQuestionsCompleted(true)
       setSelectedAnswer(null)
       return
@@ -371,14 +412,23 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
 
     // Check if we're completing AI questions or all questions
     if (currentQuestionIndex < allQuestions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1)
+      setCurrentQuestionIndex((prev) => prev + 1)
       setSelectedAnswer(null)
       questionStartTimeRef.current = Date.now()
     } else {
       // All questions done, finish quiz
       handleFinishQuiz()
     }
-  }, [currentQuestionIndex, allQuestions.length, localQuestionsCount, isAISection, handleFinishQuiz, showQuestionPrompt, localQuestionsCompleted, completed, currentQuestion])
+  }, [
+    currentQuestionIndex,
+    allQuestions,
+    aiQuestionsLoaded,
+    handleFinishQuiz,
+    showQuestionPrompt,
+    localQuestionsCompleted,
+    completed,
+    currentQuestion,
+  ])
 
   const handleSkip = useCallback((): void => {
     if (!currentQuestion || completed) return
@@ -396,6 +446,11 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
     setIncorrectAnswers((prev) => {
       if (prev.find((q) => q.id === currentQuestion.id)) return prev
       return [...prev, currentQuestion]
+    })
+    setIncorrectAnswersWithSelection((prev) => {
+      if (prev.find((item) => item.question.id === currentQuestion.id)) return prev
+      // selectedIndex -1 = skipped (no option chosen)
+      return [...prev, { question: currentQuestion, selectedIndex: -1 }]
     })
     
     // Move to next question
@@ -427,12 +482,9 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
           questionHistory.canonicalId(id),
         ),
       )
-      const newQuestions = questionHistory.pickUnseenQuestions(
-        allLocalQuestions,
-        sessionExclude,
-        count,
-        day,
-      )
+      const newQuestions = questionHistory
+        .pickUnseenQuestions(allLocalQuestions, sessionExclude, count, day)
+        .map(asLocal)
 
       if (newQuestions.length === 0) {
         setErrorMessage(
@@ -500,10 +552,11 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
       
       if (aiQuestions.length > 0) {
         consumeAiResumePending(day)
+        const taggedAi = aiQuestions.map(asAi)
         // Add AI questions after current position
         const updated = [
           ...allQuestions.slice(0, currentQuestionIndex + 1),
-          ...aiQuestions,
+          ...taggedAi,
           ...allQuestions.slice(currentQuestionIndex + 1)
         ]
         setAllQuestions(updated)
@@ -543,7 +596,10 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
   const handleCancelPrompt = useCallback((): void => {
     setShowQuestionPrompt(false)
     setQuestionPromptType(null)
-    // Continue with remaining questions
+    // Advance past question 3 so we don't sit on the same index
+    setCurrentQuestionIndex((prev) => prev + 1)
+    setSelectedAnswer(null)
+    questionStartTimeRef.current = Date.now()
   }, [])
 
   const reset = useCallback((): void => {
@@ -556,10 +612,9 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
     setGeneratingAI(false)
     // Prefer questions not yet completed; do not mark the whole bank used up front
     const fresh = questionHistory.pickUnseenQuestions(questions, new Set(), questions.length, day)
-    const shuffled =
-      fresh.length > 0
-        ? fresh
-        : [...questions].sort(() => Math.random() - 0.5)
+    const shuffled = (fresh.length > 0 ? fresh : [...questions].sort(() => Math.random() - 0.5)).map(
+      asLocal,
+    )
     setAllQuestions(shuffled)
     setAiEnabled(false)
     setAiQuestionsLoaded(false)
@@ -570,6 +625,7 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
     )
     setShowQuestionPrompt(false)
     setQuestionPromptType(null)
+    midQuizPromptShownRef.current = false
     setIncorrectAnswers([])
     setIncorrectAnswersWithSelection([])
     setSkippedQuestions(new Set())
@@ -602,6 +658,7 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
     setErrorMessage(null)
     setShowQuestionPrompt(false)
     setQuestionPromptType(null)
+    midQuizPromptShownRef.current = false
     setIncorrectAnswers([])
     setIncorrectAnswersWithSelection([])
     setSkippedQuestions(new Set())
@@ -620,7 +677,7 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
       // Will trigger useEffect to fetch
     } else {
       // Disable: revert to local questions
-      setAllQuestions(questions)
+      setAllQuestions(questions.map(asLocal))
       setAiQuestionsLoaded(false)
       setCurrentQuestionIndex(0)
       setSelectedAnswer(null)
@@ -642,6 +699,8 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
     score,
     completed,
     localQuestionsCompleted,
+    localQuestionsCount,
+    isAISection,
     aiQuestionCount,
     generatingAI,
     aiEnabled,
@@ -651,11 +710,12 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
     percentage,
     showQuestionPrompt,
     questionPromptType,
-  incorrectAnswers,
-  incorrectAnswersWithSelection,
-  quizStartTime,
-  totalTimeSpent,
-  skippedQuestions,
+    incorrectAnswers,
+    incorrectAnswersWithSelection,
+    missedCount,
+    quizStartTime,
+    totalTimeSpent,
+    skippedQuestions,
     handleAnswerSelect,
     handleNext,
     handleSkip,

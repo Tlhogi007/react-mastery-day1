@@ -16,6 +16,8 @@ interface QuizResultsProps {
     aiQuestionsLoaded: boolean
     incorrectAnswers: QuizQuestion[]
     incorrectAnswersWithSelection: Array<{ question: QuizQuestion; selectedIndex: number }>
+    /** Honest miss count: total − score (includes skips). */
+    missedCount: number
     totalTimeSpent: number
     skippedCount: number
     onRetake: () => void
@@ -30,12 +32,15 @@ function QuizResults({
     aiQuestionsLoaded,
     incorrectAnswers,
     incorrectAnswersWithSelection,
+    missedCount,
     totalTimeSpent,
     skippedCount,
     onRetake,
     onRetakeIncorrectOnly
 }: QuizResultsProps): JSX.Element {
     const [showReview, setShowReview] = useState<boolean>(false)
+    const reviewCount = Math.max(missedCount, incorrectAnswers.length)
+    const aiCount = Math.max(0, totalQuestions - localQuestionsCount)
     // Trigger confetti if passed
     useEffect(() => {
         if (percentage >= QUIZ_THRESHOLDS.PASSING_SCORE) {
@@ -60,7 +65,7 @@ function QuizResults({
             <div style={{ fontSize: '24px', marginBottom: '20px' }}>
                 {percentage}%
             </div>
-            {aiQuestionsLoaded && (
+            {aiQuestionsLoaded && aiCount > 0 && (
                 <div style={{
                     marginBottom: '15px',
                     padding: '10px',
@@ -69,33 +74,39 @@ function QuizResults({
                     borderRadius: '4px',
                     fontSize: '14px'
                 }}>
-                    ✨ {totalQuestions - localQuestionsCount} AI-generated questions included
+                    ✨ {aiCount} AI-generated · {localQuestionsCount} local
                 </div>
             )}
-            {incorrectAnswers.length > 0 && (
+            {reviewCount > 0 && (
                 <div style={{
                     marginTop: '20px',
                     padding: '15px',
                     background: 'var(--bg-section)',
                     borderRadius: '6px',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    color: 'var(--text-primary)'
                 }}>
-                    <strong>📝 Review Mode:</strong> You got {incorrectAnswers.length} question{incorrectAnswers.length !== 1 ? 's' : ''} wrong.
-                    <button
-                        onClick={() => setShowReview(!showReview)}
-                        style={{
-                            marginLeft: '10px',
-                            padding: '6px 12px',
-                            background: 'var(--button-secondary)',
-                            color: 'var(--button-text)',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '14px'
-                        }}
-                    >
-                        {showReview ? 'Hide' : 'Show'} Review
-                    </button>
+                    <strong>📝 Review Mode:</strong> You missed {reviewCount} question{reviewCount !== 1 ? 's' : ''}
+                    {skippedCount > 0 ? ` (${skippedCount} skipped)` : ''}.
+                    {incorrectAnswers.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => setShowReview(!showReview)}
+                            style={{
+                                marginLeft: '10px',
+                                padding: '8px 14px',
+                                background: 'var(--button-primary)',
+                                color: 'var(--button-text)',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: 600
+                            }}
+                        >
+                            {showReview ? 'Hide' : 'Show'} Review
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -105,12 +116,14 @@ function QuizResults({
                     padding: '15px',
                     background: 'var(--bg-section)',
                     borderRadius: '6px',
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    color: 'var(--text-primary)'
                 }}>
                     <h4 style={{ marginTop: 0 }}>Questions to Review:</h4>
                     {incorrectAnswers.map((q, idx) => {
                         const withSelection = incorrectAnswersWithSelection.find(item => item.question.id === q.id)
                         const selectedIndex = withSelection?.selectedIndex ?? null
+                        const wasSkipped = selectedIndex === -1
 
                         return (
                             <div key={q.id} style={{
@@ -122,13 +135,16 @@ function QuizResults({
                             }}>
                                 <div style={{ fontWeight: '500', marginBottom: '12px' }}>
                                     {idx + 1}. {q.question}
+                                    {wasSkipped && (
+                                        <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.8 }}>(Skipped)</span>
+                                    )}
                                 </div>
 
                                 {/* Show options with highlighting */}
                                 <div style={{ marginBottom: '10px' }}>
                                     {q.options.map((option, optIdx) => {
                                         const isCorrect = optIdx === q.correctAnswer
-                                        const isSelected = optIdx === selectedIndex
+                                        const isSelected = selectedIndex === optIdx
                                         const isWrong = isSelected && !isCorrect
 
                                         return (

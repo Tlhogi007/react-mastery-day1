@@ -16,6 +16,8 @@ export interface QuizQuestion {
   correctAnswer: number
   explanation: string
   difficulty?: 'easy' | 'medium' | 'hard'
+  /** Bank vs generated — drives local/AI counts after “More questions”. */
+  source?: 'local' | 'ai'
 }
 
 export interface DebuggingScenario {
