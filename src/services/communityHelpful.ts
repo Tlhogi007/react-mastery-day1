@@ -27,6 +27,18 @@ function writeLocalVotes(votes: Record<string, boolean>): void {
   }
 }
 
+function bumpCloudDirty(): void {
+  try {
+    window.dispatchEvent(new CustomEvent('rm-progress-changed'))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function getLocalHelpfulVotes(): Record<string, boolean> {
+  return readLocalVotes()
+}
+
 export function hasMarkedHelpful(slug: string): boolean {
   return Boolean(readLocalVotes()[slug])
 }
@@ -36,6 +48,18 @@ export function setLocalHelpful(slug: string, helpful: boolean): void {
   if (helpful) votes[slug] = true
   else delete votes[slug]
   writeLocalVotes(votes)
+  bumpCloudDirty()
+}
+
+/** Merge cloud votes into local (OR). */
+export function applyHelpfulVotes(votes: Record<string, boolean> | null | undefined): void {
+  if (!votes || typeof votes !== 'object') return
+  const merged = { ...readLocalVotes() }
+  for (const [slug, helpful] of Object.entries(votes)) {
+    if (helpful) merged[slug] = true
+  }
+  writeLocalVotes(merged)
+  window.dispatchEvent(new CustomEvent(COUNTS_EVENT, { detail: cachedCounts }))
 }
 
 let cachedCounts: HelpfulCounts = {}

@@ -195,6 +195,34 @@ class AnalyticsService {
     localStorage.removeItem(this.STORAGE_KEY)
   }
 
+  /** Snapshot for cloud sync (capped). */
+  toCloudJSON(): AnalyticsEvent[] {
+    return this.events.slice(-400)
+  }
+
+  /** Merge cloud events into the local log (by event+timestamp). */
+  mergeFromCloud(raw: unknown): void {
+    if (!Array.isArray(raw)) return
+    const map = new Map<string, AnalyticsEvent>()
+    for (const item of [...this.events, ...raw]) {
+      if (!item || typeof item !== 'object') continue
+      const row = item as AnalyticsEvent
+      if (typeof row.event !== 'string' || !Number.isFinite(Number(row.timestamp))) continue
+      const key = `${row.event}:${row.timestamp}`
+      if (!map.has(key)) {
+        map.set(key, {
+          event: row.event,
+          properties: row.properties,
+          timestamp: Number(row.timestamp),
+        })
+      }
+    }
+    this.events = [...map.values()]
+      .sort((a, b) => a.timestamp - b.timestamp)
+      .slice(-1000)
+    this.saveEvents()
+  }
+
   /**
    * Export analytics data
    */

@@ -19,7 +19,25 @@
 }
 
 .tools-page__back {
-  margin-bottom: 0.85rem;
+  margin: 0 0 0.65rem;
+  padding: 6px 10px;
+  min-height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tools-page__back:hover {
+  color: var(--text-primary);
+  background: var(--bg-section);
 }
 
 .tool-panel {
@@ -70,6 +88,24 @@
   min-height: 36px;
 }
 
+.tool-chip-row--modes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tool-chip-row--modes > button {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .tool-stats-row {
   display: flex;
   gap: 12px;
@@ -113,7 +149,15 @@
   min-height: 40px;
 }
 
+.learning-path-rec__cta {
+  width: auto;
+}
+
 @media (max-width: 768px) {
+  .tools-page {
+    padding-bottom: calc(24px + 56px + env(safe-area-inset-bottom, 0px));
+  }
+
   .tools-page__intro {
     text-align: left;
     margin-bottom: 0.85rem;
@@ -122,6 +166,14 @@
   /* Nested tool pages already sit inside Tabs padding — drop extra chrome */
   .tool-panel {
     padding: 0 !important;
+  }
+
+  .tool-chip-row--modes {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .learning-path-rec__cta {
+    width: 100%;
   }
 
   .tool-panel__hero {

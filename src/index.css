@@ -21,7 +21,7 @@
   --bg-section: #282a33;
   --bg-elevated: #22232c;
   --bg-info: rgba(47, 111, 237, 0.14);
-  --bg-warning: rgba(226, 61, 43, 0.14);
+  --bg-warning: rgba(212, 160, 23, 0.16);
   --bg-success: rgba(45, 155, 111, 0.14);
   --bg-error: rgba(226, 61, 43, 0.16);
   --bg-concepts: rgba(47, 111, 237, 0.1);
@@ -30,7 +30,7 @@
   --text-primary: #f2f1ed;
   --text-secondary: #9b9eaa;
   --text-muted: #6d7180;
-  --text-on-warning: #e23d2b;
+  --text-on-warning: #e8c04a;
   --text-on-success: #3db88a;
   --text-on-error: #e23d2b;
   --text-on-info: #6b9bff;
@@ -39,11 +39,11 @@
 
   --border-color: rgba(242, 241, 237, 0.1);
   --border-primary: #e23d2b;
-  --border-warning: #e23d2b;
+  --border-warning: #d4a017;
   --border-light: rgba(242, 241, 237, 0.06);
 
   --progress-success: #2d9b6f;
-  --progress-warning: #e23d2b;
+  --progress-warning: #d4a017;
   --progress-info: #2f6fed;
   --progress-error: #e23d2b;
 
@@ -110,7 +110,7 @@
   --bg-section: #e4e7ec;
   --bg-elevated: #ffffff;
   --bg-info: rgba(47, 111, 237, 0.1);
-  --bg-warning: rgba(226, 61, 43, 0.08);
+  --bg-warning: rgba(196, 146, 10, 0.14);
   --bg-success: rgba(45, 155, 111, 0.1);
   --bg-error: rgba(226, 61, 43, 0.08);
   --bg-concepts: rgba(47, 111, 237, 0.08);
@@ -119,7 +119,7 @@
   --text-primary: #14151a;
   --text-secondary: #4a4e5a;
   --text-muted: #6d7180;
-  --text-on-warning: #c93424;
+  --text-on-warning: #8a6500;
   --text-on-success: #1f7a55;
   --text-on-error: #c93424;
   --text-on-info: #2458c7;
@@ -128,11 +128,11 @@
 
   --border-color: #d0d4db;
   --border-primary: #e23d2b;
-  --border-warning: #e23d2b;
+  --border-warning: #c4920a;
   --border-light: #dde1e6;
 
   --progress-success: #2d9b6f;
-  --progress-warning: #e23d2b;
+  --progress-warning: #c4920a;
   --progress-info: #2f6fed;
   --progress-error: #e23d2b;
 
@@ -183,7 +183,7 @@
     --bg-section: #e4e7ec;
     --bg-elevated: #ffffff;
     --bg-info: rgba(47, 111, 237, 0.1);
-    --bg-warning: rgba(226, 61, 43, 0.08);
+    --bg-warning: rgba(196, 146, 10, 0.14);
     --bg-success: rgba(45, 155, 111, 0.1);
     --bg-error: rgba(226, 61, 43, 0.08);
     --bg-concepts: rgba(47, 111, 237, 0.08);
@@ -191,7 +191,7 @@
     --text-primary: #14151a;
     --text-secondary: #4a4e5a;
     --text-muted: #6d7180;
-    --text-on-warning: #c93424;
+    --text-on-warning: #8a6500;
     --text-on-success: #1f7a55;
     --text-on-error: #c93424;
     --text-on-info: #2458c7;
@@ -199,10 +199,10 @@
     --text-on-observation: #c93424;
     --border-color: #d0d4db;
     --border-primary: #e23d2b;
-    --border-warning: #e23d2b;
+    --border-warning: #c4920a;
     --border-light: #dde1e6;
     --progress-success: #2d9b6f;
-    --progress-warning: #e23d2b;
+    --progress-warning: #c4920a;
     --progress-info: #2f6fed;
     --progress-error: #e23d2b;
     --button-primary: #e23d2b;
@@ -396,6 +396,26 @@ select {
   border-radius: 5px;
 }
 ::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Settings modal: thin overlay scrollbar (Firefox + WebKit) */
+.settings-modal {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+.settings-modal::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.settings-modal::-webkit-scrollbar-track {
+  background: transparent;
+}
+.settings-modal::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 999px;
+}
+.settings-modal::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
 }
 

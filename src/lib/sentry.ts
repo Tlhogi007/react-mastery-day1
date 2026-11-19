@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/react'
 
 const DSN = import.meta.env.VITE_SENTRY_DSN || ''
 
-export type AppView = 'landing' | 'exercises' | 'tools' | 'community' | 'settings'
+export type AppView = 'landing' | 'exercises' | 'tools' | 'community' | 'settings' | 'support'
 
 export function initSentry(): void {
   if (!DSN) return
@@ -37,8 +37,12 @@ export function initSentry(): void {
       'Non-Error promise rejection captured',
       /^Failed to fetch$/,
       /Failed to fetch dynamically imported module/,
+      /Importing a module script failed/i,
       /Loading chunk [\d]+ failed/,
       /ChunkLoadError/,
+      /Failed to load Clerk JS/i,
+      /failed_to_load_clerk_js/i,
+      /Should have a queue/i,
     ],
     beforeSend(event) {
       const message = event.message || event.exception?.values?.[0]?.value || ''
@@ -49,7 +53,10 @@ export function initSentry(): void {
         message.includes('Sentry setup verification') ||
         message.includes('client SDK verification') ||
         message.includes('AI proxy ') ||
-        message.includes('Should have a queue')
+        message.includes('Should have a queue') ||
+        /Failed to load Clerk JS/i.test(message) ||
+        /failed_to_load_clerk_js/i.test(message) ||
+        /Importing a module script failed/i.test(message)
       ) {
         return null
       }

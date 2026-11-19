@@ -52,8 +52,8 @@ export function AuthButton(): JSX.Element {
       onClick={() => {
         if (!openSignIn) return
         tracking.signInOpened('header')
-        // Hash-free URL for Clerk; SPA restore still uses sessionStorage/hash locally.
-        const url = prepareAuthReturnUrl()
+        // After sign-in always open the lab dashboard (not marketing landing).
+        const url = prepareAuthReturnUrl({ inLab: true })
         void openSignIn({
           forceRedirectUrl: url,
           fallbackRedirectUrl: url,

@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef, type JSX } from 'react'
 import { settingsStorage } from '../services/settingsStorage'
+import {
+  applyAppTheme,
+  setAppTheme,
+  THEME_CHANGE_EVENT,
+  type AppTheme,
+} from '../services/theme'
 import { byoAiKeys, type ByoAiKeys } from '../services/byoAiKeys'
+import { tracking } from '../lib/googleAnalytics'
 import { Z_INDEX } from '../constants'
 
 interface SettingsModalProps {
@@ -19,10 +26,12 @@ function SettingsModal({
     const modalRef = useRef<HTMLDivElement>(null)
     const [byoStatus, setByoStatus] = useState<string | null>(null)
     const [byo, setByo] = useState<ByoAiKeys>(() => byoAiKeys.get())
-    const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>(() => {
-        // Load theme from localStorage on mount
-        return settingsStorage.getTheme()
-    })
+    const [theme, setTheme] = useState<AppTheme>(() => settingsStorage.getTheme())
+
+    const selectTheme = (next: AppTheme): void => {
+        setAppTheme(next)
+        tracking.themeChanged(next)
+    }
 
     const handleSaveByo = (): void => {
         byoAiKeys.set(byo)
@@ -97,19 +106,32 @@ function SettingsModal({
     }, [isOpen, onClose])
 
     useEffect(() => {
-        // Save theme preference to localStorage
-        settingsStorage.setTheme(theme)
-
-        // Apply theme preference
-        const root = document.documentElement
-        if (theme === 'light') {
-            root.style.colorScheme = 'light'
-        } else if (theme === 'dark') {
-            root.style.colorScheme = 'dark'
-        } else {
-            root.style.colorScheme = 'light dark'
+        if (isOpen) {
+            setTheme(settingsStorage.getTheme())
         }
+    }, [isOpen])
+
+    useEffect(() => {
+        applyAppTheme(theme)
+
+        if (theme !== 'auto') return
+
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+        const handleChange = (): void => applyAppTheme('auto')
+        mediaQuery.addEventListener('change', handleChange)
+        return () => mediaQuery.removeEventListener('change', handleChange)
     }, [theme])
+
+    useEffect(() => {
+        const sync = (event: Event): void => {
+            const next = (event as CustomEvent<AppTheme>).detail
+            if (next === 'light' || next === 'dark' || next === 'auto') {
+                setTheme(next)
+            }
+        }
+        window.addEventListener(THEME_CHANGE_EVENT, sync)
+        return () => window.removeEventListener(THEME_CHANGE_EVENT, sync)
+    }, [])
 
     if (!isOpen) return <></>
 
@@ -136,6 +158,7 @@ function SettingsModal({
         maxHeight: 'min(90dvh, 90vh)',
         overflowY: 'auto',
         WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'thin',
         boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
         border: '1px solid var(--border-color)',
         marginBottom: 'max(0px, env(safe-area-inset-bottom, 0px))',
@@ -168,6 +191,7 @@ function SettingsModal({
         >
             <div
                 ref={modalRef}
+                className="settings-modal"
                 style={modalStyle}
                 onClick={(e) => e.stopPropagation()}
                 role="dialog"
@@ -214,11 +238,11 @@ function SettingsModal({
                             background: theme === 'auto' ? 'var(--bg-info)' : 'var(--bg-section)',
                             color: theme === 'auto' ? 'var(--text-on-info)' : 'var(--text-primary)'
                         }}
-                        onClick={() => setTheme('auto')}
+                        onClick={() => selectTheme('auto')}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault()
-                                setTheme('auto')
+                                selectTheme('auto')
                             }
                         }}
                         onMouseEnter={(e) => {
@@ -250,11 +274,11 @@ function SettingsModal({
                             background: theme === 'light' ? 'var(--bg-info)' : 'var(--bg-section)',
                             color: theme === 'light' ? 'var(--text-on-info)' : 'var(--text-primary)'
                         }}
-                        onClick={() => setTheme('light')}
+                        onClick={() => selectTheme('light')}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault()
-                                setTheme('light')
+                                selectTheme('light')
                             }
                         }}
                         onMouseEnter={(e) => {
@@ -286,11 +310,11 @@ function SettingsModal({
                             background: theme === 'dark' ? 'var(--bg-info)' : 'var(--bg-section)',
                             color: theme === 'dark' ? 'var(--text-on-info)' : 'var(--text-primary)'
                         }}
-                        onClick={() => setTheme('dark')}
+                        onClick={() => selectTheme('dark')}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault()
-                                setTheme('dark')
+                                selectTheme('dark')
                             }
                         }}
                         onMouseEnter={(e) => {
@@ -467,7 +491,7 @@ function SettingsModal({
                             This course covers React fundamentals, performance optimization, architecture patterns, and interview preparation.
                         </p>
                         <p style={{ margin: 0, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
-                            <strong style={{ color: 'var(--text-primary)' }}>Privacy.</strong> BYO AI keys stay in this browser only and are never uploaded. When signed in, progress, notes, reflections, flashcards, snippets, and last lab location sync to your Clerk account for cross-device restore. Local analytics stay device-only. Usage analytics may go to Google Analytics when configured; crash reports to Sentry when configured.
+                            <strong style={{ color: 'var(--text-primary)' }}>Privacy.</strong> BYO AI keys stay in this browser only and are never uploaded. When signed in, progress, notes, reflections, flashcards, snippets, quiz resume, theme, tour/focus prefs, helpful votes, learning analytics, and last lab location sync to your Clerk account for cross-device restore. Usage analytics may also go to Google Analytics when configured; crash reports to Sentry when configured.
                         </p>
                     </div>
                 </div>

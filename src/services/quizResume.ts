@@ -83,17 +83,26 @@ export function consumeAiResumePending(day?: number): AiResumePending | null {
   return pending
 }
 
-export function saveQuizProgress(snapshot: QuizProgressSnapshot): void {
-  safeSet(PROGRESS_KEY, JSON.stringify({ ...snapshot, at: Date.now() }))
+function bumpCloudDirty(): void {
+  try {
+    window.dispatchEvent(new CustomEvent('rm-progress-changed'))
+  } catch {
+    /* ignore */
+  }
 }
 
-export function loadQuizProgress(day: number): QuizProgressSnapshot | null {
+export function saveQuizProgress(snapshot: QuizProgressSnapshot): void {
+  safeSet(PROGRESS_KEY, JSON.stringify({ ...snapshot, at: Date.now() }))
+  bumpCloudDirty()
+}
+
+/** Raw mid-quiz snapshot for cloud sync (any day), or null if none / stale. */
+export function peekQuizProgress(): QuizProgressSnapshot | null {
   try {
     const raw = safeGet(PROGRESS_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as QuizProgressSnapshot
-    if (parsed.day !== day) return null
-    if (Date.now() - parsed.at > 30 * 60_000) {
+    if (!parsed?.day || Date.now() - parsed.at > 30 * 60_000) {
       safeRemove(PROGRESS_KEY)
       return null
     }
@@ -104,6 +113,30 @@ export function loadQuizProgress(day: number): QuizProgressSnapshot | null {
   }
 }
 
+export function loadQuizProgress(day: number): QuizProgressSnapshot | null {
+  const parsed = peekQuizProgress()
+  if (!parsed || parsed.day !== day) return null
+  return parsed
+}
+
+/** Apply a cloud (or local) resume payload into sessionStorage. */
+export function applyQuizProgress(snapshot: QuizProgressSnapshot | null): void {
+  if (!snapshot) {
+    safeRemove(PROGRESS_KEY)
+    return
+  }
+  if (Date.now() - snapshot.at > 30 * 60_000) {
+    safeRemove(PROGRESS_KEY)
+    return
+  }
+  if (!Array.isArray(snapshot.allQuestions) || snapshot.allQuestions.length === 0) {
+    safeRemove(PROGRESS_KEY)
+    return
+  }
+  safeSet(PROGRESS_KEY, JSON.stringify(snapshot))
+}
+
 export function clearQuizProgress(): void {
   safeRemove(PROGRESS_KEY)
+  bumpCloudDirty()
 }

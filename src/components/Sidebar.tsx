@@ -9,6 +9,7 @@ interface SidebarProps {
   onExerciseSelect: (key: ExerciseKey) => void
   onToolsClick?: () => void
   onCommunityClick?: () => void
+  onSupportClick?: () => void
   onSettingsClick?: () => void
   onAnalyticsClick?: () => void
   onShortcutsClick?: () => void
@@ -22,6 +23,7 @@ function Sidebar({
   onExerciseSelect,
   onToolsClick,
   onCommunityClick,
+  onSupportClick,
   onSettingsClick,
   onAnalyticsClick,
   onShortcutsClick,
@@ -91,7 +93,9 @@ function Sidebar({
         maxWidth: isCollapsed ? 64 : 300,
         background: 'var(--bg-card)',
         borderRight: '1px solid var(--border-color)',
-        padding: isCollapsed ? '12px 8px' : '16px 14px',
+        paddingTop: isCollapsed ? 12 : 16,
+        paddingLeft: isCollapsed ? 8 : 14,
+        paddingRight: isCollapsed ? 8 : 14,
         paddingBottom: 'max(16px, env(safe-area-inset-bottom, 0px))',
         position: 'sticky',
         top: 0,
@@ -179,7 +183,7 @@ function Sidebar({
         </div>
       </FadeIn>
 
-      {!isCollapsed && (onToolsClick || onCommunityClick) && (
+      {!isCollapsed && (onToolsClick || onCommunityClick || onSupportClick) && (
         <nav
           data-tutorial="tools-community"
           style={{
@@ -196,19 +200,14 @@ function Sidebar({
               Tools
             </button>
           )}
-          {onToolsClick && onCommunityClick && (
-            <div
-              aria-hidden
-              style={{
-                height: 1,
-                margin: '4px 10px',
-                background: 'var(--border-color)',
-              }}
-            />
-          )}
           {onCommunityClick && (
             <button type="button" onClick={onCommunityClick} style={linkBtnStyle}>
               Community
+            </button>
+          )}
+          {onSupportClick && (
+            <button type="button" onClick={onSupportClick} style={linkBtnStyle}>
+              Support
             </button>
           )}
         </nav>

@@ -67,19 +67,6 @@ function Tools({ onBack, onNavigateToDay }: ToolsProps): JSX.Element {
                         type="button"
                         className="tools-page__back"
                         onClick={onBack}
-                        style={{
-                            padding: '10px 16px',
-                            minHeight: 40,
-                            borderRadius: '6px',
-                            border: '1px solid var(--border-primary)',
-                            background: 'var(--bg-section)',
-                            color: 'var(--text-primary)',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                        }}
                     >
                         <span className="tools-page__back-label-full">← Back to Exercises</span>
                         <span className="tools-page__back-label-short">← Back</span>

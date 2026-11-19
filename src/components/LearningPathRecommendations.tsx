@@ -118,64 +118,113 @@ function LearningPathRecommendations({ onNavigateToDay }: LearningPathRecommenda
                             Complete some quizzes to get personalized recommendations!
                         </p>
                     ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div className="learning-path-recs" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {recommendations.map(rec => (
                                 <div
                                     key={rec.id}
+                                    className="learning-path-rec"
                                     style={{
-                                        padding: '16px',
+                                        padding: '14px',
                                         background: 'var(--bg-section)',
-                                        borderRadius: '8px',
-                                        border: `2px solid ${getPriorityColor(rec.priority)}`,
-                                        borderLeftWidth: '4px'
+                                        borderRadius: '10px',
+                                        border: '1px solid var(--border-color)',
+                                        borderLeft: `3px solid ${getPriorityColor(rec.priority)}`,
                                     }}
                                 >
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 8, marginBottom: '8px', flexWrap: 'wrap' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                                            <span style={{ fontSize: '24px', flexShrink: 0 }}>{getTypeIcon(rec.type)}</span>
-                                            <div style={{ minWidth: 0 }}>
-                                                <h4 style={{ margin: 0, fontSize: '16px' }}>{rec.title}</h4>
-                                                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                                    {rec.type.charAt(0).toUpperCase() + rec.type.slice(1)} • {rec.priority} priority
-                                                </div>
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'flex-start',
+                                            gap: 10,
+                                            marginBottom: 8,
+                                        }}
+                                    >
+                                        <span style={{ fontSize: 22, flexShrink: 0, lineHeight: 1.2 }}>
+                                            {getTypeIcon(rec.type)}
+                                        </span>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <h4
+                                                style={{
+                                                    margin: 0,
+                                                    fontSize: 15,
+                                                    fontWeight: 650,
+                                                    lineHeight: 1.3,
+                                                }}
+                                            >
+                                                {rec.title}
+                                            </h4>
+                                            <div
+                                                style={{
+                                                    marginTop: 6,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 8,
+                                                    flexWrap: 'wrap',
+                                                }}
+                                            >
+                                                <span
+                                                    style={{
+                                                        fontSize: 12,
+                                                        color: 'var(--text-secondary)',
+                                                    }}
+                                                >
+                                                    {rec.type.charAt(0).toUpperCase() + rec.type.slice(1)}
+                                                </span>
+                                                <span
+                                                    style={{
+                                                        padding: '2px 8px',
+                                                        borderRadius: 999,
+                                                        background: getPriorityColor(rec.priority),
+                                                        color:
+                                                            rec.priority === 'high'
+                                                                ? 'var(--text-on-error)'
+                                                                : rec.priority === 'medium'
+                                                                  ? 'var(--text-on-warning)'
+                                                                  : 'var(--text-on-success)',
+                                                        fontSize: 11,
+                                                        fontWeight: 700,
+                                                        textTransform: 'lowercase',
+                                                        flexShrink: 0,
+                                                    }}
+                                                >
+                                                    {rec.priority}
+                                                </span>
                                             </div>
                                         </div>
-                                        <span style={{
-                                            padding: '4px 8px',
-                                            borderRadius: '4px',
-                                            background: getPriorityColor(rec.priority),
-                                            color: rec.priority === 'high' ? 'var(--text-on-error)' :
-                                                rec.priority === 'medium' ? 'var(--text-on-warning)' :
-                                                    'var(--text-on-success)',
-                                            fontSize: '11px',
-                                            fontWeight: 'bold'
-                                        }}>
-                                            {rec.priority}
-                                        </span>
                                     </div>
-                                    <p style={{ margin: '0 0 8px 0', lineHeight: '1.6' }}>{rec.description}</p>
-                                    <div style={{
-                                        padding: '8px',
-                                        background: 'var(--bg-card)',
-                                        borderRadius: '4px',
-                                        fontSize: '12px',
-                                        color: 'var(--text-secondary)'
-                                    }}>
+                                    <p style={{ margin: '0 0 8px', lineHeight: 1.5, fontSize: 14 }}>
+                                        {rec.description}
+                                    </p>
+                                    <div
+                                        style={{
+                                            padding: '8px 10px',
+                                            background: 'var(--bg-card)',
+                                            borderRadius: 6,
+                                            border: '1px solid var(--border-color)',
+                                            fontSize: 12,
+                                            color: 'var(--text-secondary)',
+                                            lineHeight: 1.4,
+                                        }}
+                                    >
                                         <strong>Why:</strong> {rec.reason}
                                     </div>
                                     {rec.day && onNavigateToDay && (
-                                        <div style={{ marginTop: '12px' }}>
+                                        <div style={{ marginTop: 12 }}>
                                             <button
                                                 type="button"
+                                                className="learning-path-rec__cta"
                                                 onClick={() => goToDay(rec.day!)}
                                                 style={{
-                                                    padding: '8px 16px',
-                                                    borderRadius: '6px',
+                                                    padding: '10px 16px',
+                                                    minHeight: 40,
+                                                    borderRadius: 8,
                                                     border: 'none',
                                                     background: 'var(--button-primary)',
                                                     color: 'var(--button-text)',
                                                     cursor: 'pointer',
-                                                    fontSize: '14px'
+                                                    fontSize: 14,
+                                                    fontWeight: 600,
+                                                    fontFamily: 'inherit',
                                                 }}
                                             >
                                                 Go to Day {rec.day}

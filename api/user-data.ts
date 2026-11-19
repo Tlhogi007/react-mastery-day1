@@ -16,7 +16,8 @@ import {
   userCloudKey,
 } from './_lib/userCloud.js'
 
-const MAX_BYTES = 200_000
+/** Notes + flashcards + mid-quiz resume need headroom. */
+const MAX_BYTES = 350_000
 /** Stay under vercel.json maxDuration (20s) for user-data. */
 const LONG_POLL_MS = 12_000
 const LONG_POLL_STEP_MS = 1_500

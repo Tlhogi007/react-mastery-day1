@@ -5,12 +5,24 @@
 export interface SettingsData {
   theme: 'light' | 'dark' | 'auto'
   onboardingComplete?: boolean
+  studyMode?: boolean
+  /** ISO time of last prefs change — used for cloud last-write-wins */
+  updatedAt?: string
 }
 
 const STORAGE_KEY = 'react-mastery-settings'
 const DEFAULT_SETTINGS: SettingsData = {
   theme: 'auto',
   onboardingComplete: false,
+  studyMode: false,
+}
+
+function bumpCloudDirty(): void {
+  try {
+    window.dispatchEvent(new CustomEvent('rm-progress-changed'))
+  } catch {
+    /* ignore */
+  }
 }
 
 class SettingsStorage {
@@ -24,7 +36,7 @@ class SettingsStorage {
         const parsed = JSON.parse(stored) as Partial<SettingsData>
         return {
           ...DEFAULT_SETTINGS,
-          ...parsed
+          ...parsed,
         }
       }
     } catch (error) {
@@ -36,9 +48,13 @@ class SettingsStorage {
   /**
    * Save settings to localStorage
    */
-  saveSettings(settings: SettingsData): void {
+  saveSettings(settings: SettingsData, opts?: { touch?: boolean }): void {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+      const next = { ...settings }
+      if (opts?.touch !== false) {
+        next.updatedAt = new Date().toISOString()
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
     } catch (error) {
       console.warn('Failed to save settings to localStorage:', error)
     }
@@ -68,6 +84,31 @@ class SettingsStorage {
     const settings = this.getSettings()
     settings.onboardingComplete = complete
     this.saveSettings(settings)
+    bumpCloudDirty()
+  }
+
+  getStudyMode(): boolean {
+    return Boolean(this.getSettings().studyMode)
+  }
+
+  setStudyMode(enabled: boolean): void {
+    const settings = this.getSettings()
+    settings.studyMode = enabled
+    this.saveSettings(settings)
+    bumpCloudDirty()
+  }
+
+  /**
+   * Replace settings from cloud restore (preserves unknown future keys via spread).
+   * Does not bump updatedAt — cloud stamp wins.
+   */
+  applyCloudSettings(partial: Partial<SettingsData>): SettingsData {
+    const next: SettingsData = {
+      ...this.getSettings(),
+      ...partial,
+    }
+    this.saveSettings(next, { touch: false })
+    return next
   }
 
   /**

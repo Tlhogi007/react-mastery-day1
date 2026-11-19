@@ -470,11 +470,20 @@
 
 .roadmap-week-header {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-4);
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
   padding: var(--space-4) var(--space-5);
   background: var(--bg-section);
   border-bottom: 1px solid var(--border-color);
+}
+
+.roadmap-week-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
 }
 
 .roadmap-week-badge {
@@ -492,24 +501,18 @@
 
 .roadmap-week-copy {
   min-width: 0;
-  flex: 1;
-}
-
-.roadmap-week-title-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem 0.75rem;
-  margin-bottom: 0.2rem;
+  width: 100%;
 }
 
 .roadmap-week-title {
-  margin: 0;
+  margin: 0 0 0.2rem;
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: clamp(1.02rem, 2.8vw, 1.15rem);
   font-weight: 700;
   letter-spacing: -0.02em;
+  line-height: 1.25;
   color: var(--text-primary);
+  text-wrap: balance;
 }
 
 .roadmap-soon-pill {
@@ -616,6 +619,14 @@
       max(var(--space-4), env(safe-area-inset-left, 0px));
   }
 
+  .section-title-unique {
+    font-size: clamp(1.35rem, 6.5vw, 1.75rem);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    padding-right: 0.25rem;
+  }
+
   .hero-unique {
     min-height: auto;
     padding: var(--space-5) 0;
@@ -638,11 +649,27 @@
   .concept-visual {
     display: none;
   }
+
+  .roadmap-week-header {
+    padding: var(--space-4);
+  }
+
+  .roadmap-week-title {
+    font-size: clamp(1.05rem, 4.6vw, 1.2rem);
+    max-width: 100%;
+  }
+
+  .roadmap-topic {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+    font-size: 0.9rem;
+  }
 }
 
 @media (max-width: 480px) {
   .landing-container {
-    padding-inline: max(var(--space-3), env(safe-area-inset-left, 0px));
+    padding-left: max(var(--space-4), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--space-4), env(safe-area-inset-right, 0px));
   }
 }
 

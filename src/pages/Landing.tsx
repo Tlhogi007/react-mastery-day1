@@ -9,7 +9,8 @@ import { LandingResume } from '../components/LandingResume'
 import type { ExercisesRegistry } from '../types/exercises'
 
 interface LandingProps {
-  onGetStarted: (opts?: { exercise?: string; communitySlug?: string }) => void
+  onGetStarted: (opts?: { exercise?: string; communitySlug?: string; support?: boolean }) => void
+  onOpenSupport?: () => void
   exercises?: ExercisesRegistry
 }
 
@@ -22,7 +23,7 @@ const codeSnippets = [
   { bad: '<div key={index}>', issue: 'Index as key' }
 ]
 
-export default function Landing({ onGetStarted, exercises }: LandingProps) {
+export default function Landing({ onGetStarted, onOpenSupport, exercises }: LandingProps) {
   const [currentSnippet, setCurrentSnippet] = useState(0)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
 
@@ -334,14 +335,14 @@ export default function Landing({ onGetStarted, exercises }: LandingProps) {
                 transition={{ delay: i * 0.08 }}
               >
                 <header className="roadmap-week-header">
-                  <span className="roadmap-week-badge">Week {block.week}</span>
+                  <div className="roadmap-week-meta">
+                    <span className="roadmap-week-badge">Week {block.week}</span>
+                    {!block.available && (
+                      <span className="roadmap-soon-pill">Coming soon</span>
+                    )}
+                  </div>
                   <div className="roadmap-week-copy">
-                    <div className="roadmap-week-title-row">
-                      <h3 className="roadmap-week-title">{block.title}</h3>
-                      {!block.available && (
-                        <span className="roadmap-soon-pill">Coming soon</span>
-                      )}
-                    </div>
+                    <h3 className="roadmap-week-title">{block.title}</h3>
                     <p className="roadmap-week-focus">{block.focus}</p>
                   </div>
                 </header>
@@ -381,6 +382,29 @@ export default function Landing({ onGetStarted, exercises }: LandingProps) {
 
         <footer className="footer-unique">
           <p>React Mastery Lab · free Week 1 internals · optional sign-in for AI + sync</p>
+          {onOpenSupport && (
+            <p style={{ marginTop: 10 }}>
+              <button
+                type="button"
+                className="landing-support-link"
+                onClick={onOpenSupport}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  color: 'var(--link-color)',
+                  font: 'inherit',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: 3,
+                }}
+              >
+                Support &amp; contact
+              </button>
+            </p>
+          )}
           <p className="build-stamp" style={{ marginTop: 8 }}>
             {formatBuildStamp()}
           </p>

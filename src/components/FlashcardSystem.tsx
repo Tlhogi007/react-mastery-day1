@@ -95,14 +95,14 @@ function FlashcardSystem({ day }: FlashcardSystemProps): JSX.Element {
         padding: 'clamp(1rem, 4vw, 2.5rem)',
         background: 'var(--bg-card)',
         borderRadius: '12px',
-        border: '2px solid var(--border-primary)',
+        border: '1px solid var(--border-color)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
         cursor: 'pointer',
         marginBottom: '20px',
-        boxShadow: 'var(--shadow-md)',
+        boxShadow: 'var(--shadow-sm)',
         transition: 'transform 0.3s ease',
         position: 'relative',
         width: '100%',
@@ -130,7 +130,7 @@ function FlashcardSystem({ day }: FlashcardSystemProps): JSX.Element {
                 <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
                     SM-2 scheduling: cards you miss come back sooner. Save wrong quiz answers from the Quiz tab.
                 </p>
-                <div className="tool-chip-row" style={{ marginBottom: '16px' }}>
+                <div className="tool-chip-row tool-chip-row--modes" style={{ marginBottom: '16px' }}>
                     <button
                         type="button"
                         onClick={() => {
@@ -138,15 +138,14 @@ function FlashcardSystem({ day }: FlashcardSystemProps): JSX.Element {
                             loadNextCard()
                         }}
                         style={{
-                            padding: '8px 16px',
-                            borderRadius: '6px',
-                            border: 'none',
+                            borderRadius: '8px',
+                            border: mode === 'review' ? '1px solid var(--button-primary)' : '1px solid transparent',
                             background: mode === 'review' ? 'var(--button-primary)' : 'var(--bg-section)',
                             color: mode === 'review' ? 'var(--button-text)' : 'var(--text-primary)',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
                         }}
                     >
-                        Due today ({stats.due})
+                        Due ({stats.due})
                     </button>
                     <button
                         type="button"
@@ -155,12 +154,11 @@ function FlashcardSystem({ day }: FlashcardSystemProps): JSX.Element {
                             loadNextCard()
                         }}
                         style={{
-                            padding: '8px 16px',
-                            borderRadius: '6px',
-                            border: 'none',
+                            borderRadius: '8px',
+                            border: mode === 'browse' ? '1px solid var(--button-primary)' : '1px solid transparent',
                             background: mode === 'browse' ? 'var(--button-primary)' : 'var(--bg-section)',
                             color: mode === 'browse' ? 'var(--button-text)' : 'var(--text-primary)',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
                         }}
                     >
                         Browse ({stats.total})
@@ -169,12 +167,11 @@ function FlashcardSystem({ day }: FlashcardSystemProps): JSX.Element {
                         type="button"
                         onClick={() => setMode('create')}
                         style={{
-                            padding: '8px 16px',
-                            borderRadius: '6px',
-                            border: 'none',
+                            borderRadius: '8px',
+                            border: mode === 'create' ? '1px solid var(--button-primary)' : '1px solid transparent',
                             background: mode === 'create' ? 'var(--button-primary)' : 'var(--bg-section)',
                             color: mode === 'create' ? 'var(--button-text)' : 'var(--text-primary)',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
                         }}
                     >
                         Create

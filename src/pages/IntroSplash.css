@@ -1,0 +1,111 @@
+.intro-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(24px, env(safe-area-inset-top, 0px)) 24px
+    max(24px, env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 35%, rgba(226, 61, 43, 0.1), transparent 60%),
+    var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.intro-splash__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  max-width: 360px;
+  cursor: default;
+}
+
+.intro-splash__logo {
+  display: block;
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+}
+
+.intro-splash__brand {
+  margin: 8px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--text-primary);
+}
+
+.intro-splash__lab {
+  display: inline-block;
+  margin-left: 0.35em;
+  font-weight: 650;
+  color: var(--button-primary);
+}
+
+.intro-splash__greet {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+}
+
+.intro-splash__greet--quiet {
+  color: var(--text-muted);
+}
+
+.intro-splash__name {
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+.intro-splash__continue {
+  margin-top: 10px;
+  padding: 10px 20px;
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(242, 241, 237, 0.35);
+  background: rgba(242, 241, 237, 0.08);
+  color: #f2f1ed;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.light-theme .intro-splash__continue {
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.intro-splash__continue:hover:not(:disabled) {
+  background: rgba(242, 241, 237, 0.14);
+  border-color: rgba(242, 241, 237, 0.5);
+  color: #ffffff;
+}
+
+.light-theme .intro-splash__continue:hover:not(:disabled) {
+  background: var(--bg-section);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.intro-splash__continue:disabled {
+  cursor: default;
+  opacity: 0.7;
+  color: #f2f1ed;
+}
+
+.light-theme .intro-splash__continue:disabled {
+  color: var(--text-secondary);
+}

@@ -15,7 +15,12 @@ export async function seedOnboarding(page: Page): Promise<void> {
     sessionStorage.clear()
     localStorage.setItem(
       'react-mastery-settings',
-      JSON.stringify({ onboardingComplete: true, theme: 'light' }),
+      JSON.stringify({
+        onboardingComplete: true,
+        theme: 'light',
+        studyMode: false,
+        updatedAt: new Date().toISOString(),
+      }),
     )
   })
 }
@@ -185,4 +190,133 @@ export async function waitForUserDataGet(page: Page, timeoutMs = 20_000) {
       res.ok(),
     { timeout: timeoutMs },
   )
+}
+
+export async function readLocalSettings(page: Page): Promise<{
+  theme: string
+  onboardingComplete: boolean
+  studyMode: boolean
+}> {
+  return page.evaluate(() => {
+    try {
+      const raw = localStorage.getItem('react-mastery-settings')
+      if (!raw) return { theme: 'auto', onboardingComplete: false, studyMode: false }
+      const parsed = JSON.parse(raw) as {
+        theme?: string
+        onboardingComplete?: boolean
+        studyMode?: boolean
+      }
+      return {
+        theme: parsed.theme || 'auto',
+        onboardingComplete: Boolean(parsed.onboardingComplete),
+        studyMode: Boolean(parsed.studyMode),
+      }
+    } catch {
+      return { theme: 'auto', onboardingComplete: false, studyMode: false }
+    }
+  })
+}
+
+export async function readHelpfulVotes(page: Page): Promise<Record<string, boolean>> {
+  return page.evaluate(() => {
+    try {
+      const raw = localStorage.getItem('rm-community-helpful-votes')
+      if (!raw) return {}
+      const parsed = JSON.parse(raw) as Record<string, boolean>
+      return parsed && typeof parsed === 'object' ? parsed : {}
+    } catch {
+      return {}
+    }
+  })
+}
+
+export async function readQuizResume(page: Page): Promise<{ day: number; at: number } | null> {
+  return page.evaluate(() => {
+    try {
+      const raw = sessionStorage.getItem('rm-quiz-progress')
+      if (!raw) return null
+      const parsed = JSON.parse(raw) as { day?: number; at?: number; allQuestions?: unknown[] }
+      if (typeof parsed.day !== 'number' || typeof parsed.at !== 'number') return null
+      if (!Array.isArray(parsed.allQuestions) || parsed.allQuestions.length === 0) return null
+      return { day: parsed.day, at: parsed.at }
+    } catch {
+      return null
+    }
+  })
+}
+
+/** Seed prefs / votes / mid-quiz resume and bump cloud dirty. */
+export async function seedExtendedCloudLocal(
+  page: Page,
+  opts: {
+    theme?: 'light' | 'dark' | 'auto'
+    studyMode?: boolean
+    helpfulSlug?: string
+  } = {},
+): Promise<void> {
+  await page.evaluate((o) => {
+    localStorage.setItem(
+      'react-mastery-settings',
+      JSON.stringify({
+        onboardingComplete: true,
+        theme: o.theme || 'dark',
+        studyMode: Boolean(o.studyMode),
+        updatedAt: new Date().toISOString(),
+      }),
+    )
+    if (o.helpfulSlug) {
+      localStorage.setItem(
+        'rm-community-helpful-votes',
+        JSON.stringify({ [o.helpfulSlug]: true }),
+      )
+    }
+    const analytics = [
+      { event: 'e2e_cloud_probe', properties: { ok: true }, timestamp: Date.now() },
+    ]
+    localStorage.setItem('react-mastery-analytics', JSON.stringify(analytics))
+    sessionStorage.setItem(
+      'rm-quiz-progress',
+      JSON.stringify({
+        day: 1,
+        currentQuestionIndex: 2,
+        selectedAnswer: 1,
+        score: 1,
+        completed: false,
+        localQuestionsCompleted: false,
+        aiEnabled: false,
+        aiQuestionsLoaded: false,
+        allQuestions: [
+          {
+            id: 'e2e-q1',
+            question: 'E2E resume probe?',
+            options: ['a', 'b', 'c', 'd'],
+            correctAnswer: 1,
+            explanation: 'probe',
+            source: 'local',
+          },
+          {
+            id: 'e2e-q2',
+            question: 'E2E resume probe 2?',
+            options: ['a', 'b', 'c', 'd'],
+            correctAnswer: 0,
+            explanation: 'probe',
+            source: 'local',
+          },
+          {
+            id: 'e2e-q3',
+            question: 'E2E resume probe 3?',
+            options: ['a', 'b', 'c', 'd'],
+            correctAnswer: 2,
+            explanation: 'probe',
+            source: 'local',
+          },
+        ],
+        usedLocalQuestionIds: ['e2e-q1', 'e2e-q2', 'e2e-q3'],
+        incorrectAnswerIds: [],
+        totalTimeSpent: 12,
+        at: Date.now(),
+      }),
+    )
+    window.dispatchEvent(new CustomEvent('rm-progress-changed'))
+  }, opts)
 }

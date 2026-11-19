@@ -1,11 +1,21 @@
 /**
  * Sync learner progress / notes / tools data to /api/user-data when signed in.
  */
+import {
+  mergeSnapshots,
+  type CloudQuizResume,
+  type CloudSettings,
+  type UserCloudSnapshot as SharedCloudSnapshot,
+} from '../../api/_lib/userCloud'
 import { progressStorage, type LiveDayProgress, type ProgressData } from './progressStorage'
 import { questionHistory } from './questionHistory'
 import { getActiveTab, normalizeLabView, writeLabSession } from './authReturnTo'
 import { waitForAiAuthToken } from './aiAuthBridge'
-import { mergeSnapshots } from '../../api/_lib/userCloud'
+import { settingsStorage } from './settingsStorage'
+import { applyQuizProgress, peekQuizProgress } from './quizResume'
+import { analytics } from './analytics'
+import { applyHelpfulVotes, getLocalHelpfulVotes } from './communityHelpful'
+import { applyAppTheme, THEME_CHANGE_EVENT, type AppTheme } from './theme'
 
 export const USER_CLOUD_SYNCED_EVENT = 'rm-user-cloud-synced'
 export const AI_QUOTA_UPDATED_EVENT = 'rm-ai-quota-updated'
@@ -20,25 +30,15 @@ export type AiQuotaStatus = {
 
 export type LabCloudState = {
   exercise: string
-  view: 'exercises' | 'community' | 'settings'
+  view: 'exercises' | 'community' | 'settings' | 'support'
   tools: boolean
   tab?: string
 }
 
-export type UserCloudSnapshot = {
-  version: 1
-  updatedAt: string
+export type UserCloudSnapshot = SharedCloudSnapshot & {
   progress: ProgressData
   lab?: LabCloudState | null
-  /** Mid-quiz day bar — syncs across signed-in devices */
   liveProgress?: LiveDayProgress | null
-  /** Answered local/AI question ids — keeps “no repeats” consistent across devices */
-  questionHistory?: unknown
-  notes?: unknown
-  annotations?: unknown
-  reflections?: unknown
-  flashcards?: unknown
-  snippets?: unknown
 }
 
 type UserDataResponse = {
@@ -81,6 +81,16 @@ function readLabFromStorage(): LabCloudState | null {
   }
 }
 
+function readLocalSettings(): CloudSettings {
+  const s = settingsStorage.getSettings()
+  return {
+    theme: s.theme,
+    onboardingComplete: Boolean(s.onboardingComplete),
+    studyMode: Boolean(s.studyMode),
+    updatedAt: typeof s.updatedAt === 'string' ? s.updatedAt : '',
+  }
+}
+
 export function buildLocalSnapshot(
   labOverride?: Partial<LabCloudState> | null,
 ): UserCloudSnapshot {
@@ -94,6 +104,25 @@ export function buildLocalSnapshot(
       }
     : session
 
+  const quiz = peekQuizProgress()
+  const quizResume: CloudQuizResume | null = quiz
+    ? {
+        day: quiz.day,
+        currentQuestionIndex: quiz.currentQuestionIndex,
+        selectedAnswer: quiz.selectedAnswer,
+        score: quiz.score,
+        completed: quiz.completed,
+        localQuestionsCompleted: quiz.localQuestionsCompleted,
+        aiEnabled: quiz.aiEnabled,
+        aiQuestionsLoaded: quiz.aiQuestionsLoaded,
+        allQuestions: quiz.allQuestions.slice(0, 40),
+        usedLocalQuestionIds: quiz.usedLocalQuestionIds.slice(0, 200),
+        incorrectAnswerIds: quiz.incorrectAnswerIds.slice(0, 200),
+        totalTimeSpent: quiz.totalTimeSpent,
+        at: quiz.at,
+      }
+    : null
+
   return {
     version: 1,
     updatedAt: new Date().toISOString(),
@@ -106,6 +135,15 @@ export function buildLocalSnapshot(
     reflections: readJsonKey('react-mastery-reflections'),
     flashcards: readJsonKey('react-mastery-flashcards'),
     snippets: readJsonKey('react-mastery-snippets'),
+    settings: readLocalSettings(),
+    quizResume,
+    // Prefer storage so e2e / multi-tab writes are included; fall back to in-memory.
+    analytics: (() => {
+      const stored = readJsonKey('react-mastery-analytics')
+      if (Array.isArray(stored) && stored.length > 0) return stored.slice(-400)
+      return analytics.toCloudJSON()
+    })(),
+    helpfulVotes: getLocalHelpfulVotes(),
   }
 }
 
@@ -124,6 +162,50 @@ function applySnapshotLocally(cloud: UserCloudSnapshot): void {
   if (Array.isArray(cloud.reflections)) writeJsonKey('react-mastery-reflections', cloud.reflections)
   if (Array.isArray(cloud.flashcards)) writeJsonKey('react-mastery-flashcards', cloud.flashcards)
   if (Array.isArray(cloud.snippets)) writeJsonKey('react-mastery-snippets', cloud.snippets)
+
+  if (cloud.settings) {
+    settingsStorage.applyCloudSettings({
+      theme: cloud.settings.theme,
+      onboardingComplete: cloud.settings.onboardingComplete,
+      studyMode: cloud.settings.studyMode,
+      updatedAt: cloud.settings.updatedAt,
+    })
+    applyAppTheme(cloud.settings.theme)
+    window.dispatchEvent(
+      new CustomEvent<AppTheme>(THEME_CHANGE_EVENT, { detail: cloud.settings.theme }),
+    )
+  }
+
+  if (cloud.quizResume !== undefined) {
+    applyQuizProgress(
+      cloud.quizResume
+        ? {
+            day: cloud.quizResume.day,
+            currentQuestionIndex: cloud.quizResume.currentQuestionIndex,
+            selectedAnswer: cloud.quizResume.selectedAnswer,
+            score: cloud.quizResume.score,
+            completed: cloud.quizResume.completed,
+            localQuestionsCompleted: cloud.quizResume.localQuestionsCompleted,
+            aiEnabled: cloud.quizResume.aiEnabled,
+            aiQuestionsLoaded: cloud.quizResume.aiQuestionsLoaded,
+            allQuestions: cloud.quizResume.allQuestions as never,
+            usedLocalQuestionIds: cloud.quizResume.usedLocalQuestionIds,
+            incorrectAnswerIds: cloud.quizResume.incorrectAnswerIds,
+            totalTimeSpent: cloud.quizResume.totalTimeSpent,
+            at: cloud.quizResume.at,
+          }
+        : null,
+    )
+  }
+
+  if (cloud.analytics != null) {
+    analytics.mergeFromCloud(cloud.analytics)
+  }
+
+  if (cloud.helpfulVotes != null) {
+    applyHelpfulVotes(cloud.helpfulVotes)
+  }
+
   if (cloud.lab?.exercise) {
     writeLabSession({
       exercise: cloud.lab.exercise,
@@ -227,7 +309,7 @@ export async function pushUserCloud(
   }
 }
 
-/** Compare progress fields that should live-update across devices. */
+/** Compare fields that should live-update across devices. */
 export function progressSyncFingerprint(snapshot: UserCloudSnapshot): string {
   const historyIds = Array.isArray(snapshot.questionHistory)
     ? snapshot.questionHistory
@@ -241,13 +323,24 @@ export function progressSyncFingerprint(snapshot: UserCloudSnapshot): string {
     : []
   // Omit liveProgress.updatedAt — it changes every tick and was burning uploads on Quiz.
   const live = snapshot.liveProgress
+  const helpfulKeys = Object.keys(snapshot.helpfulVotes || {})
+    .filter((k) => snapshot.helpfulVotes?.[k])
+    .sort()
   return JSON.stringify({
     progress: snapshot.progress,
-    live:
-      live == null
-        ? null
-        : { day: live.day, percent: live.percent },
+    live: live == null ? null : { day: live.day, percent: live.percent },
     historyIds,
+    settings: snapshot.settings ?? null,
+    quizResume: snapshot.quizResume
+      ? {
+          day: snapshot.quizResume.day,
+          at: snapshot.quizResume.at,
+          index: snapshot.quizResume.currentQuestionIndex,
+          score: snapshot.quizResume.score,
+          completed: snapshot.quizResume.completed,
+        }
+      : null,
+    helpfulKeys,
   })
 }
 

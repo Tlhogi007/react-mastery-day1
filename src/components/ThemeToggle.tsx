@@ -5,6 +5,12 @@
 
 import { useState, useEffect, type JSX } from 'react'
 import { settingsStorage } from '../services/settingsStorage'
+import {
+  applyAppTheme,
+  setAppTheme,
+  THEME_CHANGE_EVENT,
+  type AppTheme,
+} from '../services/theme'
 import { tracking } from '../lib/googleAnalytics'
 
 interface ThemeToggleProps {
@@ -14,70 +20,35 @@ interface ThemeToggleProps {
 }
 
 function ThemeToggle({ className, compact }: ThemeToggleProps): JSX.Element {
-  const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>(() => {
-    return settingsStorage.getTheme()
-  })
+  const [theme, setTheme] = useState<AppTheme>(() => settingsStorage.getTheme())
 
   useEffect(() => {
-    // Apply theme on mount and when it changes
-    const root = document.documentElement
-    const body = document.body
-    
-    const applyTheme = (): void => {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    applyAppTheme(theme)
 
-      if (theme === 'light') {
-        root.style.colorScheme = 'light'
-        root.classList.add('light-theme')
-        root.classList.remove('dark-theme')
-        body.classList.add('light-theme')
-        body.classList.remove('dark-theme')
-      } else if (theme === 'dark') {
-        root.style.colorScheme = 'dark'
-        root.classList.add('dark-theme')
-        root.classList.remove('light-theme')
-        body.classList.add('dark-theme')
-        body.classList.remove('light-theme')
-      } else {
-        // Auto mode - follow system preference
-        root.style.colorScheme = 'light dark'
-        if (prefersDark) {
-          root.classList.add('dark-theme')
-          root.classList.remove('light-theme')
-          body.classList.add('dark-theme')
-          body.classList.remove('light-theme')
-        } else {
-          root.classList.add('light-theme')
-          root.classList.remove('dark-theme')
-          body.classList.add('light-theme')
-          body.classList.remove('dark-theme')
-        }
-      }
-    }
+    if (theme !== 'auto') return
 
-    applyTheme()
-
-    // Listen for system preference changes in auto mode
-    if (theme === 'auto') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-      const handleChange = (): void => {
-        if (theme === 'auto') {
-          applyTheme()
-        }
-      }
-      mediaQuery.addEventListener('change', handleChange)
-      return () => mediaQuery.removeEventListener('change', handleChange)
-    }
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = (): void => applyAppTheme('auto')
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
   }, [theme])
 
+  useEffect(() => {
+    const sync = (event: Event): void => {
+      const next = (event as CustomEvent<AppTheme>).detail
+      if (next === 'light' || next === 'dark' || next === 'auto') {
+        setTheme(next)
+      }
+    }
+    window.addEventListener(THEME_CHANGE_EVENT, sync)
+    return () => window.removeEventListener(THEME_CHANGE_EVENT, sync)
+  }, [])
+
   const toggleTheme = (): void => {
-    // Cycle: auto -> light -> dark -> auto
-    const nextTheme: 'light' | 'dark' | 'auto' = 
-      theme === 'auto' ? 'light' : 
-      theme === 'light' ? 'dark' : 'auto'
-    
-    setTheme(nextTheme)
-    settingsStorage.setTheme(nextTheme)
+    const nextTheme: AppTheme =
+      theme === 'auto' ? 'light' : theme === 'light' ? 'dark' : 'auto'
+
+    setAppTheme(nextTheme)
     tracking.themeChanged(nextTheme)
   }
 

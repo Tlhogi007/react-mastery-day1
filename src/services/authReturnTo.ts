@@ -7,11 +7,13 @@ export const ACTIVE_TAB_KEY = 'rm-active-tab'
 export const LAB_SESSION_KEY = 'rm-lab-session'
 /** Set before Clerk sign-out so a remount still opens landing, not the lab. */
 export const FORCE_LANDING_KEY = 'rm-force-landing'
+/** Set before sign-in so the post-auth remount skips the intro splash. */
+export const SKIP_INTRO_AFTER_AUTH_KEY = 'rm-skip-intro-after-auth'
 
-export type AuthReturnView = 'exercises' | 'community' | 'settings'
+export type AuthReturnView = 'exercises' | 'community' | 'settings' | 'support'
 
 export function normalizeLabView(view: unknown): AuthReturnView {
-  if (view === 'community' || view === 'settings') return view
+  if (view === 'community' || view === 'settings' || view === 'support') return view
   return 'exercises'
 }
 
@@ -85,6 +87,8 @@ export function clearLabNavigationState(): void {
  */
 export function prepareLandingAfterSignOut(): void {
   safeSet(FORCE_LANDING_KEY, '1')
+  // Sign-out → marketing landing, not the 5s intro splash.
+  markSkipIntroAfterAuth()
   safeRemove(LAB_SESSION_KEY)
   safeRemove(ACTIVE_TAB_KEY)
   if (typeof window === 'undefined') return
@@ -206,9 +210,15 @@ function parseReturnMarker(): Partial<AuthReturnTo> | null {
  * for Clerk — OAuth allowlists reject fragments, and `#rm=landing` after sign-out
  * was blocking the next openSignIn.
  */
+export function markSkipIntroAfterAuth(): void {
+  safeSet(SKIP_INTRO_AFTER_AUTH_KEY, '1')
+}
+
 export function prepareAuthReturnUrl(overrides?: Partial<AuthReturnTo>): string {
   const state = snapshotFromStorage(overrides)
   persistSnapshot(state)
+  // Post-OAuth remount should land on home/lab — not replay the 5s intro.
+  markSkipIntroAfterAuth()
   if (typeof window === 'undefined') return '/'
   const pathSearch = `${window.location.pathname}${window.location.search}` || '/'
   const hash = encodeHash(state)
@@ -219,6 +229,15 @@ export function prepareAuthReturnUrl(overrides?: Partial<AuthReturnTo>): string 
     /* ignore */
   }
   return `${window.location.origin}${pathSearch}`
+}
+
+export function peekSkipIntroAfterAuth(): boolean {
+  return safeGet(SKIP_INTRO_AFTER_AUTH_KEY) === '1'
+}
+
+/** Clear after leaving landing so a later intentional visit can show intro again. */
+export function clearSkipIntroAfterAuth(): void {
+  safeRemove(SKIP_INTRO_AFTER_AUTH_KEY)
 }
 
 /** Prefer URL marker (query/hash), else sessionStorage. */

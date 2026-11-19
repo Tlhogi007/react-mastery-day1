@@ -12,7 +12,7 @@ export type ProgressData = {
 
 export type LabCloudState = {
   exercise: string
-  view: 'exercises' | 'community' | 'settings'
+  view: 'exercises' | 'community' | 'settings' | 'support'
   tools: boolean
   tab?: string
 }
@@ -22,6 +22,31 @@ export type LiveProgressState = {
   day: number
   percent: number | null
   updatedAt: string
+}
+
+export type CloudSettings = {
+  theme: 'light' | 'dark' | 'auto'
+  onboardingComplete?: boolean
+  studyMode?: boolean
+  /** Last prefs change — last-write-wins for theme/focus (not snapshot.updatedAt). */
+  updatedAt?: string
+}
+
+/** Mid-quiz session resume (answers, index, loaded questions). */
+export type CloudQuizResume = {
+  day: number
+  currentQuestionIndex: number
+  selectedAnswer: number | null
+  score: number
+  completed: boolean
+  localQuestionsCompleted: boolean
+  aiEnabled: boolean
+  aiQuestionsLoaded: boolean
+  allQuestions: unknown[]
+  usedLocalQuestionIds: string[]
+  incorrectAnswerIds: string[]
+  totalTimeSpent: number
+  at: number
 }
 
 export type UserCloudSnapshot = {
@@ -36,6 +61,14 @@ export type UserCloudSnapshot = {
   reflections?: unknown
   flashcards?: unknown
   snippets?: unknown
+  /** Theme / tour / focus — device prefs that should follow the account */
+  settings?: CloudSettings | null
+  /** In-progress quiz (newest `at` wins). null = cleared */
+  quizResume?: CloudQuizResume | null
+  /** Local learning-analytics event log (merged by timestamp+event) */
+  analytics?: unknown
+  /** Community posts this user marked helpful */
+  helpfulVotes?: Record<string, boolean>
 }
 
 export const USER_CLOUD_KEY_PREFIX = 'rm:user:'
@@ -54,6 +87,15 @@ export function emptyProgress(): ProgressData {
   }
 }
 
+export function emptySettings(): CloudSettings {
+  return {
+    theme: 'auto',
+    onboardingComplete: false,
+    studyMode: false,
+    updatedAt: '',
+  }
+}
+
 export function emptySnapshot(): UserCloudSnapshot {
   return {
     version: 1,
@@ -67,6 +109,10 @@ export function emptySnapshot(): UserCloudSnapshot {
     reflections: [],
     flashcards: [],
     snippets: [],
+    settings: emptySettings(),
+    quizResume: null,
+    analytics: [],
+    helpfulVotes: {},
   }
 }
 
@@ -217,6 +263,137 @@ function mergeById(local: unknown, cloud: unknown): unknown[] {
   return [...map.values()]
 }
 
+export function normalizeSettings(raw: unknown): CloudSettings {
+  const o = asRecord(raw)
+  const theme =
+    o.theme === 'light' || o.theme === 'dark' || o.theme === 'auto' ? o.theme : 'auto'
+  return {
+    theme,
+    onboardingComplete: Boolean(o.onboardingComplete),
+    studyMode: Boolean(o.studyMode),
+    updatedAt: typeof o.updatedAt === 'string' ? o.updatedAt : '',
+  }
+}
+
+export function mergeSettings(
+  local: CloudSettings | null | undefined,
+  cloud: CloudSettings | null | undefined,
+): CloudSettings {
+  const a = local ? normalizeSettings(local) : emptySettings()
+  const b = cloud ? normalizeSettings(cloud) : emptySettings()
+  const localPrefsNewer = (a.updatedAt || '') > (b.updatedAt || '')
+  // Prefer an explicit light/dark choice over auto when only one side is auto.
+  const theme =
+    a.theme !== 'auto' && b.theme === 'auto'
+      ? a.theme
+      : b.theme !== 'auto' && a.theme === 'auto'
+        ? b.theme
+        : localPrefsNewer
+          ? a.theme
+          : b.theme
+  return {
+    theme,
+    // Once the tour is done on any device, keep it done.
+    onboardingComplete: Boolean(a.onboardingComplete || b.onboardingComplete),
+    // Focus mode: prefs stamp last-write-wins.
+    studyMode: localPrefsNewer ? a.studyMode : b.studyMode,
+    updatedAt:
+      (a.updatedAt || '') >= (b.updatedAt || '') ? a.updatedAt || b.updatedAt : b.updatedAt || a.updatedAt,
+  }
+}
+
+export function normalizeQuizResume(raw: unknown): CloudQuizResume | null {
+  if (raw == null) return null
+  if (!raw || typeof raw !== 'object') return null
+  const o = raw as Record<string, unknown>
+  const day = Number(o.day)
+  const at = Number(o.at)
+  if (!Number.isFinite(day) || day < 1) return null
+  if (!Number.isFinite(at) || at <= 0) return null
+  // Stale resume (> 30 min) — treat as cleared for merge/apply
+  if (Date.now() - at > 30 * 60_000) return null
+  const allQuestions = Array.isArray(o.allQuestions) ? o.allQuestions.slice(0, 40) : []
+  if (allQuestions.length === 0) return null
+  return {
+    day,
+    currentQuestionIndex: Math.max(0, Math.floor(Number(o.currentQuestionIndex) || 0)),
+    selectedAnswer:
+      o.selectedAnswer == null ? null : Math.max(0, Math.floor(Number(o.selectedAnswer) || 0)),
+    score: Math.max(0, Math.floor(Number(o.score) || 0)),
+    completed: Boolean(o.completed),
+    localQuestionsCompleted: Boolean(o.localQuestionsCompleted),
+    aiEnabled: Boolean(o.aiEnabled),
+    aiQuestionsLoaded: Boolean(o.aiQuestionsLoaded),
+    allQuestions,
+    usedLocalQuestionIds: Array.isArray(o.usedLocalQuestionIds)
+      ? o.usedLocalQuestionIds.filter((id): id is string => typeof id === 'string').slice(0, 200)
+      : [],
+    incorrectAnswerIds: Array.isArray(o.incorrectAnswerIds)
+      ? o.incorrectAnswerIds.filter((id): id is string => typeof id === 'string').slice(0, 200)
+      : [],
+    totalTimeSpent: Math.max(0, Math.floor(Number(o.totalTimeSpent) || 0)),
+    at,
+  }
+}
+
+export function mergeQuizResume(
+  local: CloudQuizResume | null | undefined,
+  cloud: CloudQuizResume | null | undefined,
+): CloudQuizResume | null {
+  const a = normalizeQuizResume(local)
+  const b = normalizeQuizResume(cloud)
+  if (!a) return b
+  if (!b) return a
+  return a.at >= b.at ? a : b
+}
+
+function mergeAnalytics(local: unknown, cloud: unknown): unknown[] {
+  const map = new Map<string, Record<string, unknown>>()
+  const ingest = (list: unknown) => {
+    if (!Array.isArray(list)) return
+    for (const item of list) {
+      if (!item || typeof item !== 'object') continue
+      const row = item as Record<string, unknown>
+      const event = typeof row.event === 'string' ? row.event : ''
+      const timestamp = Number(row.timestamp) || 0
+      if (!event || !timestamp) continue
+      const key = `${event}:${timestamp}`
+      if (!map.has(key)) map.set(key, row)
+    }
+  }
+  ingest(cloud)
+  ingest(local)
+  return [...map.values()]
+    .sort((a, b) => (Number(a.timestamp) || 0) - (Number(b.timestamp) || 0))
+    .slice(-400)
+}
+
+function mergeHelpfulVotes(
+  local: Record<string, boolean> | null | undefined,
+  cloud: Record<string, boolean> | null | undefined,
+): Record<string, boolean> {
+  const out: Record<string, boolean> = { ...(cloud || {}) }
+  for (const [k, v] of Object.entries(local || {})) {
+    if (v) out[k] = true
+    else if (!(k in out)) out[k] = false
+  }
+  // Keep only true votes to stay small
+  const trimmed: Record<string, boolean> = {}
+  for (const [k, v] of Object.entries(out)) {
+    if (v) trimmed[k] = true
+  }
+  return trimmed
+}
+
+function normalizeHelpfulVotes(raw: unknown): Record<string, boolean> {
+  const o = asRecord(raw)
+  const out: Record<string, boolean> = {}
+  for (const [k, v] of Object.entries(o)) {
+    if (v === true) out[k] = true
+  }
+  return out
+}
+
 export function mergeSnapshots(
   local: Partial<UserCloudSnapshot> | null | undefined,
   cloud: UserCloudSnapshot | null | undefined,
@@ -234,6 +411,8 @@ export function mergeSnapshots(
     normalizeLiveProgress(l.liveProgress),
     normalizeLiveProgress(c.liveProgress),
   )
+  const settings = mergeSettings(l.settings, c.settings)
+
   return {
     version: 1,
     updatedAt: new Date().toISOString(),
@@ -246,6 +425,16 @@ export function mergeSnapshots(
     reflections: mergeById(l.reflections, c.reflections),
     flashcards: mergeById(l.flashcards, c.flashcards),
     snippets: mergeById(l.snippets, c.snippets),
+    settings,
+    quizResume: mergeQuizResume(
+      normalizeQuizResume(l.quizResume),
+      normalizeQuizResume(c.quizResume),
+    ),
+    analytics: mergeAnalytics(l.analytics, c.analytics),
+    helpfulVotes: mergeHelpfulVotes(
+      normalizeHelpfulVotes(l.helpfulVotes),
+      normalizeHelpfulVotes(c.helpfulVotes),
+    ),
   }
 }
 
@@ -266,6 +455,10 @@ export function parseSnapshot(raw: string | null): UserCloudSnapshot | null {
       reflections: parsed.reflections ?? [],
       flashcards: parsed.flashcards ?? [],
       snippets: parsed.snippets ?? [],
+      settings: parsed.settings ? normalizeSettings(parsed.settings) : emptySettings(),
+      quizResume: normalizeQuizResume(parsed.quizResume),
+      analytics: Array.isArray(parsed.analytics) ? parsed.analytics : [],
+      helpfulVotes: normalizeHelpfulVotes(parsed.helpfulVotes),
     }
   } catch {
     return null
@@ -291,7 +484,10 @@ export function sanitizeIncomingSnapshot(body: unknown): UserCloudSnapshot | nul
     reflections: cappedArray(o.reflections, 500),
     flashcards: cappedArray(o.flashcards, 1000),
     snippets: cappedArray(o.snippets, 500),
+    settings: o.settings ? normalizeSettings(o.settings) : emptySettings(),
+    quizResume: normalizeQuizResume(o.quizResume),
+    analytics: cappedArray(o.analytics, 400),
+    helpfulVotes: normalizeHelpfulVotes(o.helpfulVotes),
   }
-  // Cap JSON size roughly by stringifying later; reject huge payloads in handler.
   return snap
 }

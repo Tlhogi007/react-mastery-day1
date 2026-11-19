@@ -34,21 +34,23 @@ export function ScrollToTopButton(): JSX.Element | null {
       }}
       style={{
         position: 'fixed',
-        right: 'max(16px, env(safe-area-inset-right, 0px))',
-        bottom: 'max(20px, env(safe-area-inset-bottom, 0px))',
+        right: 'max(12px, env(safe-area-inset-right, 0px))',
+        bottom: 'max(16px, env(safe-area-inset-bottom, 0px))',
         zIndex: Z_INDEX.FLOATING_ACTIONS,
-        width: 44,
-        height: 44,
+        width: 40,
+        height: 40,
         padding: 0,
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 12,
+        borderRadius: 999,
         border: '1px solid var(--border-color)',
-        background: 'var(--bg-card)',
-        color: 'var(--text-primary)',
-        boxShadow: 'var(--shadow-md)',
+        background: 'color-mix(in srgb, var(--bg-card) 92%, transparent)',
+        color: 'var(--text-secondary)',
+        boxShadow: 'var(--shadow-sm)',
         cursor: 'pointer',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
       }}
     >
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
