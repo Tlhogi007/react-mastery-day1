@@ -13,7 +13,8 @@ concurrency:
 jobs:
   unit:
     name: Unit (Vitest)
-    runs-on: ubuntu-latest
+    # Pin OS: ubuntu-latest is 26.04; Playwright 1.58.x lacks chromium deps there.
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,7 +33,7 @@ jobs:
 
   e2e:
     name: E2E (Playwright)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Skip on forks — Clerk/Upstash secrets are not available to PR workflows from forks.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     steps:
