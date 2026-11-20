@@ -1,3 +1,10 @@
+## [1.14.1](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.14.0...v1.14.1) (2026-11-20)
+
+
+### Bug Fixes
+
+* seal Day 1 quiz history, exhaust, and AI edge flows ([4383061](https://github.com/Tlhogi007/react-mastery-day1/commit/4383061b8ee279ac30fe143cf80d9a0abc93bc24))
+
 # [1.14.0](https://github.com/Tlhogi007/react-mastery-day1/compare/v1.13.4...v1.14.0) (2026-11-19)
 
 
