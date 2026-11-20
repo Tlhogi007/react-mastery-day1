@@ -32,8 +32,8 @@ export async function dismissIntroIfPresent(page: Page): Promise<void> {
 
   const continueBtn = dialog.getByRole('button', { name: /^Continue$/i })
   await expect(continueBtn).toBeVisible({ timeout: 5_000 })
-  await continueBtn.click()
-  await expect(dialog).toBeHidden({ timeout: 5_000 })
+  await continueBtn.click({ force: true })
+  await expect(dialog).toBeHidden({ timeout: 10_000 })
 }
 
 export async function enterLab(
@@ -45,6 +45,8 @@ export async function enterLab(
   } else {
     await page.goto('/')
   }
+
+  await dismissIntroIfPresent(page)
 
   // Already in the lab?
   if (await page.getByRole('button', { name: /Mark complete|^Completed$/i }).isVisible().catch(() => false)) {

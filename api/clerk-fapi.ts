@@ -187,7 +187,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     const upstream = await fetch(target, {
       method: req.method || 'GET',
       headers,
-      body,
+      body: body ? new Uint8Array(body) : undefined,
       redirect: 'manual',
     })
 

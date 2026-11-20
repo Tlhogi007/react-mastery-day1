@@ -44,6 +44,8 @@ interface UseQuizReturn {
   handleAIGenerationRequest: (count: number) => Promise<void>
   handleLoadMoreLocalQuestions: (count: number) => Promise<void>
   handleFinishQuiz: () => void
+  dismissError: () => void
+  offerAiQuestions: () => void
   reset: () => void
   resetWithIncorrectOnly: () => void
   toggleAI: () => void
@@ -92,9 +94,10 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
     aiEnabled: ai.aiEnabled,
     aiQuestionsLoaded: ai.aiQuestionsLoaded,
     allQuestions: session.allQuestions,
-    usedLocalQuestionIds: session.usedLocalQuestionIds,
+    usedLocalQuestionIds: Array.from(session.usedLocalQuestionIds),
     incorrectAnswers: session.incorrectAnswers,
     totalTimeSpent: session.totalTimeSpent,
+    localBankGateDismissed: session.localBankGateDismissed,
   })
 
   return {
@@ -128,6 +131,8 @@ export function useQuiz({ questions, day }: UseQuizOptions): UseQuizReturn {
     handleAIGenerationRequest: ai.handleAIGenerationRequest,
     handleLoadMoreLocalQuestions: session.handleLoadMoreLocalQuestions,
     handleFinishQuiz: session.handleFinishQuiz,
+    dismissError: session.dismissError,
+    offerAiQuestions: session.offerAiQuestions,
     reset: session.reset,
     resetWithIncorrectOnly: session.resetWithIncorrectOnly,
     toggleAI: ai.toggleAI,

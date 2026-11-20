@@ -174,7 +174,10 @@ describe('quizSessionReducer', () => {
     expect(state.errorMessage).toMatch(/No local questions available/i)
 
     state = quizSessionReducer(state, { type: QuizSessionActionType.LoadMoreNoUnseen })
-    expect(state.questionPromptType).toBe(QuestionPromptKind.Ai)
+    expect(state.showQuestionPrompt).toBe(false)
+    expect(state.questionPromptType).toBeNull()
+    expect(state.errorMessage).toMatch(/No new local questions left/i)
+    expect(state.localBankGateDismissed).toBe(false)
 
     state = quizSessionReducer(state, {
       type: QuizSessionActionType.LoadMoreFail,

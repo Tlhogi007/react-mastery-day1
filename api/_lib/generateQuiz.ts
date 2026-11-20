@@ -202,7 +202,7 @@ export async function generateQuizContent(
   const order: Array<Exclude<Provider, 'auto'>> =
     provider === 'auto' ? ['groq', 'gemini', 'together'] : [provider]
 
-  let lastFail: { status: number; error: string } | null = null
+  let lastFail: { ok: false; status: number; error: string } | null = null
   for (const p of order) {
     const configured =
       (p === 'groq' && keys.groq) ||

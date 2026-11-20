@@ -54,7 +54,13 @@ class ProgressStorage {
     } catch (error) {
       console.warn('Failed to load progress from localStorage:', error)
     }
-    return { ...DEFAULT_PROGRESS }
+    // Clone nested collections — callers mutate and save; never share DEFAULT refs.
+    return {
+      ...DEFAULT_PROGRESS,
+      completedDays: [],
+      completedQuizzes: {},
+      quizScores: {},
+    }
   }
 
   /**

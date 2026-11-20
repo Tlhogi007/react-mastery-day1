@@ -12,9 +12,11 @@ export interface UseQuizPersistenceParams {
   aiEnabled: boolean
   aiQuestionsLoaded: boolean
   allQuestions: QuizQuestion[]
-  usedLocalQuestionIds: Set<string>
+  /** Prefer a stable array — a new Set() each render re-fires this effect forever. */
+  usedLocalQuestionIds: string[]
   incorrectAnswers: QuizQuestion[]
   totalTimeSpent: number
+  localBankGateDismissed: boolean
 }
 
 export function useQuizPersistence({
@@ -30,7 +32,11 @@ export function useQuizPersistence({
   usedLocalQuestionIds,
   incorrectAnswers,
   totalTimeSpent,
+  localBankGateDismissed,
 }: UseQuizPersistenceParams): void {
+  const usedIdsKey = usedLocalQuestionIds.join('|')
+  const incorrectIdsKey = incorrectAnswers.map((q) => q.id).join('|')
+
   useEffect(() => {
     if (day == null || completed) return
     saveQuizProgress({
@@ -46,8 +52,11 @@ export function useQuizPersistence({
       usedLocalQuestionIds: [...usedLocalQuestionIds],
       incorrectAnswerIds: incorrectAnswers.map((q) => q.id),
       totalTimeSpent,
+      localBankGateDismissed,
       at: Date.now(),
     })
+    // Serialize id lists — array/Set identity changes every render and caused max update depth.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- usedIdsKey / incorrectIdsKey stand in for list identity
   }, [
     day,
     currentQuestionIndex,
@@ -58,9 +67,10 @@ export function useQuizPersistence({
     aiEnabled,
     aiQuestionsLoaded,
     allQuestions,
-    usedLocalQuestionIds,
-    incorrectAnswers,
+    usedIdsKey,
+    incorrectIdsKey,
     totalTimeSpent,
+    localBankGateDismissed,
   ])
 
   useEffect(() => {

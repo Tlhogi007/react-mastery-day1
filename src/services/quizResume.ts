@@ -27,6 +27,8 @@ export type QuizProgressSnapshot = {
   usedLocalQuestionIds: string[]
   incorrectAnswerIds: string[]
   totalTimeSpent: number
+  /** User dismissed the local-bank-done gate (Practice again) this attempt. */
+  localBankGateDismissed?: boolean
   at: number
 }
 

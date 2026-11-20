@@ -992,6 +992,38 @@ button.code-preset-btn:hover:not(.code-preset-btn--active) {
   font-size: 13px;
 }
 
+.quiz-exhausted-prompt .quiz-exhausted__callout {
+  margin-bottom: 4px;
+}
+
+.quiz-exhausted__callout {
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(226, 61, 43, 0.28);
+  background: rgba(226, 61, 43, 0.08);
+}
+
+.quiz-exhausted__status {
+  display: inline-block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--button-primary);
+}
+
+.quiz-exhausted__message {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.quiz-exhausted__actions {
+  margin-top: 10px;
+}
+
 .quiz-count-prompt__error,
 .quiz-ai-gate__error {
   overflow-wrap: break-word;

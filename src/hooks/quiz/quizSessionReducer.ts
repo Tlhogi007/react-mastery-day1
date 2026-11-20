@@ -1,7 +1,6 @@
 import type { QuizQuestion } from '../../types/challenges'
 import { asLocal, isLocalQuestion } from './tags'
 import {
-  QuestionPromptKind,
   QuizSessionActionType,
   type QuestionPromptType,
 } from './quizSessionEnums'
@@ -10,6 +9,7 @@ import {
   pickLocalDeck,
   tagQuestions,
 } from './quizSessionState'
+import { LOCAL_BANK_EMPTY, LOCAL_BANK_EXHAUSTED, LOCAL_BANK_NO_UNSEEN } from './quizMessages'
 
 type SetState<T> = T | ((prev: T) => T)
 
@@ -53,6 +53,7 @@ type QuizSessionActionPayload = {
     now: number
   }
   [QuizSessionActionType.ResetIncorrect]: { now: number }
+  [QuizSessionActionType.DismissLocalBankGate]: undefined
 }
 
 export type QuizSessionAction = {
@@ -167,6 +168,7 @@ export function quizSessionReducer(
         skippedQuestionIds: [],
         totalTimeSpent: 0,
         errorMessage: action.exhaustedMessage,
+        localBankGateDismissed: !action.exhaustedMessage,
       }
 
     case QuizSessionActionType.SelectAnswer: {
@@ -256,16 +258,27 @@ export function quizSessionReducer(
     case QuizSessionActionType.LoadMoreEmptyBank:
       return {
         ...state,
-        errorMessage:
-          'No local questions available for this topic. Try AI-generated questions instead.',
+        showQuestionPrompt: false,
+        questionPromptType: null,
+        localBankGateDismissed: false,
+        errorMessage: LOCAL_BANK_EMPTY,
       }
 
     case QuizSessionActionType.LoadMoreNoUnseen:
+      // Stay on the local-bank gate — do not pivot into the AI escape panel.
       return {
         ...state,
-        questionPromptType: QuestionPromptKind.Ai,
-        errorMessage:
-          'No new local questions left. Choose an AI count, or Back to continue the quiz.',
+        showQuestionPrompt: false,
+        questionPromptType: null,
+        localBankGateDismissed: false,
+        errorMessage: LOCAL_BANK_NO_UNSEEN,
+      }
+
+    case QuizSessionActionType.DismissLocalBankGate:
+      return {
+        ...state,
+        errorMessage: null,
+        localBankGateDismissed: true,
       }
 
     case QuizSessionActionType.LoadMoreFail:
@@ -284,9 +297,8 @@ export function quizSessionReducer(
         score: 0,
         completed: false,
         localQuestionsCompleted: false,
-        errorMessage: exhausted
-          ? 'All local questions were already completed. Showing the full bank again — or use AI / Retake Incorrect.'
-          : null,
+        errorMessage: exhausted ? LOCAL_BANK_EXHAUSTED : null,
+        localBankGateDismissed: !exhausted,
         showQuestionPrompt: false,
         questionPromptType: null,
         midQuizPromptShown: false,
@@ -313,6 +325,7 @@ export function quizSessionReducer(
         completed: false,
         localQuestionsCompleted: false,
         errorMessage: null,
+        localBankGateDismissed: true,
         showQuestionPrompt: false,
         questionPromptType: null,
         midQuizPromptShown: false,

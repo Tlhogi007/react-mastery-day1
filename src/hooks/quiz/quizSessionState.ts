@@ -28,6 +28,8 @@ export type QuizSessionState = {
   quizStartTime: number | null
   totalTimeSpent: number
   skippedQuestionIds: string[]
+  /** Practice again was chosen — don't re-block on remount until reset/finish. */
+  localBankGateDismissed: boolean
 }
 
 export function tagQuestions(seed: QuizQuestion[]): QuizQuestion[] {
@@ -62,6 +64,7 @@ export function createInitialQuizSessionState(
     quizStartTime: now,
     totalTimeSpent: boot?.totalTimeSpent ?? 0,
     skippedQuestionIds: [],
+    localBankGateDismissed: Boolean(boot?.localBankGateDismissed),
   }
 }
 

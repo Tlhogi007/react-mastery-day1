@@ -42,11 +42,14 @@ export interface UseQuizSessionReturn {
   totalTimeSpent: number
   skippedQuestions: Set<string>
   usedLocalQuestionIds: Set<string>
+  localBankGateDismissed: boolean
   handleAnswerSelect: (index: number) => void
   handleNext: () => void
   handleSkip: () => void
   handleLoadMoreLocalQuestions: (count: number) => Promise<void>
   handleFinishQuiz: () => void
+  dismissError: () => void
+  offerAiQuestions: () => void
   reset: () => void
   resetWithIncorrectOnly: () => void
   handleSelectPromptType: (type: QuestionPromptType) => void

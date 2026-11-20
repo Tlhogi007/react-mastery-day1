@@ -11,6 +11,7 @@ import {
   type AiQuotaStatus,
   fetchUserCloud,
 } from '../../services/userCloudSync'
+import { isLocalBankExhaustedMessage } from '../../hooks/quiz/quizMessages'
 import '../../exercises/exerciseLayout.css'
 
 interface QuestionPromptProps {
@@ -41,7 +42,10 @@ function QuestionPrompt({
 
   const aiUnavailable = selectedType === 'ai' && hostedBlocked && !usingByo
   /** Failed generate must still offer an exit — don't leave Continue as the only path. */
-  const aiFailed = selectedType === 'ai' && Boolean(errorMessage)
+  const aiFailed =
+    selectedType === 'ai' &&
+    Boolean(errorMessage) &&
+    !isLocalBankExhaustedMessage(errorMessage)
   const showAiEscape = aiUnavailable || aiFailed
 
   const openSettings = () => {
@@ -274,6 +278,16 @@ function QuestionPrompt({
           >
             Back
           </button>
+          {isLocalBankExhaustedMessage(errorMessage) && (
+            <button
+              type="button"
+              className="quiz-btn quiz-btn--link"
+              onClick={onFinishQuiz}
+              disabled={generating}
+            >
+              Finish quiz
+            </button>
+          )}
         </div>
       </div>
     </SlideUp>

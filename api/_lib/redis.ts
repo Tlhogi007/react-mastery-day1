@@ -13,7 +13,7 @@ function redisBase(): { base: string; token: string } | null {
   return { base: url.replace(/\/$/, ''), token }
 }
 
-async function redisCommand(args: unknown[]): Promise<unknown | null> {
+export async function redisCommand(args: unknown[]): Promise<unknown | null> {
   const cfg = redisBase()
   if (!cfg) return null
   try {

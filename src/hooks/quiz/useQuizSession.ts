@@ -20,9 +20,11 @@ import { persistQuizFinish } from './persistQuizFinish'
 import { isLocalQuestion } from './tags'
 import {
   LoadMoreLocalsReason,
+  QuestionPromptKind,
   QuizSessionActionType,
   type QuestionPromptType,
 } from './quizSessionEnums'
+import { LOCAL_BANK_EXHAUSTED } from './quizMessages'
 
 export type { UseQuizSessionParams, UseQuizSessionReturn } from './useQuizSessionTypes'
 import type { UseQuizSessionParams, UseQuizSessionReturn } from './useQuizSessionTypes'
@@ -40,7 +42,26 @@ export function useQuizSession({
   const [state, dispatch] = useReducer(
     quizSessionReducer,
     undefined,
-    () => createInitialQuizSessionState(questions, boot),
+    () => {
+      const base = createInitialQuizSessionState(questions, boot)
+      // Resume mid-quiz: re-show local-bank gate unless Practice again was already chosen.
+      if (boot && !boot.completed && !boot.localBankGateDismissed) {
+        const picked = questionHistory.pickUnseenQuestions(
+          questions,
+          new Set(),
+          questions.length,
+          day,
+        )
+        if (picked.length === 0 && questions.length > 0) {
+          return {
+            ...base,
+            errorMessage: LOCAL_BANK_EXHAUSTED,
+            localBankGateDismissed: false,
+          }
+        }
+      }
+      return base
+    },
   )
 
   const questionStartTimeRef = useRef(Date.now())
@@ -49,6 +70,14 @@ export function useQuizSession({
   stateRef.current = state
 
   const currentQuestion = state.allQuestions[state.currentQuestionIndex]
+  const usedLocalQuestionIdSet = useMemo(
+    () => new Set(state.usedLocalQuestionIds),
+    [state.usedLocalQuestionIds],
+  )
+  const skippedQuestionSet = useMemo(
+    () => new Set(state.skippedQuestionIds),
+    [state.skippedQuestionIds],
+  )
   const localQuestionsCount = useMemo(
     () => state.allQuestions.filter((q) => isLocalQuestion(q)).length,
     [state.allQuestions],
@@ -82,9 +111,7 @@ export function useQuizSession({
         day,
       )
       const { questions: deck, exhausted } = pickLocalDeck(questions, picked)
-      const exhaustedMessage = exhausted
-        ? 'All local questions were already completed. Showing the full bank again — or use AI / Retake Incorrect.'
-        : null
+      const exhaustedMessage = exhausted ? LOCAL_BANK_EXHAUSTED : null
 
       // Mid-attempt on this device: don't reshuffle, only surface the banner once history arrives.
       const quizStarted =
@@ -169,6 +196,18 @@ export function useQuizSession({
     finishIfNeeded(prev, next)
     dispatch({ type: QuizSessionActionType.Finish })
   }, [finishIfNeeded])
+
+  const dismissError = useCallback((): void => {
+    dispatch({ type: QuizSessionActionType.DismissLocalBankGate })
+  }, [])
+
+  /** Mid-quiz escape hatch when the local bank is exhausted. */
+  const offerAiQuestions = useCallback((): void => {
+    setAiEnabled(true)
+    dispatch({ type: QuizSessionActionType.DismissLocalBankGate })
+    dispatch({ type: QuizSessionActionType.SetShowPrompt, value: true })
+    dispatch({ type: QuizSessionActionType.SetPromptType, value: QuestionPromptKind.Ai })
+  }, [setAiEnabled])
 
   const handleNext = useCallback((): void => {
     const prev = stateRef.current
@@ -366,13 +405,16 @@ export function useQuizSession({
     missedCount,
     quizStartTime: state.quizStartTime,
     totalTimeSpent: state.totalTimeSpent,
-    skippedQuestions: new Set(state.skippedQuestionIds),
-    usedLocalQuestionIds: new Set(state.usedLocalQuestionIds),
+    skippedQuestions: skippedQuestionSet,
+    usedLocalQuestionIds: usedLocalQuestionIdSet,
+    localBankGateDismissed: state.localBankGateDismissed,
     handleAnswerSelect,
     handleNext,
     handleSkip,
     handleLoadMoreLocalQuestions,
     handleFinishQuiz,
+    dismissError,
+    offerAiQuestions,
     reset,
     resetWithIncorrectOnly,
     handleSelectPromptType,

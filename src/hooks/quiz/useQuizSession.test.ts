@@ -135,6 +135,6 @@ describe('useQuizSession (composer)', () => {
     act(() => {
       window.dispatchEvent(new CustomEvent('rm-user-cloud-synced'))
     })
-    expect(result.current.errorMessage).toMatch(/already completed/i)
+    expect(result.current.errorMessage).toMatch(/No new local questions left|Practice again replays/i)
   })
 })

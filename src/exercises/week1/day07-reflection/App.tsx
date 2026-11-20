@@ -26,7 +26,7 @@ function Day07Reflection(): JSX.Element {
       <Tabs
         tabs={[
           {
-            id: 'review',
+            id: 'learn',
             label: 'Review',
             icon: '📚',
             content: (

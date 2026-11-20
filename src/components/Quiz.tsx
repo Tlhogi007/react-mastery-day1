@@ -18,10 +18,12 @@ import QuizAiControls from './quiz/QuizAiControls'
 import QuizQuestionDisplay from './quiz/QuizQuestion'
 import QuizResults from './quiz/QuizResults'
 import QuizMessages from './quiz/QuizMessages'
+import QuizExhaustedPrompt from './quiz/QuizExhaustedPrompt'
 import AIGenerationPrompt from './quiz/AIGenerationPrompt'
 import QuestionPrompt from './quiz/QuestionPrompt'
 import LoadingSkeleton from '../components/ui/LoadingSkeleton'
 import type { QuizQuestion } from '../types/challenges'
+import { isLocalBankExhaustedMessage } from '../hooks/quiz/quizMessages'
 import '../exercises/exerciseLayout.css'
 
 interface QuizProps {
@@ -73,7 +75,10 @@ function Quiz({
         resetWithIncorrectOnly,
         toggleAI,
         handleSelectPromptType,
-        handleCancelPrompt
+        handleCancelPrompt,
+        handleFinishQuiz,
+        dismissError,
+        offerAiQuestions,
     } = useQuiz({ questions, day })
 
     const aiTotal = allQuestions.length - localQuestionsCount
@@ -120,7 +125,11 @@ function Quiz({
                 handleAnswerSelect(index)
             }
         },
-        enabled: !completed && !generatingAI && !showQuestionPrompt
+        enabled:
+            !completed &&
+            !generatingAI &&
+            !showQuestionPrompt &&
+            !isLocalBankExhaustedMessage(errorMessage),
     })
 
     const shell = (body: JSX.Element): JSX.Element => (
@@ -128,6 +137,22 @@ function Quiz({
             {body}
         </div>
     )
+
+    // Local bank exhausted — decide before questions resume
+    if (isLocalBankExhaustedMessage(errorMessage) && !completed && !generatingAI && !showQuestionPrompt) {
+        return shell(
+            <>
+                <h3 className="quiz-shell__title">{title}</h3>
+                <QuizExhaustedPrompt
+                    message={errorMessage!}
+                    enableAI={enableAI}
+                    onKeepGoing={dismissError}
+                    onTryAi={offerAiQuestions}
+                    onFinishQuiz={handleFinishQuiz}
+                />
+            </>,
+        )
+    }
 
     // Show final results
     if (completed) {

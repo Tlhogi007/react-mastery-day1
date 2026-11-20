@@ -205,6 +205,15 @@ describe('pickUnseenQuestions', () => {
     expect(out.map((p) => p.id)).toEqual(['day01-q2'])
   })
 
+  it('remiss (correct → later wrong) returns the id to the miss pool', () => {
+    for (const p of pool) qh.recordAnswer(q(p.id), true, 1)
+    expect(qh.pickUnseenQuestions(pool, new Set(), 5)).toEqual([])
+
+    qh.recordAnswer(q('day01-q2'), false, 2)
+    expect(qh.getHistory('day01-q2')?.answeredCorrectly).toBe(false)
+    expect(qh.pickUnseenQuestions(pool, new Set(), 5).map((p) => p.id)).toEqual(['day01-q2'])
+  })
+
   it('returns nothing when everything is mastered or excluded', () => {
     for (const p of pool) qh.recordAnswer(q(p.id), true, 1)
     expect(qh.pickUnseenQuestions(pool, new Set(), 5)).toEqual([])

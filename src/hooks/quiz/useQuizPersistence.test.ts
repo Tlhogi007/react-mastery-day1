@@ -24,9 +24,10 @@ const params = (p: Partial<UseQuizPersistenceParams> = {}): UseQuizPersistencePa
   aiEnabled: false,
   aiQuestionsLoaded: false,
   allQuestions: [question],
-  usedLocalQuestionIds: new Set(['q1']),
+  usedLocalQuestionIds: ['q1'],
   incorrectAnswers: [question],
   totalTimeSpent: 3,
+  localBankGateDismissed: false,
   ...p,
 })
 

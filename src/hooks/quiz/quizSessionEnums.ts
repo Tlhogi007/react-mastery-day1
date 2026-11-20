@@ -39,4 +39,5 @@ export enum QuizSessionActionType {
   LoadMoreNoDay = 'LOAD_MORE_NO_DAY',
   Reset = 'RESET',
   ResetIncorrect = 'RESET_INCORRECT',
+  DismissLocalBankGate = 'DISMISS_LOCAL_BANK_GATE',
 }

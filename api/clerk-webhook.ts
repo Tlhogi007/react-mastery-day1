@@ -76,7 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         'svix-timestamp': svixTimestamp,
         'svix-signature': svixSignature,
       },
-      body: rawBody,
+      body: new Uint8Array(rawBody),
     })
 
     const evt = await verifyWebhook(request, {
